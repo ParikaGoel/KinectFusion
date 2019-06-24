@@ -10,11 +10,22 @@ set(LIBRARY_OUTPUT_PATH lib)
 
 # Required libraries
 find_package(Eigen3 REQUIRED)
+include_directories(${EIGEN3_INCLUDE_DIR})
 
-INCLUDE_DIRECTORIES(
-        ${EIGEN3_INCLUDE_DIR}
+find_package(FreeImage REQUIRED)
+include_directories(${FREEIMAGE_INCLUDE_DIRS})
+
+set( HEADER_FILES
+    ${PROJECT_SOURCE_DIR}/src/FreeImageHelper.h
+    ${PROJECT_SOURCE_DIR}/src/VirtualSensor.h
 )
 
-# build main executable
-ADD_EXECUTABLE(${PROJECT_NAME}
-        ${PROJECT_SOURCE_DIR}/src/main.cpp)
+set( SOURCE_FILES
+    ${PROJECT_SOURCE_DIR}/src/FreeImageHelper.cpp
+    ${PROJECT_SOURCE_DIR}/src/DepthMapConverter.cpp
+    ${PROJECT_SOURCE_DIR}/src/main.cpp
+)
+
+ADD_EXECUTABLE(${PROJECT_NAME} ${HEADER_FILES} ${SOURCE_FILES})
+
+target_link_libraries(${PROJECT_NAME} ${FREEIMAGE_LIBRARIES})
