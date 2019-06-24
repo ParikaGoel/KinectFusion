@@ -26,17 +26,25 @@ include_directories(${SOPHUS_INCLUDE_DIR})
 
 include_directories(${PROJECT_SOURCE_DIR}/include)
 
+find_package(FreeImage REQUIRED)
+include_directories(${FREEIMAGE_INCLUDE_DIRS})
+
+
 # Source Files
 set(SOURCE_FILES
-        ${PROJECT_SOURCE_DIR}/src/icp.cpp)
-
+        ${PROJECT_SOURCE_DIR}/src/icp.cpp
+        ${PROJECT_SOURCE_DIR}/src/FreeImageHelper.cpp
+        ${PROJECT_SOURCE_DIR}/src/DepthMapConverter.cpp
+        ${PROJECT_SOURCE_DIR}/src/main.cpp
+ )
 # Libraries to be linked
 set(TARGET_LIBS
+    ${FREEIMAGE_LIBRARIES}
         ${CERES_LIBRARIES})
 
 # build main executable
 ADD_EXECUTABLE(${PROJECT_NAME}
         ${SOURCE_FILES}
-        ${PROJECT_SOURCE_DIR}/src/main.cpp)
+  )
 
 target_link_libraries(${PROJECT_NAME} ${TARGET_LIBS})
