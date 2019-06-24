@@ -10,16 +10,17 @@
 #include <zconf.h>
 
 #include "DepthSensor.h"
+#include "Frame.h"
 #include "icp.h"
 
-bool writeToFile(std::string filename, int width, int height, std::vector<double> vector){
-    std::ofstream outFile(filename);
-    if (!outFile.is_open()) return false;
+bool writeToFile(std::string filename, int width, int height, std::vector<double> vector) {
+   std::ofstream outFile(filename);
+   if (!outFile.is_open()) return false;
 
-    outFile << width << "," << height << std::endl;
-    for(auto vec : vector)
-        outFile << vec<<",";
-    return true;
+   outFile << width << "," << height << std::endl;
+        for (auto vec : vector)
+            outFile << vec << ",";
+        return true;
 }
 
 int main(){
