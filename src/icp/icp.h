@@ -25,12 +25,12 @@ class icp {
 public:
     EIGEN_MAKE_ALIGNED_OPERATOR_NEW
     icp(std::shared_ptr<Frame> prev_frame, std::shared_ptr<Frame> current_frame, double dist_threshold, double normal_threshold);
-    Sophus::SE3d& estimatePose(const Sophus::SE3d& initial_pose, size_t m_nIterations);
+    void estimatePose(const Sophus::SE3d& initial_pose, Sophus::SE3d& estimated_pose, size_t m_nIterations);
 
 private:
 
     void findCorrespondence(std::vector<std::pair<size_t,size_t>>& corresponding_points);
-    void prepareConstraints(std::vector<std::pair<size_t,size_t>>& corresponding_points, const Sophus::SE3d& pose, ceres::Problem& problem);
+    void prepareConstraints(std::vector<std::pair<size_t,size_t>>& corresponding_points, Sophus::SE3d& pose, ceres::Problem& problem);
     void configureSolver(ceres::Solver::Options& options);
 
     std::shared_ptr<Frame> prev_frame;

@@ -1,3 +1,4 @@
+#include "utils/local_parameterization_se3.hpp"
 #include "icp.h"
 
 PointToPlaneConstraint::PointToPlaneConstraint(const Vector3d& sourcePoint, const Vector3d& targetPoint, const Vector3d& targetNormal) :
@@ -7,15 +8,14 @@ PointToPlaneConstraint::PointToPlaneConstraint(const Vector3d& sourcePoint, cons
     { }
 
 template <typename T>
-bool PointToPlaneConstraint::operator()(T const* const sPose, T* sResiduals) const {
+bool PointToPlaneConstraint::operator()(const T* const sPose, T* sResiduals) const {
 
      // map inputs
      Eigen::Map<Sophus::SE3<T> const> const pose(sPose);
-     Eigen::Map<Eigen::Matrix<T, 1, 1>> residuals(sResiduals);
 
      Eigen::Vector3d transformed_point = pose * m_source_point;
      Eigen::Vector3d diff_point = transformed_point - m_target_point;
-     residuals = diff_point.dot(m_target_normal);
+     sResiduals[0] = T(diff_point.dot(m_target_normal));
 
      return true;
 }
@@ -76,11 +76,15 @@ void icp::findCorrespondence(std::vector<std::pair<size_t,size_t>>& correspondin
 
 }
 
-void icp::prepareConstraints(std::vector<std::pair<size_t,size_t>>& corresponding_points, const Sophus::SE3d& pose, ceres::Problem& problem) {
+void icp::prepareConstraints(std::vector<std::pair<size_t,size_t>>& corresponding_points, Sophus::SE3d& pose, ceres::Problem& problem) {
 
     std::vector<Vector3d> target_vertex_map = prev_frame->getGlobalPoints();
     std::vector<Vector3d> target_normal_map = prev_frame->getNormals();
     std::vector<Vector3d> source_vertex_map = curr_frame->getPoints();
+
+    problem.AddParameterBlock(pose.data(),
+                              Sophus::SE3d::num_parameters,
+                              new Sophus::test::LocalParameterizationSE3);
 
     for (const auto& match : corresponding_points){
         size_t source_idx = match.first;
@@ -93,7 +97,7 @@ void icp::prepareConstraints(std::vector<std::pair<size_t,size_t>>& correspondin
             continue;
 
         ceres::CostFunction* point_to_plane_cost = PointToPlaneConstraint::create(source_point, target_point, target_normal);
-        problem.AddResidualBlock(point_to_plane_cost, nullptr,pose);
+        problem.AddResidualBlock(point_to_plane_cost, nullptr,pose.data());
     }
 }
 
@@ -107,9 +111,9 @@ void icp::configureSolver(ceres::Solver::Options& options) {
     options.num_threads = 8;
 }
 
-Sophus::SE3d& icp::estimatePose(const Sophus::SE3d& initial_pose, size_t m_nIterations) {
+void icp::estimatePose(const Sophus::SE3d& initial_pose, Sophus::SE3d& estimated_pose, size_t m_nIterations) {
 
-    Sophus::SE3d estimated_pose = initial_pose;
+    estimated_pose = initial_pose;
 
     for (int i = 0; i < m_nIterations; ++i) {
         // Find corresponding points
@@ -137,7 +141,5 @@ Sophus::SE3d& icp::estimatePose(const Sophus::SE3d& initial_pose, size_t m_nIter
 
         std::cout << "Optimization iteration done." << std::endl;
     }
-
-    return estimated_pose;
 
 }

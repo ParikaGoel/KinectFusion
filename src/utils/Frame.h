@@ -181,11 +181,11 @@ public:
         return intrinsic_matrix;
     }
 
-    const unsigned int& getWidth() const{
+    const unsigned int getWidth() const{
         return width;
     }
 
-    const unsigned int& getHeight() const{
+    const unsigned int getHeight() const{
         return height;
     }
 
