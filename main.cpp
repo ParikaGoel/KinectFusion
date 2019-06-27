@@ -2,9 +2,10 @@
 #include <fstream>
 #include <vector>
 #include <math.h>
+#include <Eigen/Dense>
 
-#include "Eigen.h"
-#include "VirtualSensor.h"
+//#include "src/Eigen.h"
+#include "VirtualSensor.hpp"
 
 
 

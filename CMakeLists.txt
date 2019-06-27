@@ -1,31 +1,24 @@
+cmake_minimum_required(VERSION 3.10)
 set(PROJECT_NAME KinectFusion)
 project(${PROJECT_NAME})
-
-cmake_minimum_required(VERSION 3.1)
-set(CMAKE_CXX_STANDARD 14)
 set(CMAKE_MODULE_PATH ${PROJECT_SOURCE_DIR}/cmake ${CMAKE_MODULE_PATH})
-
 set(EXECUTABLE_OUTPUT_PATH bin)
 set(LIBRARY_OUTPUT_PATH lib)
-
-# Required libraries
-find_package(Eigen3 REQUIRED)
-include_directories(${EIGEN3_INCLUDE_DIR})
+set (CMAKE_CXX_STANDARD 14)
 
 find_package(FreeImage REQUIRED)
-include_directories(${FREEIMAGE_INCLUDE_DIRS})
 
-set( HEADER_FILES
-    ${PROJECT_SOURCE_DIR}/src/FreeImageHelper.h
-    ${PROJECT_SOURCE_DIR}/src/VirtualSensor.h
-)
+#adds gitsubmodules
+add_subdirectory(extern)
+### if CMAKE Build Time
+#adds our KinectFusion Lib
+add_subdirectory(FusionLib)
 
-set( SOURCE_FILES
-    ${PROJECT_SOURCE_DIR}/src/FreeImageHelper.cpp
-    ${PROJECT_SOURCE_DIR}/src/DepthMapConverter.cpp
-    ${PROJECT_SOURCE_DIR}/src/main.cpp
-)
+#<-------Stuff for directly building an Application----->
+set(APP_ONE ${PROJECT_NAME} )
+add_executable(${APP_ONE} main.cpp)
+#target_link_libraries (${TEST_TARGET_ONE} graph Eigen3::Eigen )# libdl)# pybind11)
+target_link_libraries (${APP_ONE} kfusion eigenI ${FREEIMAGE_LIBRARIES})# libdl)# pybind11)
+target_compile_features(${APP_ONE} PUBLIC cxx_std_17)
 
-ADD_EXECUTABLE(${PROJECT_NAME} ${HEADER_FILES} ${SOURCE_FILES})
 
-target_link_libraries(${PROJECT_NAME} ${FREEIMAGE_LIBRARIES})
