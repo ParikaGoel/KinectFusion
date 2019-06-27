@@ -29,6 +29,22 @@ include_directories(${PROJECT_SOURCE_DIR}/include)
 find_package(FreeImage REQUIRED)
 include_directories(${FREEIMAGE_INCLUDE_DIRS})
 
+find_package(realsense2 REQUIRED)
+include_directories(${realsense2_INCLUDE_DIRS})
+
+# find_package(OpenGL REQUIRED)
+# include_directories(${OPENGL_INCLUDE_DIR})
+
+# find_package(glfw3 REQUIRED)
+
+
+# if (OPENGL_FOUND)
+#     message("opengl found")
+#     message("include dir: ${OPENGL_INCLUDE_DIR}")
+#     message("link libraries: ${OPENGL_gl_LIBRARY}")
+# else (OPENGL_FOUND)
+#     message("opengl not found")
+# endif()
 
 # Source Files
 set(SOURCE_FILES
@@ -36,11 +52,15 @@ set(SOURCE_FILES
         ${PROJECT_SOURCE_DIR}/src/FreeImageHelper.cpp
         ${PROJECT_SOURCE_DIR}/src/DepthMapConverter.cpp
         ${PROJECT_SOURCE_DIR}/src/main.cpp
+        ${PROJECT_SOURCE_DIR}/src/test.cpp
  )
+
 # Libraries to be linked
 set(TARGET_LIBS
     ${FREEIMAGE_LIBRARIES}
-        ${CERES_LIBRARIES})
+        ${CERES_LIBRARIES}
+        realsense2
+        )
 
 # build main executable
 ADD_EXECUTABLE(${PROJECT_NAME}
@@ -48,3 +68,7 @@ ADD_EXECUTABLE(${PROJECT_NAME}
   )
 
 target_link_libraries(${PROJECT_NAME} ${TARGET_LIBS})
+
+# target_link_libraries(${PROJECT_NAME} ${OPENGL_gl_LIBRARY})
+# target_link_libraries(${PROJECT_NAME} ${OPENGL_glu_LIBRARY})
+# target_link_libraries(${PROJECT_NAME} glfw)

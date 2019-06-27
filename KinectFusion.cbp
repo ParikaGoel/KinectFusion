@@ -1,0 +1,122 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<CodeBlocks_project_file>
+	<FileVersion major="1" minor="6"/>
+	<Project>
+		<Option title="KinectFusion"/>
+		<Option makefile_is_custom="1"/>
+		<Option compiler="gcc"/>
+		<Option virtualFolders="CMake Files\;CMake Files\..\;CMake Files\..\..\;CMake Files\..\..\..\;CMake Files\..\..\..\..\;CMake Files\..\..\..\..\..\;CMake Files\..\..\..\..\..\usr\;CMake Files\..\..\..\..\..\usr\lib\;CMake Files\..\..\..\..\..\usr\lib\cmake\;CMake Files\..\..\..\..\..\usr\lib\cmake\eigen3\;CMake Files\..\..\..\..\..\usr\lib\x86_64-linux-gnu\;CMake Files\..\..\..\..\..\usr\lib\x86_64-linux-gnu\cmake\;CMake Files\..\..\..\..\..\usr\lib\x86_64-linux-gnu\cmake\realsense2\;CMake Files\..\..\..\..\..\usr\lib\x86_64-linux-gnu\cmake\glfw3\;CMake Files\cmake\;"/>
+		<Build>
+			<Target title="all">
+				<Option working_dir="/home/frankzl/uni/in2354_3d_scanning/KineticFusion"/>
+				<Option type="4"/>
+				<MakeCommands>
+					<Build command="/usr/bin/make -f &quot;/home/frankzl/uni/in2354_3d_scanning/KineticFusion/Makefile&quot;  VERBOSE=1 all"/>
+					<CompileFile command="/usr/bin/make -f &quot;/home/frankzl/uni/in2354_3d_scanning/KineticFusion/Makefile&quot;  VERBOSE=1 &quot;$file&quot;"/>
+					<Clean command="/usr/bin/make -f &quot;/home/frankzl/uni/in2354_3d_scanning/KineticFusion/Makefile&quot;  VERBOSE=1 clean"/>
+					<DistClean command="/usr/bin/make -f &quot;/home/frankzl/uni/in2354_3d_scanning/KineticFusion/Makefile&quot;  VERBOSE=1 clean"/>
+				</MakeCommands>
+			</Target>
+			<Target title="rebuild_cache">
+				<Option working_dir="/home/frankzl/uni/in2354_3d_scanning/KineticFusion"/>
+				<Option type="4"/>
+				<MakeCommands>
+					<Build command="/usr/bin/make -f &quot;/home/frankzl/uni/in2354_3d_scanning/KineticFusion/Makefile&quot;  VERBOSE=1 rebuild_cache"/>
+					<CompileFile command="/usr/bin/make -f &quot;/home/frankzl/uni/in2354_3d_scanning/KineticFusion/Makefile&quot;  VERBOSE=1 &quot;$file&quot;"/>
+					<Clean command="/usr/bin/make -f &quot;/home/frankzl/uni/in2354_3d_scanning/KineticFusion/Makefile&quot;  VERBOSE=1 clean"/>
+					<DistClean command="/usr/bin/make -f &quot;/home/frankzl/uni/in2354_3d_scanning/KineticFusion/Makefile&quot;  VERBOSE=1 clean"/>
+				</MakeCommands>
+			</Target>
+			<Target title="KinectFusion">
+				<Option output="/home/frankzl/uni/in2354_3d_scanning/KineticFusion/bin/KinectFusion" prefix_auto="0" extension_auto="0"/>
+				<Option working_dir="bin"/>
+				<Option object_output="./"/>
+				<Option type="1"/>
+				<Option compiler="gcc"/>
+				<Compiler>
+					<Add directory="/usr/include/eigen3"/>
+				</Compiler>
+				<MakeCommands>
+					<Build command="/usr/bin/make -f &quot;/home/frankzl/uni/in2354_3d_scanning/KineticFusion/Makefile&quot;  VERBOSE=1 KinectFusion"/>
+					<CompileFile command="/usr/bin/make -f &quot;/home/frankzl/uni/in2354_3d_scanning/KineticFusion/Makefile&quot;  VERBOSE=1 &quot;$file&quot;"/>
+					<Clean command="/usr/bin/make -f &quot;/home/frankzl/uni/in2354_3d_scanning/KineticFusion/Makefile&quot;  VERBOSE=1 clean"/>
+					<DistClean command="/usr/bin/make -f &quot;/home/frankzl/uni/in2354_3d_scanning/KineticFusion/Makefile&quot;  VERBOSE=1 clean"/>
+				</MakeCommands>
+			</Target>
+			<Target title="KinectFusion/fast">
+				<Option output="/home/frankzl/uni/in2354_3d_scanning/KineticFusion/bin/KinectFusion" prefix_auto="0" extension_auto="0"/>
+				<Option working_dir="bin"/>
+				<Option object_output="./"/>
+				<Option type="1"/>
+				<Option compiler="gcc"/>
+				<Compiler>
+					<Add directory="/usr/include/eigen3"/>
+				</Compiler>
+				<MakeCommands>
+					<Build command="/usr/bin/make -f &quot;/home/frankzl/uni/in2354_3d_scanning/KineticFusion/Makefile&quot;  VERBOSE=1 KinectFusion/fast"/>
+					<CompileFile command="/usr/bin/make -f &quot;/home/frankzl/uni/in2354_3d_scanning/KineticFusion/Makefile&quot;  VERBOSE=1 &quot;$file&quot;"/>
+					<Clean command="/usr/bin/make -f &quot;/home/frankzl/uni/in2354_3d_scanning/KineticFusion/Makefile&quot;  VERBOSE=1 clean"/>
+					<DistClean command="/usr/bin/make -f &quot;/home/frankzl/uni/in2354_3d_scanning/KineticFusion/Makefile&quot;  VERBOSE=1 clean"/>
+				</MakeCommands>
+			</Target>
+			<Target title="edit_cache">
+				<Option working_dir="/home/frankzl/uni/in2354_3d_scanning/KineticFusion"/>
+				<Option type="4"/>
+				<MakeCommands>
+					<Build command="/usr/bin/make -f &quot;/home/frankzl/uni/in2354_3d_scanning/KineticFusion/Makefile&quot;  VERBOSE=1 edit_cache"/>
+					<CompileFile command="/usr/bin/make -f &quot;/home/frankzl/uni/in2354_3d_scanning/KineticFusion/Makefile&quot;  VERBOSE=1 &quot;$file&quot;"/>
+					<Clean command="/usr/bin/make -f &quot;/home/frankzl/uni/in2354_3d_scanning/KineticFusion/Makefile&quot;  VERBOSE=1 clean"/>
+					<DistClean command="/usr/bin/make -f &quot;/home/frankzl/uni/in2354_3d_scanning/KineticFusion/Makefile&quot;  VERBOSE=1 clean"/>
+				</MakeCommands>
+			</Target>
+		</Build>
+		<Unit filename="/home/frankzl/uni/in2354_3d_scanning/KineticFusion/src/DepthSensor.h">
+			<Option target="KinectFusion"/>
+		</Unit>
+		<Unit filename="/home/frankzl/uni/in2354_3d_scanning/KineticFusion/src/FreeImageHelper.cpp">
+			<Option target="KinectFusion"/>
+		</Unit>
+		<Unit filename="/home/frankzl/uni/in2354_3d_scanning/KineticFusion/src/FreeImageHelper.h">
+			<Option target="KinectFusion"/>
+		</Unit>
+		<Unit filename="/home/frankzl/uni/in2354_3d_scanning/KineticFusion/src/VirtualSensor.h">
+			<Option target="KinectFusion"/>
+		</Unit>
+		<Unit filename="/home/frankzl/uni/in2354_3d_scanning/KineticFusion/src/stb_easy_font.h">
+			<Option target="KinectFusion"/>
+		</Unit>
+		<Unit filename="/home/frankzl/uni/in2354_3d_scanning/KineticFusion/src/stb_image_write.h">
+			<Option target="KinectFusion"/>
+		</Unit>
+		<Unit filename="/home/frankzl/uni/in2354_3d_scanning/KineticFusion/src/test.cpp">
+			<Option target="KinectFusion"/>
+		</Unit>
+		<Unit filename="/home/frankzl/uni/in2354_3d_scanning/KineticFusion/CMakeLists.txt">
+			<Option virtualFolder="CMake Files\"/>
+		</Unit>
+		<Unit filename="/home/frankzl/uni/in2354_3d_scanning/KineticFusion/../../../../../usr/lib/cmake/eigen3/Eigen3Config.cmake">
+			<Option virtualFolder="CMake Files\..\..\..\..\..\usr\lib\cmake\eigen3\"/>
+		</Unit>
+		<Unit filename="/home/frankzl/uni/in2354_3d_scanning/KineticFusion/../../../../../usr/lib/x86_64-linux-gnu/cmake/realsense2/realsense2Config.cmake">
+			<Option virtualFolder="CMake Files\..\..\..\..\..\usr\lib\x86_64-linux-gnu\cmake\realsense2\"/>
+		</Unit>
+		<Unit filename="/home/frankzl/uni/in2354_3d_scanning/KineticFusion/../../../../../usr/lib/x86_64-linux-gnu/cmake/realsense2/realsense2ConfigVersion.cmake">
+			<Option virtualFolder="CMake Files\..\..\..\..\..\usr\lib\x86_64-linux-gnu\cmake\realsense2\"/>
+		</Unit>
+		<Unit filename="/home/frankzl/uni/in2354_3d_scanning/KineticFusion/../../../../../usr/lib/x86_64-linux-gnu/cmake/realsense2/realsense2Targets-release.cmake">
+			<Option virtualFolder="CMake Files\..\..\..\..\..\usr\lib\x86_64-linux-gnu\cmake\realsense2\"/>
+		</Unit>
+		<Unit filename="/home/frankzl/uni/in2354_3d_scanning/KineticFusion/../../../../../usr/lib/x86_64-linux-gnu/cmake/realsense2/realsense2Targets.cmake">
+			<Option virtualFolder="CMake Files\..\..\..\..\..\usr\lib\x86_64-linux-gnu\cmake\realsense2\"/>
+		</Unit>
+		<Unit filename="/home/frankzl/uni/in2354_3d_scanning/KineticFusion/../../../../../usr/lib/x86_64-linux-gnu/cmake/glfw3/glfw3Config.cmake">
+			<Option virtualFolder="CMake Files\..\..\..\..\..\usr\lib\x86_64-linux-gnu\cmake\glfw3\"/>
+		</Unit>
+		<Unit filename="/home/frankzl/uni/in2354_3d_scanning/KineticFusion/../../../../../usr/lib/x86_64-linux-gnu/cmake/glfw3/glfw3ConfigVersion.cmake">
+			<Option virtualFolder="CMake Files\..\..\..\..\..\usr\lib\x86_64-linux-gnu\cmake\glfw3\"/>
+		</Unit>
+		<Unit filename="/home/frankzl/uni/in2354_3d_scanning/KineticFusion/cmake/FindFreeImage.cmake">
+			<Option virtualFolder="CMake Files\cmake\"/>
+		</Unit>
+	</Project>
+</CodeBlocks_project_file>
