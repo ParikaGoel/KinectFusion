@@ -22,3 +22,8 @@ target_link_libraries (${APP_ONE} kfusion eigenI ${FREEIMAGE_LIBRARIES})# libdl)
 target_compile_features(${APP_ONE} PUBLIC cxx_std_17)
 
 
+### Copy Data to cmake-build, this need to be applied to each new executable###
+add_custom_command(TARGET ${PROJECT_NAME} PRE_BUILD
+        COMMAND ${CMAKE_COMMAND} -E copy_directory
+        ${CMAKE_SOURCE_DIR}/data $<TARGET_FILE_DIR:${PROJECT_NAME}>/data)
+
