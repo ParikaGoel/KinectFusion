@@ -71,3 +71,8 @@ add_executable(${APP_ONE} main.cpp)
 #target_link_libraries (${TEST_TARGET_ONE} graph Eigen3::Eigen )# libdl)# pybind11)
 target_link_libraries (${APP_ONE} kfusion eigenI ${FREEIMAGE_LIBRARIES})# libdl)# pybind11)
 target_compile_features(${APP_ONE} PUBLIC cxx_std_17)
+
+### Copy Data to cmake-build, this need to be applied to each new executable###
+add_custom_command(TARGET ${PROJECT_NAME} PRE_BUILD
+        COMMAND ${CMAKE_COMMAND} -E copy_directory
+        ${CMAKE_SOURCE_DIR}/data $<TARGET_FILE_DIR:${PROJECT_NAME}>/data)
