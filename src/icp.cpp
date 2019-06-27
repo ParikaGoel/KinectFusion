@@ -1,7 +1,7 @@
-#include "utils/local_parameterization_se3.hpp"
+#include "local_parameterization_se3.hpp"
 #include "icp.h"
 
-PointToPlaneConstraint::PointToPlaneConstraint(const Vector3d& sourcePoint, const Vector3d& targetPoint, const Vector3d& targetNormal) :
+PointToPlaneConstraint::PointToPlaneConstraint(const Eigen::Vector3d& sourcePoint, const Eigen::Vector3d& targetPoint, const Eigen::Vector3d& targetNormal) :
     m_source_point{ sourcePoint },
     m_target_point{ targetPoint },
     m_target_normal{ targetNormal}
@@ -20,7 +20,7 @@ bool PointToPlaneConstraint::operator()(const T* const sPose, T* sResiduals) con
      return true;
 }
 
-ceres::CostFunction* PointToPlaneConstraint::create(const Vector3d& sourcePoint, const Vector3d& targetPoint, const Vector3d& targetNormal) {
+ceres::CostFunction* PointToPlaneConstraint::create(const Eigen::Vector3d& sourcePoint, const Eigen::Vector3d& targetPoint, const Eigen::Vector3d& targetNormal) {
     return new ceres::AutoDiffCostFunction<PointToPlaneConstraint, 1, Sophus::SE3d::num_parameters>(
            new PointToPlaneConstraint(sourcePoint, targetPoint, targetNormal)
     );
@@ -40,27 +40,27 @@ void icp::findCorrespondence(std::vector<std::pair<size_t,size_t>>& correspondin
     size_t frame_width = curr_frame->getWidth();
     size_t frame_height = curr_frame->getHeight();
     std::vector<double> curr_depth_map = curr_frame->getDepthMap();
-    std::vector<Vector3d> prev_frame_points = prev_frame->getGlobalPoints();
-    std::vector<Vector3d> prev_frame_normal_map = prev_frame->getNormals();
+    std::vector<Eigen::Vector3d> prev_frame_points = prev_frame->getGlobalPoints();
+    std::vector<Eigen::Vector3d> prev_frame_normal_map = prev_frame->getNormals();
     Sophus::SE3d prev_frame_pose = prev_frame->getGlobalPose();
-    Matrix3d camera_intrinsics = prev_frame->getIntrinsics();
+    Eigen::Matrix3d camera_intrinsics = prev_frame->getIntrinsics();
 
-    std::vector<Vector3d> curr_frame_vertex_map = curr_frame->getPoints();
-    std::vector<Vector3d> curr_frame_normal_map = curr_frame->getNormals();
+    std::vector<Eigen::Vector3d> curr_frame_vertex_map = curr_frame->getPoints();
+    std::vector<Eigen::Vector3d> curr_frame_normal_map = curr_frame->getNormals();
 
 
     for(size_t v = 0; v < frame_height; v++){
         for(size_t u = 0; u< frame_width; u++){
             size_t target_idx = (v * frame_width) + u;
             if (curr_depth_map[target_idx] > 0){
-                Vector3d target_point_camera = prev_frame_pose.inverse() * prev_frame_points[target_idx];
-                Vector3d target_point_image = camera_intrinsics * target_point_camera;
+                Eigen::Vector3d target_point_camera = prev_frame_pose.inverse() * prev_frame_points[target_idx];
+                Eigen::Vector3d target_point_image = camera_intrinsics * target_point_camera;
                 target_point_image = target_point_image/target_point_image[2];
 
                 if(target_point_image[0] < frame_width && target_point_image[1] < frame_height){
                     size_t source_idx = (target_point_image[1] * frame_width) + target_point_image[0];
-                    Vector3d source_point_camera = prev_frame_pose * curr_frame_vertex_map[source_idx];
-                    Vector3d source_point_normal = prev_frame_pose.rotationMatrix() * curr_frame_normal_map[source_idx];
+                    Eigen::Vector3d source_point_camera = prev_frame_pose * curr_frame_vertex_map[source_idx];
+                    Eigen::Vector3d source_point_normal = prev_frame_pose.rotationMatrix() * curr_frame_normal_map[source_idx];
 
                     if ((source_point_camera - target_point_camera).norm() < dist_threshold){
                         if(source_point_normal.dot(prev_frame_normal_map[target_idx]) < normal_threshold){
@@ -78,9 +78,9 @@ void icp::findCorrespondence(std::vector<std::pair<size_t,size_t>>& correspondin
 
 void icp::prepareConstraints(std::vector<std::pair<size_t,size_t>>& corresponding_points, Sophus::SE3d& pose, ceres::Problem& problem) {
 
-    std::vector<Vector3d> target_vertex_map = prev_frame->getGlobalPoints();
-    std::vector<Vector3d> target_normal_map = prev_frame->getNormals();
-    std::vector<Vector3d> source_vertex_map = curr_frame->getPoints();
+    std::vector<Eigen::Vector3d> target_vertex_map = prev_frame->getGlobalPoints();
+    std::vector<Eigen::Vector3d> target_normal_map = prev_frame->getNormals();
+    std::vector<Eigen::Vector3d> source_vertex_map = curr_frame->getPoints();
 
     problem.AddParameterBlock(pose.data(),
                               Sophus::SE3d::num_parameters,

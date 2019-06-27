@@ -2,14 +2,19 @@
 
 #include <fstream>
 #include <sophus/se3.hpp>
-#include "Eigen.h"
+
+#include <limits>
+
+#ifndef MINF
+#define MINF -std::numeric_limits<double>::infinity()
+#endif
 
 class Frame {
 public:
     EIGEN_MAKE_ALIGNED_OPERATOR_NEW
     Frame() {}
 
-    Frame(float* depthMap, const Matrix3d& depthIntrinsics, const Matrix4d& depthExtrinsics, const unsigned width, const unsigned height, unsigned downsampleFactor = 1, float maxDistance = 0.1f) {
+    Frame(float* depthMap, const Eigen::Matrix3d& depthIntrinsics, const Eigen::Matrix4d& depthExtrinsics, const unsigned width, const unsigned height, unsigned downsampleFactor = 1, float maxDistance = 0.1f) {
 		// Get depth intrinsics.
 		float fovX = depthIntrinsics(0, 0);
 		float fovY = depthIntrinsics(1, 1);
@@ -18,12 +23,12 @@ public:
         intrinsic_matrix = depthIntrinsics;
 
 		// Compute inverse depth extrinsics.
-		Matrix4d depthExtrinsicsInv = depthExtrinsics.inverse();
-		Matrix3d rotationInv = depthExtrinsicsInv.block(0, 0, 3, 3);
-		Vector3d translationInv = depthExtrinsicsInv.block(0, 3, 3, 1);
+        Eigen::Matrix4d depthExtrinsicsInv = depthExtrinsics.inverse();
+        Eigen::Matrix3d rotationInv = depthExtrinsicsInv.block(0, 0, 3, 3);
+        Eigen::Vector3d translationInv = depthExtrinsicsInv.block(0, 3, 3, 1);
 
 		// Back-project the pixel depths into the camera space.
-		std::vector<Vector3d> pointsTmp(width * height);
+		std::vector<Eigen::Vector3d> pointsTmp(width * height);
 
 		// For every pixel row.
 		#pragma omp parallel for
@@ -33,17 +38,17 @@ public:
 				unsigned int idx = v*width + u; // linearized index
 				double depth = depthMap[idx];
 				if (depth == MINF) {
-					pointsTmp[idx] = Vector3d(MINF, MINF, MINF);
+					pointsTmp[idx] = Eigen::Vector3d(MINF, MINF, MINF);
 				}
 				else {
 					// Back-projection to camera space.
-					pointsTmp[idx] = rotationInv * Vector3d((u - cX) / fovX * depth, (v - cY) / fovY * depth, depth) + translationInv;
+					pointsTmp[idx] = rotationInv * Eigen::Vector3d((u - cX) / fovX * depth, (v - cY) / fovY * depth, depth) + translationInv;
 				}
 			}
 		}
 
 		// We need to compute derivatives and then the normalized normal vector (for valid pixels).
-		std::vector<Vector3d> normalsTmp(width * height);
+		std::vector<Eigen::Vector3d> normalsTmp(width * height);
 
 		#pragma omp parallel for
 		for (int v = 1; v < height - 1; ++v) {
@@ -53,7 +58,7 @@ public:
 				const double du = depthMap[idx + 1] - depthMap[idx - 1];
 				const double dv = depthMap[idx + width] - depthMap[idx - width];
 				if (!std::isfinite(du) || !std::isfinite(dv) || abs(du) > maxDistance || abs(dv) > maxDistance) {
-					normalsTmp[idx] = Vector3d(MINF, MINF, MINF);
+					normalsTmp[idx] = Eigen::Vector3d(MINF, MINF, MINF);
 					continue;
 				}
 
@@ -64,19 +69,19 @@ public:
                 const double yu = 0;
                 const double yv = 1;
 
-                normalsTmp[idx] = Vector3d(yu*dv - yv*du, xv*du - xu*dv, xu*yv - yu*xv);
+                normalsTmp[idx] = Eigen::Vector3d(yu*dv - yv*du, xv*du - xu*dv, xu*yv - yu*xv);
 				normalsTmp[idx].normalize();
 			}
 		}
 
 		// We set invalid normals for border regions.
 		for (int u = 0; u < width; ++u) {
-			normalsTmp[u] = Vector3d(MINF, MINF, MINF);
-			normalsTmp[u + (height - 1) * width] = Vector3d(MINF, MINF, MINF);
+			normalsTmp[u] = Eigen::Vector3d(MINF, MINF, MINF);
+			normalsTmp[u + (height - 1) * width] = Eigen::Vector3d(MINF, MINF, MINF);
 		}
 		for (int v = 0; v < height; ++v) {
-			normalsTmp[v * width] = Vector3d(MINF, MINF, MINF);
-			normalsTmp[(width - 1) + v * width] = Vector3d(MINF, MINF, MINF);
+			normalsTmp[v * width] = Eigen::Vector3d(MINF, MINF, MINF);
+			normalsTmp[(width - 1) + v * width] = Eigen::Vector3d(MINF, MINF, MINF);
 		}
 
 		// We filter out measurements where either point or normal is invalid.
@@ -149,23 +154,23 @@ public:
 		return true;
 	}
 
-	std::vector<Vector3d>& getPoints() {
+	std::vector<Eigen::Vector3d>& getPoints() {
 		return m_points;
 	}
 
-	const std::vector<Vector3d>& getPoints() const {
+	const std::vector<Eigen::Vector3d>& getPoints() const {
 		return m_points;
 	}
 
-	std::vector<Vector3d>& getNormals() {
+	std::vector<Eigen::Vector3d>& getNormals() {
 		return m_normals;
 	}
 
-	const std::vector<Vector3d>& getNormals() const {
+	const std::vector<Eigen::Vector3d>& getNormals() const {
 		return m_normals;
 	}
 
-    std::vector<Vector3d>& getGlobalPoints() {
+    std::vector<Eigen::Vector3d>& getGlobalPoints() {
         return m_points_global;
     }
 
@@ -177,7 +182,7 @@ public:
         return m_depth_map;
     }
 
-    const Matrix3d& getIntrinsics() const{
+    const Eigen::Matrix3d& getIntrinsics() const{
         return intrinsic_matrix;
     }
 
@@ -190,12 +195,12 @@ public:
     }
 
 private:
-	std::vector<Vector3d> m_points;
-	std::vector<Vector3d> m_normals;
+	std::vector<Eigen::Vector3d> m_points;
+	std::vector<Eigen::Vector3d> m_normals;
     std::vector<double> m_depth_map;
-    std::vector<Vector3d> m_points_global;
+    std::vector<Eigen::Vector3d> m_points_global;
     Sophus::SE3d global_pose;
-    Matrix3d intrinsic_matrix;
+    Eigen::Matrix3d intrinsic_matrix;
     size_t width;
     size_t height;
 

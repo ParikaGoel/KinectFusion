@@ -4,21 +4,20 @@
 #include <ceres/rotation.h>
 #include <sophus/se3.hpp>
 
-#include "utils/Eigen.h"
-#include "utils/Frame.h"
+#include "Frame.h"
 
 class PointToPlaneConstraint {
 public:
     EIGEN_MAKE_ALIGNED_OPERATOR_NEW
-    PointToPlaneConstraint(const Vector3d& sourcePoint, const Vector3d& targetPoint, const Vector3d& targetNormal);
+    PointToPlaneConstraint(const Eigen::Vector3d& sourcePoint, const Eigen::Vector3d& targetPoint, const Eigen::Vector3d& targetNormal);
     template <typename T>
     bool operator()(T const* const sPose, T* sResiduals) const ;
-    static ceres::CostFunction* create(const Vector3d& sourcePoint, const Vector3d& targetPoint, const Vector3d& targetNormal);
+    static ceres::CostFunction* create(const Eigen::Vector3d& sourcePoint, const Eigen::Vector3d& targetPoint, const Eigen::Vector3d& targetNormal);
 
 protected:
-    const Vector3d m_source_point;
-    const Vector3d m_target_point;
-    const Vector3d m_target_normal;
+    const Eigen::Vector3d m_source_point;
+    const Eigen::Vector3d m_target_point;
+    const Eigen::Vector3d m_target_normal;
 };
 
 class icp {

@@ -19,11 +19,11 @@ find_package(Sophus REQUIRED)
 include_directories(${SOPHUS_INCLUDE_DIR})
 
 # Include directories
-include_directories(${PROJECT_SOURCE_DIR}/src)
+include_directories(${PROJECT_SOURCE_DIR}/include)
 
 # Source Files
 set(SOURCE_FILES
-        ${PROJECT_SOURCE_DIR}/src/icp/icp.cpp)
+        ${PROJECT_SOURCE_DIR}/src/icp.cpp)
 
 # Libraries to be linked
 set(TARGET_LIBS
