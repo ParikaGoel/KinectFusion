@@ -1,28 +1,41 @@
-#include "local_parameterization_se3.hpp"
 #include "icp.h"
 
 PointToPlaneConstraint::PointToPlaneConstraint(const Eigen::Vector3d& sourcePoint, const Eigen::Vector3d& targetPoint, const Eigen::Vector3d& targetNormal) :
-    m_source_point{ sourcePoint },
-    m_target_point{ targetPoint },
-    m_target_normal{ targetNormal}
-    { }
+        m_source_point(sourcePoint),
+        m_target_point(targetPoint),
+        m_target_normal(targetNormal)
+{ }
 
 template <typename T>
-bool PointToPlaneConstraint::operator()(const T* const sPose, T* sResiduals) const {
+bool PointToPlaneConstraint::operator()(T const* const sPose, T* sResiduals) const {
 
-     // map inputs
-     Eigen::Map<Sophus::SE3<T> const> const pose(sPose);
+    // map inputs
+    Eigen::Map<Sophus::SE3<T> const> const pose(sPose);
 
-     Eigen::Vector3d transformed_point = pose * m_source_point;
-     Eigen::Vector3d diff_point = transformed_point - m_target_point;
-     sResiduals[0] = T(diff_point.dot(m_target_normal));
+    T* s_transformed_point = new T(sizeof(T) * 3);
+    s_transformed_point[0] = T(0.0);
+    s_transformed_point[1] = T(0.0);
+    s_transformed_point[2] = T(0.0);
 
-     return true;
+    Eigen::Map<Eigen::Matrix<T, 3, 1>> transformed_point(s_transformed_point);
+
+    T* s_diff_point = new T(sizeof(T) * 3);
+    s_diff_point[0] = T(0.0);
+    s_diff_point[1] = T(0.0);
+    s_diff_point[2] = T(0.0);
+
+    Eigen::Map<Eigen::Matrix<T, 3, 1>> diff_point(s_diff_point);
+
+    transformed_point = pose * m_source_point;
+    diff_point = transformed_point - m_target_point;
+    sResiduals[0] = diff_point.dot(m_target_normal);
+
+    return true;
 }
 
 ceres::CostFunction* PointToPlaneConstraint::create(const Eigen::Vector3d& sourcePoint, const Eigen::Vector3d& targetPoint, const Eigen::Vector3d& targetNormal) {
     return new ceres::AutoDiffCostFunction<PointToPlaneConstraint, 1, Sophus::SE3d::num_parameters>(
-           new PointToPlaneConstraint(sourcePoint, targetPoint, targetNormal)
+            new PointToPlaneConstraint(sourcePoint, targetPoint, targetNormal)
     );
 }
 
@@ -96,7 +109,9 @@ void icp::prepareConstraints(std::vector<std::pair<size_t,size_t>>& correspondin
         if (!source_point.allFinite() && !target_point.allFinite() && !target_normal.allFinite())
             continue;
 
+
         ceres::CostFunction* point_to_plane_cost = PointToPlaneConstraint::create(source_point, target_point, target_normal);
+
         problem.AddResidualBlock(point_to_plane_cost, nullptr,pose.data());
     }
 }

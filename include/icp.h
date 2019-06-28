@@ -1,8 +1,15 @@
 #pragma once
 
+#include <memory>
+
+#include <Eigen/Dense>
+#include <Eigen/Core>
+#include <Eigen/StdVector>
+
 #include <ceres/ceres.h>
-#include <ceres/rotation.h>
 #include <sophus/se3.hpp>
+
+#include "local_parameterization_se3.hpp"
 
 #include "Frame.h"
 
@@ -10,14 +17,16 @@ class PointToPlaneConstraint {
 public:
     EIGEN_MAKE_ALIGNED_OPERATOR_NEW
     PointToPlaneConstraint(const Eigen::Vector3d& sourcePoint, const Eigen::Vector3d& targetPoint, const Eigen::Vector3d& targetNormal);
+
     template <typename T>
-    bool operator()(T const* const sPose, T* sResiduals) const ;
+    bool operator()(T const* const sPose, T* sResiduals) const;
+
     static ceres::CostFunction* create(const Eigen::Vector3d& sourcePoint, const Eigen::Vector3d& targetPoint, const Eigen::Vector3d& targetNormal);
 
 protected:
-    const Eigen::Vector3d m_source_point;
-    const Eigen::Vector3d m_target_point;
-    const Eigen::Vector3d m_target_normal;
+    Eigen::Vector3d m_source_point;
+    Eigen::Vector3d m_target_point;
+    Eigen::Vector3d m_target_normal;
 };
 
 class icp {
