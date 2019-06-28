@@ -44,10 +44,11 @@ bool VirtualSensor::Init(const std::string& datasetDir)
     m_colorExtrinsics.setIdentity();
     m_depthExtrinsics.setIdentity();
 
-    m_depthFrame = std::make_shared<std::vector<Point2D>>(m_depthImageWidth*m_depthImageHeight);
+    m_depthFrame = std::make_shared<std::vector<Point2D>>();
     for(int y=0;y<m_depthImageHeight;y++){
         for(int x = 0;x<m_depthImageWidth;x++){
-            m_depthFrame->push_back({x,y,0.5f});
+            Point2D tmp(x,y,0.5f);
+            m_depthFrame->push_back(tmp);
         }
     }
 
