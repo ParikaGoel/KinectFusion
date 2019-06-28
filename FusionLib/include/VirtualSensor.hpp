@@ -4,9 +4,10 @@
 #include <iostream>
 #include <cstring>
 #include <fstream>
-
+#include <memory>
 #include <EigenHelper.hpp>
 #include "FreeImageHelper.hpp"
+#include <Utils.hpp>
 
 typedef unsigned char BYTE;
 
@@ -29,7 +30,9 @@ public:
 	BYTE* GetColorRGBX();
 
 	// get current depth data
-	float* GetDepth();
+//    std::shared_ptr<std::vector<Eigen::Vector3f>> GetDepth();
+	std::shared_ptr<std::vector<Point2D>> GetDepth();
+//    std::shared_ptr<std::map<Point2D,float>>  GetDepth();
 
 	// color camera info
 	Eigen::Matrix3f GetColorIntrinsics();
@@ -66,7 +69,8 @@ private:
 	int m_increment;
 
 	// frame data
-	float* m_depthFrame;
+    std::shared_ptr<std::vector<Point2D>>  m_depthFrame;
+
 	BYTE* m_colorFrame;
 	Eigen::Matrix4f m_currentTrajectory;
 

@@ -6,7 +6,7 @@
 
 //#include "src/Eigen.h"
 #include "VirtualSensor.hpp"
-
+#include <DepthMapConverter.hpp>
 
 
 int main()
@@ -25,6 +25,7 @@ int main()
     while (sensor.ProcessNextFrame() )
     {
         std::cout << "Next Frame." << std::endl;
+        DepthMapConverter conv(sensor.GetDepth(),sensor.GetDepthImageWidth(),sensor.GetDepthImageHeight(),sensor.GetDepthIntrinsics(),sensor.GetDepthExtrinsics());
 
     }
     
