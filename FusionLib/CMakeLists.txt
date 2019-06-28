@@ -6,7 +6,8 @@ set(FUSION_Name kfusion)
 set(FUSION_SOURCES
         src/DepthMapConverter.cpp
         src/FreeImageHelper.cpp
-        src/VirtualSensor.cpp)
+        src/VirtualSensor.cpp
+        src/ICP.cpp)
 
 add_library(${FUSION_Name}  ${FUSION_SOURCES})
 target_include_directories(${FUSION_Name} PUBLIC ${CMAKE_CURRENT_LIST_DIR}/include)
