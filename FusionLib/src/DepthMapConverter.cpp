@@ -10,7 +10,9 @@ DepthMapConverter::DepthMapConverter(std::shared_ptr<std::vector<Point2D>> image
                                      _width(imageWidth),
                                      _height(imageHeight){
 
-    _worldData = std::make_shared<std::vector<Vector4f>>(imageData->size());
+    _globalVertex = std::make_shared<std::vector<Vector4f>>(imageData->size());
+    _cameraVertex = std::make_shared<std::vector<Vector3f>>(imageData->size());
+
     ImageToWorld();
 
 }
@@ -19,32 +21,28 @@ void DepthMapConverter::ImageToWorld() {
     auto intrinsicsInverse = _intrinsics.inverse();
     auto trajectoryInv = _extrinsics.inverse();
     for(Point2D vertex :*_imageData){
-        Vector4f worldPoint(0,0,0,1);
+        Vector4f worldVertex(0,0,0,1);
+        Vector3f cameraVertex;
 
         if(vertex._data == MINF){
-            worldPoint = Vector4f(MINF,MINF,MINF,MINF);
+            worldVertex = Vector4f(MINF,MINF,MINF,MINF);
         }else{
             //calc depthvalue*K⁻1*[u,1]
-            Vector3f tmp =vertex._data*intrinsicsInverse*vertex._position;
-            worldPoint.block(0,0,3,1) = tmp;
-            worldPoint = trajectoryInv * worldPoint;
+            Vector3f cameraVertex =vertex._data*intrinsicsInverse*vertex._position;
+            worldVertex.block(0,0,3,1) = cameraVertex;
+            worldVertex = trajectoryInv * worldVertex;
         }
-        _worldData->push_back(worldPoint);
+        _cameraVertex->push_back(cameraVertex);
+        _globalVertex->push_back(worldVertex);
+
     }
 }
 
-const std::shared_ptr<std::vector<Point2D>> &DepthMapConverter::getImageData() const {
-    return _imageData;
+const std::shared_ptr<std::vector<Vector3f>> &DepthMapConverter::getCameraVertex() const {
+    return _cameraVertex;
 }
 
-const std::shared_ptr<std::vector<Vector4f>> &DepthMapConverter::getWorldData() const {
-    return _worldData;
+const std::shared_ptr<std::vector<Vector4f>> &DepthMapConverter::getGlobalVertex() const {
+    return _globalVertex;
 }
 
-const Eigen::Matrix3f DepthMapConverter::getIntrinsics() const {
-    return _intrinsics;
-}
-
-const Eigen::Matrix4f DepthMapConverter::getExtrinsics() const {
-    return _extrinsics;
-}
