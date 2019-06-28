@@ -6,7 +6,6 @@ set(CMAKE_CXX_STANDARD 14)
 set(CMAKE_MODULE_PATH ${PROJECT_SOURCE_DIR}/cmake ${CMAKE_MODULE_PATH})
 
 set(EXECUTABLE_OUTPUT_PATH bin)
-set(LIBRARY_OUTPUT_PATH lib)
 
 # for some reason clang doesn't include them in Wall whereas gcc does, so include them explicitly.
 SET(EXTRA_WARNING_FLAGS "-Wsign-compare")
@@ -24,13 +23,13 @@ include_directories(${CERES_INCLUDE_DIRS})
 find_package(Sophus REQUIRED)
 include_directories(${SOPHUS_INCLUDE_DIR})
 
-include_directories(${PROJECT_SOURCE_DIR}/include)
-
 find_package(FreeImage REQUIRED)
 include_directories(${FREEIMAGE_INCLUDE_DIRS})
 
 find_package(realsense2 REQUIRED)
 include_directories(${realsense2_INCLUDE_DIRS})
+
+include_directories(${PROJECT_SOURCE_DIR}/include)
 
 # find_package(OpenGL REQUIRED)
 # include_directories(${OPENGL_INCLUDE_DIR})
@@ -50,22 +49,18 @@ include_directories(${realsense2_INCLUDE_DIRS})
 set(SOURCE_FILES
         ${PROJECT_SOURCE_DIR}/src/icp.cpp
         ${PROJECT_SOURCE_DIR}/src/FreeImageHelper.cpp
-        ${PROJECT_SOURCE_DIR}/src/DepthMapConverter.cpp
         ${PROJECT_SOURCE_DIR}/src/main.cpp
-        ${PROJECT_SOURCE_DIR}/src/test.cpp
  )
 
 # Libraries to be linked
 set(TARGET_LIBS
     ${FREEIMAGE_LIBRARIES}
-        ${CERES_LIBRARIES}
-        realsense2
-        )
+    ${CERES_LIBRARIES}
+    realsense2
+    )
 
 # build main executable
-ADD_EXECUTABLE(${PROJECT_NAME}
-        ${SOURCE_FILES}
-  )
+ADD_EXECUTABLE(${PROJECT_NAME} ${SOURCE_FILES})
 
 target_link_libraries(${PROJECT_NAME} ${TARGET_LIBS})
 

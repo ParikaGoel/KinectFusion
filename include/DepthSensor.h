@@ -1,7 +1,5 @@
 #include "VirtualSensor.h"
 
-#include "Eigen.h"
-
 #include <librealsense2/rs.hpp>
 
 class DepthSensor {

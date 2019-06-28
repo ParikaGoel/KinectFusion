@@ -6,6 +6,7 @@
 #include <fstream>
 
 #include "Eigen.h"
+
 #include "FreeImageHelper.h"
 
 typedef unsigned char BYTE;
