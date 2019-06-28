@@ -4,3 +4,9 @@
 [submodule "extern/eigen-git-mirror"]
 	path = extern/eigen-git-mirror
 	url = https://github.com/eigenteam/eigen-git-mirror.git
+[submodule "extern/Sophus"]
+	path = extern/Sophus
+	url = https://github.com/strasdat/Sophus.git
+[submodule "extern/ceres"]
+	path = extern/ceres
+	url = https://github.com/ceres-solver/ceres-solver
