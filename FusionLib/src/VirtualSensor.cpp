@@ -10,7 +10,7 @@ VirtualSensor::VirtualSensor() : m_currentIdx(-1), m_increment(10)
 
 VirtualSensor::~VirtualSensor()
 {
-    delete[] m_depthFrame;
+//    delete[] m_depthFrame;
     delete[] m_colorFrame;
 }
 
@@ -34,6 +34,7 @@ bool VirtualSensor::Init(const std::string& datasetDir)
     m_depthImageHeight = 480;
 
     // intrinsics
+    //can be found here https://vision.in.tum.de/data/datasets/rgbd-dataset/file_formats#intrinsic_camera_calibration_of_the_kinect
     m_colorIntrinsics <<	525.0f, 0.0f, 319.5f,
             0.0f, 525.0f, 239.5f,
             0.0f, 0.0f, 1.0f;
@@ -43,8 +44,12 @@ bool VirtualSensor::Init(const std::string& datasetDir)
     m_colorExtrinsics.setIdentity();
     m_depthExtrinsics.setIdentity();
 
-    m_depthFrame = new float[m_depthImageWidth*m_depthImageHeight];
-    for (unsigned int i = 0; i < m_depthImageWidth*m_depthImageHeight; ++i) m_depthFrame[i] = 0.5f;
+    m_depthFrame = std::make_shared<std::vector<Point2D>>(m_depthImageWidth*m_depthImageHeight);
+    for(int y=0;y<m_depthImageHeight;y++){
+        for(int x = 0;x<m_depthImageWidth;x++){
+            m_depthFrame->push_back({x,y,0.5f});
+        }
+    }
 
     m_colorFrame = new BYTE[4* m_colorImageWidth*m_colorImageHeight];
     for (unsigned int i = 0; i < 4*m_colorImageWidth*m_colorImageHeight; ++i) m_colorFrame[i] = 255;
@@ -74,9 +79,9 @@ bool VirtualSensor::ProcessNextFrame()
     for (unsigned int i = 0; i < m_depthImageWidth*m_depthImageHeight; ++i)
     {
         if (dImage.data[i] == 0)
-            m_depthFrame[i] = MINF;
+            m_depthFrame->at(i)._data = MINF;
         else
-            m_depthFrame[i] = dImage.data[i] * 1.0f / 5000.0f;
+            m_depthFrame->at(i)._data = dImage.data[i] * 1.0f / 5000.0f;
     }
 
     // find transformation (simple nearest neighbor, linear search)
@@ -109,7 +114,8 @@ BYTE* VirtualSensor::GetColorRGBX()
     return m_colorFrame;
 }
 // get current depth data
-float* VirtualSensor::GetDepth()
+std::shared_ptr<std::vector<Point2D>>  VirtualSensor::GetDepth()
+//std::shared_ptr<std::map<Point2D,float>> VirtualSensor::GetDepth()
 {
     return m_depthFrame;
 }

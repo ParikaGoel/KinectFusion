@@ -12,6 +12,8 @@
 #include "DepthSensor.h"
 #include "Frame.h"
 #include "icp.h"
+#include "VirtualSensor.hpp"
+#include <DepthMapConverter.hpp>
 
 bool writeToFile(std::string filename, int width, int height, std::vector<double> vector) {
    std::ofstream outFile(filename);
@@ -77,6 +79,10 @@ int main(){
     int height = sensor.GetDepthImageHeight();
     std::cout << std::endl << "HEIGHT:" << height;
 
+    while (sensor.ProcessNextFrame() )
+    {
+        std::cout << "Next Frame." << std::endl;
+        DepthMapConverter conv(sensor.GetDepth(),sensor.GetDepthImageWidth(),sensor.GetDepthImageHeight(),sensor.GetDepthIntrinsics(),sensor.GetDepthExtrinsics());
 
     std::cout << std::endl << "#points:" << sensor.getPoints().size() << std::endl;
 
