@@ -22,6 +22,9 @@ endif()
 if(NOT EXISTS "${PROJECT_SOURCE_DIR}/extern/Sophus/CMakeLists.txt")
     message(FATAL_ERROR "Problems with submodule Sophus.")
 endif()
+if(NOT EXISTS "${PROJECT_SOURCE_DIR}/extern/ceres/CMakeLists.txt")
+    message(FATAL_ERROR "Problems with submodule ceres.")
+endif()
 #if(NOT EXISTS "${PROJECT_SOURCE_DIR}/extern/pybind11/CMakeLists.txt")
 #    message(FATAL_ERROR "Problems with submodule pybind.")
 #endif()
@@ -40,6 +43,10 @@ target_include_directories(catch2I INTERFACE ${PROJECT_SOURCE_DIR}/extern/Catch2
 
 add_library(sophusI INTERFACE)
 target_include_directories(sophusI INTERFACE ${PROJECT_SOURCE_DIR}/extern/Sophus/sophus)
+
+add_library(ceresI INTERFACE)
+target_include_directories(sophusI INTERFACE ${PROJECT_SOURCE_DIR}/extern/ceres/include)
+
 
 #add_subdirectory(Catch2)
 ##add_subdirectory(pybind11)
