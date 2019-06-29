@@ -6,21 +6,43 @@
 #include "stb_image_write.h"
 
 #include <iostream>
+#include <vector>
+#include <zconf.h>
 
 #include "DepthSensor.h"
 
+bool writeToFile(std::string filename, std::vector<float> vector){
+    std::ofstream outFile(filename);
+    if (!outFile.is_open()) return false;
+
+    for(auto vec : vector)
+        outFile << vec<<",";
+    return true;
+}
 
 int main(){
 
     DepthSensor sensor;
 
     sensor.start();
-    sensor.capture();
-    float* map = sensor.getDepth();
-    for(int i = 0; i < 640*360; i++ )
-        if (map[i] > 0.1)
-            std::cout <<  map[i] << ",";
+    sensor.ProcessNextFrame();
+
+    std::cout << "Intrinsics" << std::endl;
     std::cout << std::endl << sensor.getIntrinsics();
+    std::cout << std::endl << "WIDTH: " << sensor.GetDepthImageWidth();
+    std::cout << std::endl << "HEIGHT:" << sensor.GetDepthImageHeight();
+
+
+    std::cout << std::endl << "#points:" << sensor.getPoints().size() << std::endl;
+
+    while (true){
+        usleep(10000000);
+        std::cout << "capturing" << std::endl;
+        sensor.ProcessNextFrame();
+        auto map = sensor.GetDepth();
+        writeToFile("test.txt", map);
+    }
+
 
      // //Create a simple OpenGL window for rendering:
      // window app(1280, 720, "RealSense Pointcloud Example");
