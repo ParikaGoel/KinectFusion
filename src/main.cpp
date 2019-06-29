@@ -11,10 +11,11 @@
 
 #include "DepthSensor.h"
 
-bool writeToFile(std::string filename, std::vector<float> vector){
+bool writeToFile(std::string filename, int width, int height, std::vector<float> vector){
     std::ofstream outFile(filename);
     if (!outFile.is_open()) return false;
 
+    outFile << width << "," << height << std::endl;
     for(auto vec : vector)
         outFile << vec<<",";
     return true;
@@ -29,18 +30,20 @@ int main(){
 
     std::cout << "Intrinsics" << std::endl;
     std::cout << std::endl << sensor.getIntrinsics();
-    std::cout << std::endl << "WIDTH: " << sensor.GetDepthImageWidth();
-    std::cout << std::endl << "HEIGHT:" << sensor.GetDepthImageHeight();
+    int width = sensor.GetDepthImageWidth();
+    std::cout << std::endl << "WIDTH: " << width;
+    int height = sensor.GetDepthImageHeight();
+    std::cout << std::endl << "HEIGHT:" << height;
 
 
     std::cout << std::endl << "#points:" << sensor.getPoints().size() << std::endl;
 
     while (true){
-        usleep(10000000);
+        usleep(5000000);
         std::cout << "capturing" << std::endl;
         sensor.ProcessNextFrame();
         auto map = sensor.GetDepth();
-        writeToFile("test.txt", map);
+        writeToFile("depth.txt", width, height, map);
     }
 
 
