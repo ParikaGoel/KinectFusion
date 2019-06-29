@@ -1,6 +1,16 @@
+//
+// Created by frankzl on 28.06.19.
+//
+
+#ifndef KINECTFUSION_DEPTHSENSOR_H
+#define KINECTFUSION_DEPTHSENSOR_H
+
+#endif //KINECTFUSION_DEPTHSENSOR_H
 #include "VirtualSensor.h"
+#include <vector>
 
 #include <librealsense2/rs.hpp>
+
 
 class DepthSensor {
 public:
@@ -33,19 +43,28 @@ public:
         m_pipe.stop();
     }
 
-    bool capture() {
+    int GetDepthImageWidth(){
+        return m_intrinsics(0,2)*2;
+    }
+
+    int GetDepthImageHeight(){
+        return m_intrinsics(1,2)*2;
+    }
+
+    bool ProcessNextFrame() {
         m_frameset = m_pipe.wait_for_frames();
         rs2::depth_frame original_depth = m_frameset.get_depth_frame();
 
-        auto depth = dec.process(original_depth);
-        depth = depth2disparity.process(depth);
-        depth = spat.process(depth);
-        depth = temp.process(depth);
-        depth = disparity2depth.process(depth);
+        // auto depth = dec.process(original_depth);
+        // depth = depth2disparity.process(depth);
+        // depth = spat.process(depth);
+        // depth = temp.process(depth);
+        // depth = disparity2depth.process(depth);
 
-        m_points = m_pc.calculate(depth);
+        m_points = m_pc.calculate(original_depth);
         m_vertices = m_points.get_vertices();
-        float depthMap [m_points.size()];
+
+        std::vector<float> depthMap (m_points.size(), 0);
 
         for (int i = 0; i < m_points.size(); ++i ){
             depthMap[i] = m_vertices[i].z;
@@ -58,12 +77,13 @@ public:
         return m_intrinsics;
     }
 
-    float* getDepth(){
+    std::vector<float> GetDepth(){
         return m_depthMap;
     }
 
     rs2::points getPoints(){
         return m_points;
+
     }
 
     rs2::video_frame getColorFrame(){
@@ -89,7 +109,7 @@ private:
     const rs2::vertex* m_vertices;
 
     Eigen::Matrix3d m_intrinsics;
-    float* m_depthMap;
+    std::vector<float> m_depthMap;
     int m_currentIdx;
 
 
