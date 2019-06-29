@@ -12,22 +12,21 @@
 typedef unsigned char BYTE;
 
 // reads sensor files according to https://vision.in.tum.de/data/datasets/rgbd-dataset/file_formats
-class VirtualSensor
-{
+class VirtualSensor {
 public:
 
 	VirtualSensor();
 
 	~VirtualSensor();
 
-	bool Init(const std::string& datasetDir);
+	bool Init(const std::string &datasetDir);
 
 	bool ProcessNextFrame();
 
 	unsigned int GetCurrentFrameCnt();
 
 	// get current color data
-	BYTE* GetColorRGBX();
+	BYTE *GetColorRGBX();
 
 	// get current depth data
 	std::shared_ptr<std::vector<Point2D>> GetDepth();
@@ -55,10 +54,10 @@ public:
 
 private:
 
-	bool ReadFileList(const std::string& filename, std::vector<std::string>& result, std::vector<double>& timestamps);
+	bool ReadFileList(const std::string &filename, std::vector<std::string> &result, std::vector<double> &timestamps);
 
-	bool ReadTrajectoryFile(const std::string& filename, std::vector<Eigen::Matrix4d>& result, std::vector<double>&
-	        timestamps);
+	bool ReadTrajectoryFile(const std::string &filename, std::vector<Eigen::Matrix4d> &result, std::vector<double> &
+	timestamps);
 
 	EIGEN_MAKE_ALIGNED_OPERATOR_NEW
 
@@ -68,9 +67,9 @@ private:
 	int m_increment;
 
 	// frame data
-    std::shared_ptr<std::vector<Point2D>>  m_depthFrame;
+	std::shared_ptr<std::vector<Point2D>> m_depthFrame;
 
-	BYTE* m_colorFrame;
+	BYTE *m_colorFrame;
 	Eigen::Matrix4d m_currentTrajectory;
 
 	// color camera info

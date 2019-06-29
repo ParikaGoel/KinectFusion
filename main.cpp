@@ -9,26 +9,24 @@
 #include <DepthMapConverter.hpp>
 
 
-int main()
-{
+int main() {
 
-    std::string filenameIn = "data/rgbd_dataset_freiburg1_xyz/";
-    std::cout << "Initialize virtual sensor..." << std::endl;
+	std::string filenameIn = "data/rgbd_dataset_freiburg1_xyz/";
+	std::cout << "Initialize virtual sensor..." << std::endl;
 
-    VirtualSensor sensor;
+	VirtualSensor sensor;
 
-    if (!sensor.Init(filenameIn) ){
-        std::cout << "Failed to initialize sensor!" << std::endl;
-        return -1;
-    }
+	if (!sensor.Init(filenameIn)) {
+		std::cout << "Failed to initialize sensor!" << std::endl;
+		return -1;
+	}
 
-    while (sensor.ProcessNextFrame() )
-    {
-        std::cout << "Next Frame." << std::endl;
-        DepthMapConverter conv(sensor.GetDepth(),sensor.GetDepthImageWidth(),sensor.GetDepthImageHeight(),sensor.GetDepthIntrinsics(),sensor.GetDepthExtrinsics());
+	while (sensor.ProcessNextFrame()) {
+		std::cout << "Next Frame." << std::endl;
+		DepthMapConverter conv(sensor.GetDepth(), sensor.GetDepthImageWidth(), sensor.GetDepthImageHeight(), sensor.GetDepthIntrinsics(), sensor.GetDepthExtrinsics());
 
-    }
-    
-    return 0;
+	}
+
+	return 0;
 }
 
