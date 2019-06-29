@@ -122,12 +122,12 @@ std::shared_ptr<std::vector<Point2D>>  VirtualSensor::GetDepth()
 }
 
 // color camera info
-Eigen::Matrix3f VirtualSensor::GetColorIntrinsics()
+Eigen::Matrix3d VirtualSensor::GetColorIntrinsics()
 {
     return m_colorIntrinsics;
 }
 
-Eigen::Matrix4f VirtualSensor::GetColorExtrinsics()
+Eigen::Matrix4d VirtualSensor::GetColorExtrinsics()
 {
     return m_colorExtrinsics;
 }
@@ -143,12 +143,12 @@ unsigned int VirtualSensor::GetColorImageHeight()
 }
 
 // depth (ir) camera info
-Eigen::Matrix3f VirtualSensor::GetDepthIntrinsics()
+Eigen::Matrix3d VirtualSensor::GetDepthIntrinsics()
 {
     return m_depthIntrinsics;
 }
 
-Eigen::Matrix4f VirtualSensor::GetDepthExtrinsics()
+Eigen::Matrix4d VirtualSensor::GetDepthExtrinsics()
 {
     return m_depthExtrinsics;
 }
@@ -164,7 +164,7 @@ unsigned int VirtualSensor::GetDepthImageHeight()
 }
 
 // get current trajectory transformation
-Eigen::Matrix4f VirtualSensor::GetTrajectory()
+Eigen::Matrix4d VirtualSensor::GetTrajectory()
 {
     return m_currentTrajectory;
 }
@@ -194,7 +194,8 @@ bool VirtualSensor::ReadFileList(const std::string& filename, std::vector<std::s
     return true;
 }
 
-bool VirtualSensor::ReadTrajectoryFile(const std::string& filename, std::vector<Eigen::Matrix4f>& result, std::vector<double>& timestamps)
+bool VirtualSensor::ReadTrajectoryFile(const std::string& filename, std::vector<Eigen::Matrix4d>& result,
+		std::vector<double>& timestamps)
 {
     std::ifstream file(filename, std::ios::in);
     if (!file.is_open()) return false;
@@ -208,13 +209,13 @@ bool VirtualSensor::ReadTrajectoryFile(const std::string& filename, std::vector<
     {
         double timestamp;
         file >> timestamp;
-        Eigen::Vector3f translation;
+        Eigen::Vector3d translation;
         file >> translation.x() >> translation.y() >> translation.z();
-        Eigen::Quaternionf rot;
+        Eigen::Quaterniond rot;
         Eigen::MatrixXf  m(3,2);
         file >> rot;
 
-        Eigen::Matrix4f transf;
+        Eigen::Matrix4d transf;
         transf.setIdentity();
         transf.block<3, 3>(0, 0) = rot.toRotationMatrix();
         transf.block<3, 1>(0, 3) = translation;

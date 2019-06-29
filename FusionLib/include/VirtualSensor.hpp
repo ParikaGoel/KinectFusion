@@ -30,36 +30,35 @@ public:
 	BYTE* GetColorRGBX();
 
 	// get current depth data
-//    std::shared_ptr<std::vector<Eigen::Vector3f>> GetDepth();
 	std::shared_ptr<std::vector<Point2D>> GetDepth();
-//    std::shared_ptr<std::map<Point2D,float>>  GetDepth();
 
 	// color camera info
-	Eigen::Matrix3f GetColorIntrinsics();
+	Eigen::Matrix3d GetColorIntrinsics();
 
-	Eigen::Matrix4f GetColorExtrinsics();
+	Eigen::Matrix4d GetColorExtrinsics();
 
 	unsigned int GetColorImageWidth();
 
 	unsigned int GetColorImageHeight();
 
 	// depth (ir) camera info
-	Eigen::Matrix3f GetDepthIntrinsics();
+	Eigen::Matrix3d GetDepthIntrinsics();
 
-	Eigen::Matrix4f GetDepthExtrinsics();
+	Eigen::Matrix4d GetDepthExtrinsics();
 
 	unsigned int GetDepthImageWidth();
 
 	unsigned int GetDepthImageHeight();
 
 	// get current trajectory transformation
-	Eigen::Matrix4f GetTrajectory();
+	Eigen::Matrix4d GetTrajectory();
 
 private:
 
 	bool ReadFileList(const std::string& filename, std::vector<std::string>& result, std::vector<double>& timestamps);
 
-	bool ReadTrajectoryFile(const std::string& filename, std::vector<Eigen::Matrix4f>& result, std::vector<double>& timestamps);
+	bool ReadTrajectoryFile(const std::string& filename, std::vector<Eigen::Matrix4d>& result, std::vector<double>&
+	        timestamps);
 
 	EIGEN_MAKE_ALIGNED_OPERATOR_NEW
 
@@ -72,17 +71,17 @@ private:
     std::shared_ptr<std::vector<Point2D>>  m_depthFrame;
 
 	BYTE* m_colorFrame;
-	Eigen::Matrix4f m_currentTrajectory;
+	Eigen::Matrix4d m_currentTrajectory;
 
 	// color camera info
-	Eigen::Matrix3f m_colorIntrinsics;
-	Eigen::Matrix4f m_colorExtrinsics;
+	Eigen::Matrix3d m_colorIntrinsics;
+	Eigen::Matrix4d m_colorExtrinsics;
 	unsigned int m_colorImageWidth;
 	unsigned int m_colorImageHeight;
 
 	// depth (ir) camera info
-	Eigen::Matrix3f m_depthIntrinsics;
-	Eigen::Matrix4f m_depthExtrinsics;
+	Eigen::Matrix3d m_depthIntrinsics;
+	Eigen::Matrix4d m_depthExtrinsics;
 	unsigned int m_depthImageWidth;
 	unsigned int m_depthImageHeight;
 
@@ -96,6 +95,6 @@ private:
 	std::vector<double> m_colorImagesTimeStamps;
 
 	// trajectory
-	std::vector<Eigen::Matrix4f> m_trajectory;
+	std::vector<Eigen::Matrix4d> m_trajectory;
 	std::vector<double> m_trajectoryTimeStamps;
 };
