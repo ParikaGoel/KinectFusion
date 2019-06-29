@@ -11,7 +11,8 @@
 
 class DepthMapConverter{
 public:
-    DepthMapConverter(std::shared_ptr<std::vector<Point2D>> imageData,int imageWidth,int imageHeight, Eigen::Matrix3f intrinsics, Eigen::Matrix4f extrinsics);
+    DepthMapConverter(std::shared_ptr<std::vector<Point2D>> imageData,int imageWidth,int imageHeight, Eigen::Matrix3d
+    intrinsics, Eigen::Matrix4d extrinsics);
 
     void ImageToWorld();
     /*
@@ -25,12 +26,12 @@ public:
 
 private:
     std::shared_ptr<std::vector<Point2D>> _imageData;
-    std::shared_ptr<std::vector<Vector3f>> _cameraVertex;
-    std::shared_ptr<std::vector<Vector4f>> _globalVertex;
-    std::shared_ptr<std::vector<Vector3f>> _cameraNormals;
-    std::shared_ptr<std::vector<Vector4f>> _globalNormals;
-    Eigen::Matrix3f _intrinsics;
-    Eigen::Matrix4f _extrinsics;
+    std::shared_ptr<std::vector<Vector3d>> _cameraVertex;
+    std::shared_ptr<std::vector<Vector4d>> _globalVertex;
+    std::shared_ptr<std::vector<Vector3d>> _cameraNormals;
+    std::shared_ptr<std::vector<Vector4d>> _globalNormals;
+    Eigen::Matrix3d _intrinsics;
+    Eigen::Matrix4d _extrinsics;
     int _width,_height;
 
     /*
@@ -40,12 +41,14 @@ private:
      */
 public:
 
-    const std::shared_ptr<std::vector<Vector3f>> &getCameraVertex() const;
+    const std::shared_ptr<std::vector<Vector3d>> &getCameraVertexPtr() const;
+    const std::shared_ptr<std::vector<Vector4d>> &getGlobalVertexPtr() const;
+    const std::shared_ptr<std::vector<Vector3d>> &getCameraNormalPtr() const;
+    const std::shared_ptr<std::vector<Vector4d>> &getGlobalNormalsPtr() const;
 
-    const std::shared_ptr<std::vector<Vector4f>> &getGlobalVertex() const;
-
-    const std::shared_ptr<std::vector<Vector3f>> &getCameraNormal() const;
-
-    const std::shared_ptr<std::vector<Vector4f>> &getGlobalNormals() const;
+	const std::vector<Vector3d> &getCameraVertex() const;
+	const std::vector<Vector4d> &getGlobalVertex() const;
+	const std::vector<Vector3d> &getCameraNormal() const;
+	const std::vector<Vector4d> &getGlobalNormals() const;
 
 };
