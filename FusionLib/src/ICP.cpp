@@ -6,7 +6,7 @@ PointToPlaneConstraint::PointToPlaneConstraint(const Eigen::Vector3d& sourcePoin
         m_target_normal(targetNormal)
 { }
 
-template <typename T>
+/*template <typename T>
 bool PointToPlaneConstraint::operator()(T const* const sPose, T* sResiduals) const {
 
     // map inputs
@@ -28,6 +28,21 @@ bool PointToPlaneConstraint::operator()(T const* const sPose, T* sResiduals) con
 
     transformed_point = pose * m_source_point;
     diff_point = transformed_point - m_target_point;
+    sResiduals[0] = diff_point.dot(m_target_normal);
+
+    return true;
+}*/
+
+template <typename T>
+bool PointToPlaneConstraint::operator()(T const* const sPose, T* sResiduals) const {
+
+    // map inputs
+    Eigen::Map<Sophus::SE3<T> const> const pose(sPose);
+
+    Eigen::Matrix<T, 3, 1> transformed_point = pose * m_source_point;
+
+    Eigen::Matrix<T, 3, 1> diff_point = transformed_point - m_target_point;
+
     sResiduals[0] = diff_point.dot(m_target_normal);
 
     return true;
