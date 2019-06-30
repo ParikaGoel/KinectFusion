@@ -11,7 +11,7 @@
 
 #include "local_parameterization_se3.hpp"
 
-#include "Frame.h"
+#include "DepthMapConverter.hpp"
 
 class PointToPlaneConstraint {
 public:
@@ -32,7 +32,7 @@ protected:
 class icp {
 public:
     EIGEN_MAKE_ALIGNED_OPERATOR_NEW
-    icp(std::shared_ptr<Frame> prev_frame, std::shared_ptr<Frame> current_frame, double dist_threshold, double normal_threshold);
+    icp(std::shared_ptr<DepthMapConverter> prev_frame, std::shared_ptr<DepthMapConverter> current_frame, double dist_threshold, double normal_threshold);
     void estimatePose(const Sophus::SE3d& initial_pose, Sophus::SE3d& estimated_pose, size_t m_nIterations);
 
 private:
@@ -41,8 +41,8 @@ private:
     void prepareConstraints(std::vector<std::pair<size_t,size_t>>& corresponding_points, Sophus::SE3d& pose, ceres::Problem& problem);
     void configureSolver(ceres::Solver::Options& options);
 
-    std::shared_ptr<Frame> prev_frame;
-    std::shared_ptr<Frame> curr_frame;
+    std::shared_ptr<DepthMapConverter> prev_frame;
+    std::shared_ptr<DepthMapConverter> curr_frame;
     double dist_threshold;
     double normal_threshold;
 

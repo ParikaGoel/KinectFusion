@@ -9,6 +9,8 @@
 #include <Utils.hpp>
 #include <EigenHelper.hpp>
 
+#include <sophus/se3.hpp>
+
 class DepthMapConverter {
 public:
 	DepthMapConverter(std::shared_ptr<std::vector<Point2D>> imageData, int imageWidth, int imageHeight, Eigen::Matrix3d
@@ -26,11 +28,11 @@ public:
 private:
 	std::shared_ptr<std::vector<Point2D>> _imageData;
 	std::shared_ptr<std::vector<Vector3d>> _cameraVertex;
-	std::shared_ptr<std::vector<Vector4d>> _globalVertex;
+	std::shared_ptr<std::vector<Vector3d>> _globalVertex;
 	std::shared_ptr<std::vector<Vector3d>> _cameraNormals;
-	std::shared_ptr<std::vector<Vector4d>> _globalNormals;
+	std::shared_ptr<std::vector<Vector3d>> _globalNormals;
 	Eigen::Matrix3d _intrinsics;
-	Eigen::Matrix4d _extrinsics;
+	Sophus::SE3d _extrinsics;
 	int _width, _height;
 
 	/*
@@ -42,18 +44,28 @@ public:
 
 	const std::shared_ptr<std::vector<Vector3d>> &getCameraVertexPtr() const;
 
-	const std::shared_ptr<std::vector<Vector4d>> &getGlobalVertexPtr() const;
+	const std::shared_ptr<std::vector<Vector3d>> &getGlobalVertexPtr() const;
 
 	const std::shared_ptr<std::vector<Vector3d>> &getCameraNormalPtr() const;
 
-	const std::shared_ptr<std::vector<Vector4d>> &getGlobalNormalsPtr() const;
+	const std::shared_ptr<std::vector<Vector3d>> &getGlobalNormalsPtr() const;
 
 	const std::vector<Vector3d> &getCameraVertex() const;
 
-	const std::vector<Vector4d> &getGlobalVertex() const;
+	const std::vector<Vector3d> &getGlobalVertex() const;
 
 	const std::vector<Vector3d> &getCameraNormal() const;
 
-	const std::vector<Vector4d> &getGlobalNormals() const;
+	const std::vector<Vector3d> &getGlobalNormals() const;
+
+	const Matrix3d &getIntrinsics() const;
+
+	const Sophus::SE3d &getGlobalPose() const;
+
+	const std::vector<double> &getDepthMap() const;
+
+	const double getWidth();
+
+	const double getHeight();
 
 };

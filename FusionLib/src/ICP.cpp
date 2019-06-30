@@ -40,7 +40,7 @@ ceres::CostFunction* PointToPlaneConstraint::create(const Eigen::Vector3d& sourc
 }
 
 
-icp::icp(std::shared_ptr<Frame> previous_frame, std::shared_ptr<Frame> current_frame, double dist_thresh, double normal_thresh):prev_frame(previous_frame), curr_frame(current_frame){
+icp::icp(std::shared_ptr<DepthMapConverter> previous_frame, std::shared_ptr<DepthMapConverter> current_frame, double dist_thresh, double normal_thresh):prev_frame(previous_frame), curr_frame(current_frame){
     dist_threshold = dist_thresh;
     normal_threshold = normal_thresh;
 }
@@ -53,13 +53,13 @@ void icp::findCorrespondence(std::vector<std::pair<size_t,size_t>>& correspondin
     size_t frame_width = curr_frame->getWidth();
     size_t frame_height = curr_frame->getHeight();
     std::vector<double> curr_depth_map = curr_frame->getDepthMap();
-    std::vector<Eigen::Vector3d> prev_frame_points = prev_frame->getGlobalPoints();
-    std::vector<Eigen::Vector3d> prev_frame_normal_map = prev_frame->getNormals();
+    std::vector<Eigen::Vector3d> prev_frame_points = prev_frame->getGlobalVertex();
+    std::vector<Eigen::Vector3d> prev_frame_normal_map = prev_frame->getGlobalNormals();
     Sophus::SE3d prev_frame_pose = prev_frame->getGlobalPose();
     Eigen::Matrix3d camera_intrinsics = prev_frame->getIntrinsics();
 
-    std::vector<Eigen::Vector3d> curr_frame_vertex_map = curr_frame->getPoints();
-    std::vector<Eigen::Vector3d> curr_frame_normal_map = curr_frame->getNormals();
+    std::vector<Eigen::Vector3d> curr_frame_vertex_map = curr_frame->getCameraVertex();
+    std::vector<Eigen::Vector3d> curr_frame_normal_map = curr_frame->getCameraNormal();
 
 
     for(size_t v = 0; v < frame_height; v++){
@@ -91,9 +91,9 @@ void icp::findCorrespondence(std::vector<std::pair<size_t,size_t>>& correspondin
 
 void icp::prepareConstraints(std::vector<std::pair<size_t,size_t>>& corresponding_points, Sophus::SE3d& pose, ceres::Problem& problem) {
 
-    std::vector<Eigen::Vector3d> target_vertex_map = prev_frame->getGlobalPoints();
-    std::vector<Eigen::Vector3d> target_normal_map = prev_frame->getNormals();
-    std::vector<Eigen::Vector3d> source_vertex_map = curr_frame->getPoints();
+    std::vector<Eigen::Vector3d> target_vertex_map = prev_frame->getGlobalVertex();
+    std::vector<Eigen::Vector3d> target_normal_map = prev_frame->getGlobalNormals();
+    std::vector<Eigen::Vector3d> source_vertex_map = curr_frame->getCameraVertex();
 
     problem.AddParameterBlock(pose.data(),
                               Sophus::SE3d::num_parameters,
