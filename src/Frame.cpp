@@ -108,101 +108,53 @@ std::vector<Eigen::Vector3d> Frame::computeNormals(std::vector<double> depthMap,
     return normalsTmp;
 }
 
-
-
-    bool readFromFile(const std::string& filename) {
-        std::ifstream is(filename, std::ios::in | std::ios::binary);
-        if (!is.is_open()) {
-            std::cout << "ERROR: unable to read input file!" << std::endl;
-            return false;
-        }
-
-        char nBytes;
-        is.read(&nBytes, sizeof(char));
-
-        unsigned int n;
-        is.read((char*)&n, sizeof(unsigned int));
-
-        if (nBytes == sizeof(float)) {
-            float* ps = new float[3 * n];
-
-            is.read((char*)ps, 3 * sizeof(float) * n);
-
-            for (unsigned int i = 0; i < n; i++) {
-                Eigen::Vector3d p(ps[3 * i + 0], ps[3 * i + 1], ps[3 * i + 2]);
-                m_points.push_back(p);
-            }
-
-            is.read((char*)ps, 3 * sizeof(float) * n);
-            for (unsigned int i = 0; i < n; i++) {
-                Eigen::Vector3d p(ps[3 * i + 0], ps[3 * i + 1], ps[3 * i + 2]);
-                m_normals.push_back(p);
-            }
-
-            delete ps;
-        }
-        else {
-            double* ps = new double[3 * n];
-
-            is.read((char*)ps, 3 * sizeof(double) * n);
-
-            for (unsigned int i = 0; i < n; i++) {
-                Eigen::Vector3d p((float)ps[3 * i + 0], (float)ps[3 * i + 1], (float)ps[3 * i + 2]);
-                m_points.push_back(p);
-            }
-
-            is.read((char*)ps, 3 * sizeof(double) * n);
-
-            for (unsigned int i = 0; i < n; i++) {
-                Eigen::Vector3d p((float)ps[3 * i + 0], (float)ps[3 * i + 1], (float)ps[3 * i + 2]);
-                m_normals.push_back(p);
-            }
-
-            delete ps;
-        }
-
-        return true;
+std::vector<Eigen::Vector3d> Frame::applyGlobalPose(Sophus::SE3d estimated_pose;std::vector<Eigen::Vector3d> cameraCoordinates){
+    for(auto point=cameraCoordinates.begin();point!=cameraCoordinates.end(),++point){
+        auto g_point = estimated_pose*
     }
 
-    std::vector<Eigen::Vector3d>& getPoints() {
+}
+
+
+std::vector<Eigen::Vector3d>& Frame::getPoints() {
         return m_points;
-    }
+}
 
-    const std::vector<Eigen::Vector3d>& getPoints() const {
+const std::vector<Eigen::Vector3d>& Frame::getPoints() const {
         return m_points;
-    }
+}
 
-    std::vector<Eigen::Vector3d>& getNormals() {
+std::vector<Eigen::Vector3d>& Frame::getNormals() {
         return m_normals;
-    }
+}
 
-    const std::vector<Eigen::Vector3d>& getNormals() const {
+const std::vector<Eigen::Vector3d>& Frame::getNormals() const {
         return m_normals;
-    }
+}
 
-    std::vector<Eigen::Vector3d>& getGlobalPoints() {
+std::vector<Eigen::Vector3d>& Frame::getGlobalPoints() {
         return m_points_global;
-    }
+}
 
-    const Sophus::SE3d& getGlobalPose() const{
+const Sophus::SE3d& Frame::getGlobalPose() const{
         return global_pose;
-    }
+}
 
-    const std::vector<double>& getDepthMap() const{
+const std::vector<double>& Frame::getDepthMap() const{
         return m_depth_map;
-    }
+}
 
-    const Eigen::Matrix3d& getIntrinsics() const{
+const Eigen::Matrix3d& Frame::getIntrinsics() const{
         return m_intrinsic_matrix;
-    }
+}
 
-    const unsigned int getWidth() const{
+const unsigned int Frame::getWidth() const{
         return width;
-    }
+}
 
-    const unsigned int getHeight() const{
+const unsigned int Frame:: getHeight() const{
         return height;
-    }
+}
 
 private:
     std::vector<Eigen::Vector3d> m_points;
