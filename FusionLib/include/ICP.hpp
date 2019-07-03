@@ -32,17 +32,15 @@ protected:
 class icp {
 public:
     EIGEN_MAKE_ALIGNED_OPERATOR_NEW
-    icp(std::shared_ptr<DepthMapConverter> prev_frame, std::shared_ptr<DepthMapConverter> current_frame, double dist_threshold, double normal_threshold);
-    void estimatePose(const Sophus::SE3d& initial_pose, Sophus::SE3d& estimated_pose, size_t m_nIterations);
+    icp(double dist_threshold, double normal_threshold);
+    void estimatePose(std::shared_ptr<DepthMapConverter> prev_frame, std::shared_ptr<DepthMapConverter> current_frame, size_t m_nIterations);
 
 private:
 
-    void findCorrespondence(std::vector<std::pair<size_t,size_t>>& corresponding_points);
-    void prepareConstraints(std::vector<std::pair<size_t,size_t>>& corresponding_points, Sophus::SE3d& pose, ceres::Problem& problem);
+    void findCorrespondence(std::shared_ptr<DepthMapConverter> prev_frame, std::shared_ptr<DepthMapConverter> curr_frame,std::vector<std::pair<size_t,size_t>>& corresponding_points);
+    void prepareConstraints(std::shared_ptr<DepthMapConverter> prev_frame, std::shared_ptr<DepthMapConverter> curr_frame,std::vector<std::pair<size_t,size_t>>& corresponding_points, Sophus::SE3d& pose, ceres::Problem& problem);
     void configureSolver(ceres::Solver::Options& options);
 
-    std::shared_ptr<DepthMapConverter> prev_frame;
-    std::shared_ptr<DepthMapConverter> curr_frame;
     double dist_threshold;
     double normal_threshold;
 
