@@ -50,7 +50,7 @@ set(SOURCE_FILES
         ${PROJECT_SOURCE_DIR}/src/icp.cpp
         ${PROJECT_SOURCE_DIR}/src/FreeImageHelper.cpp
         ${PROJECT_SOURCE_DIR}/src/main.cpp
- )
+        src/DepthSensor.cpp src/Frame.cpp)
 
 # Libraries to be linked
 set(TARGET_LIBS
