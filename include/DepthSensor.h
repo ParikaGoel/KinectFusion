@@ -11,92 +11,33 @@
 
 #include <librealsense2/rs.hpp>
 
+#include "Frame.h"
+
 
 class DepthSensor {
 public:
 
-    DepthSensor() : m_currentIdx(-1) {
-        dec.set_option(RS2_OPTION_FILTER_MAGNITUDE, 2);
-        disparity2depth = rs2::disparity_transform(false);
-    }
+    DepthSensor();
 
-    ~DepthSensor() {
-        // SAFE_DELETE_ARRAY(m_depthFrame);
-    }
+    void start();
 
-    void start(){
-        m_profile = m_pipe.start();
-        auto sensor = m_profile.get_device().first<rs2::depth_sensor>();
-        sensor.set_option(RS2_OPTION_VISUAL_PRESET, RS2_RS400_VISUAL_PRESET_HIGH_ACCURACY);
+    void stop();
 
-        auto stream = m_profile.get_stream(RS2_STREAM_DEPTH).as<rs2::video_stream_profile>();
-        auto intrinsics = stream.get_intrinsics(); // Calibration data
+    unsigned int GetDepthImageWidth();
 
-        m_intrinsics(0,0) = intrinsics.fx;
-        m_intrinsics(1,1) = intrinsics.fy;
-        m_intrinsics(0,2) = intrinsics.width/2;
-        m_intrinsics(1,2) = intrinsics.height/2;
-        m_intrinsics(2,2) = 1;
-    }
+    unsigned int GetDepthImageHeight();
 
-    void stop(){
-        m_pipe.stop();
-    }
+    bool ProcessNextFrame();
 
-    int GetDepthImageWidth(){
-        return m_intrinsics(0,2)*2;
-    }
+    Eigen::Matrix3d GetIntrinsics();
 
-    int GetDepthImageHeight(){
-        return m_intrinsics(1,2)*2;
-    }
+    std::vector<double> GetDepth();
 
-    bool ProcessNextFrame() {
-        m_frameset = m_pipe.wait_for_frames();
-        rs2::depth_frame original_depth = m_frameset.get_depth_frame();
 
-        // auto depth = dec.process(original_depth);
-        // depth = depth2disparity.process(depth);
-        // depth = spat.process(depth);
-        // depth = temp.process(depth);
-        // depth = disparity2depth.process(depth);
-
-        m_points = m_pc.calculate(original_depth);
-        m_vertices = m_points.get_vertices();
-
-        std::vector<float> depthMap (m_points.size(), 0);
-
-        for (int i = 0; i < m_points.size(); ++i ){
-            depthMap[i] = m_vertices[i].z;
-        }
-        m_depthMap = depthMap;
-        return true;
-    }
-
-    Eigen::Matrix3d getIntrinsics(){
-        return m_intrinsics;
-    }
-
-    std::vector<float> GetDepth(){
-        return m_depthMap;
-    }
-
-    rs2::points getPoints(){
-        return m_points;
-
-    }
-
-    rs2::video_frame getColorFrame(){
-        return m_frameset.get_color_frame();
-    }
-
-    rs2::frameset getFrameset(){
-        return m_frameset;
-    }
-
-    rs2::pointcloud getPointcloud(){
-        return m_pc;
-    }
+    rs2::points getPoints();
+    rs2::video_frame getColorFrame();
+    rs2::frameset getFrameset();
+    rs2::pointcloud getPointcloud();
 
 private:
     rs2::pipeline m_pipe;
@@ -109,13 +50,13 @@ private:
     const rs2::vertex* m_vertices;
 
     Eigen::Matrix3d m_intrinsics;
-    std::vector<float> m_depthMap;
+    std::vector<double> m_depthMap;
     int m_currentIdx;
 
 
     rs2::decimation_filter dec;
-    rs2::disparity_transform depth2disparity;
+    //rs2::disparity_transform depth2disparity;
     rs2::disparity_transform disparity2depth;
-    rs2::spatial_filter spat;
-    rs2::temporal_filter temp;
+    // rs2::spatial_filter spat;
+    // rs2::temporal_filter temp;
 };
