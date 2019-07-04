@@ -51,6 +51,7 @@ public:
     const unsigned int getWidth() const;
 
     const unsigned int getHeight() const;
+    std::vector<double> m_depth_map;
 
 private:
 
@@ -63,7 +64,7 @@ private:
 
     std::vector<Eigen::Vector3d> m_points;
 	std::vector<Eigen::Vector3d> m_normals;
-    std::vector<double> m_depth_map;
+
     std::vector<Eigen::Vector3d> m_points_global;
     std::vector<Eigen::Vector3d> m_normals_global;
     Sophus::SE3d global_pose;

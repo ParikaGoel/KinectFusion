@@ -56,8 +56,6 @@ int main(){
     // We store a first frame as a reference frame. All next frames are tracked relatively to the first frame.
     sensor.processNextFrame();
 
-    std::cout<<"here1";
-
     // Setup the optimizer.
 
     double dist_threshold = 0.001;
