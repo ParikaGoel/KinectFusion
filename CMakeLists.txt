@@ -30,6 +30,7 @@ find_package(realsense2 REQUIRED)
 include_directories(${realsense2_INCLUDE_DIRS})
 
 include_directories(${PROJECT_SOURCE_DIR}/include)
+add_definitions(-DPROJECT_DIR="${PROJECT_SOURCE_DIR}")
 
 #adds gitsubmodules
 add_subdirectory(extern)
@@ -37,7 +38,7 @@ add_subdirectory(extern)
 # Source Files
 set(SOURCE_FILES
         ${PROJECT_SOURCE_DIR}/src/icp.cpp
-        ${PROJECT_SOURCE_DIR}/src/FreeImageHelper.cpp
+        ${PROJECT_SOURCE_DIR}/src/VirtualSensor.cpp
         ${PROJECT_SOURCE_DIR}/src/DepthSensor.cpp
         ${PROJECT_SOURCE_DIR}/src/Frame.cpp)
 
