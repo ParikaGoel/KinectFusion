@@ -58,12 +58,13 @@ private:
 
     void addValidPoints(std::vector<Eigen::Vector3d> points, std::vector<Eigen::Vector3d> normals, int downsampleFactor);
 
-    std::vector<Eigen::Vector3d> applyGlobalPose(Sophus::SE3d estimated_pose;std::vector<Eigen::Vector3d> cameraCoordinates)
+    std::vector<Eigen::Vector3d> applyGlobalPose(Sophus::SE3d estimated_pose)
 
 	std::vector<Eigen::Vector3d> m_points;
 	std::vector<Eigen::Vector3d> m_normals;
     std::vector<double> m_depth_map;
     std::vector<Eigen::Vector3d> m_points_global;
+    std::vector<Eigen::Vector3d> m_normals_global;
     Sophus::SE3d global_pose;
     Eigen::Matrix3d m_intrinsic_matrix;
     size_t width;

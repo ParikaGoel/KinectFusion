@@ -108,10 +108,17 @@ std::vector<Eigen::Vector3d> Frame::computeNormals(std::vector<double> depthMap,
     return normalsTmp;
 }
 
-std::vector<Eigen::Vector3d> Frame::applyGlobalPose(Sophus::SE3d estimated_pose;std::vector<Eigen::Vector3d> cameraCoordinates){
-    for(auto point=cameraCoordinates.begin();point!=cameraCoordinates.end(),++point){
-        auto g_point = estimated_pose*
+std::vector<Eigen::Vector3d> Frame::applyGlobalPose(Sophus::SE3d estimated_pose){
+    for(auto point=m_points.begin();point!=m_points.end(),++point){
+        Eigen::Vector3d g_point = estimated_pose*point;
+        m_points_global.push_back(g_point)
     }
+
+    for(auto normal=m_normals.begin();normal!=m_normals.end(),++normal){
+        Eigen::Vector3d g_normal = estimated_pose.rotationMatrix()*normal;
+        m_normals_global.push_back(g_normal)
+    }
+
 
 }
 
