@@ -1,6 +1,8 @@
 bin
 data/rgbd_dataset_freiburg1_xyz
 
+*.png
+
 # Compiled Object files
 *.slo
 *.lo
