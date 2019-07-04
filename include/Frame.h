@@ -18,14 +18,14 @@ class Frame {
 public:
     EIGEN_MAKE_ALIGNED_OPERATOR_NEW
 
-    Frame(std::vector<double> depthMap, const Eigen::Matrix3d& depthIntrinsics,
+    Frame(double* depthMap, const Eigen::Matrix3d& depthIntrinsics,
             const unsigned int width, const unsigned int height, int downsampleFactor = 1, double maxDistance = 0.1);
 
-    Frame(std::vector<double> depthMap, const Eigen::Matrix3d& depthIntrinsics, const Eigen::Matrix4d& depthExtrinsics,
-            const unsigned int width, const unsigned int height);
-
-    Frame(std::vector<double> depthMap, const Eigen::Matrix3d& depthIntrinsics, const Eigen::Matrix4d& depthExtrinsics,
-            const unsigned width, const unsigned height, unsigned downsampleFactor = 1, float maxDistance = 0.1f);
+//    Frame(std::vector<double> depthMap, const Eigen::Matrix3d& depthIntrinsics, const Eigen::Matrix4d& depthExtrinsics,
+//            const unsigned int width, const unsigned int height);
+//
+//    Frame(std::vector<double> depthMap, const Eigen::Matrix3d& depthIntrinsics, const Eigen::Matrix4d& depthExtrinsics,
+//            const unsigned width, const unsigned height, unsigned downsampleFactor = 1, float maxDistance = 0.1f);
 
 	void computeNormals(double maxDistance=0.1);
 
@@ -33,8 +33,6 @@ public:
 
 
     void applyGlobalPose(Sophus::SE3d& estimated_pose);
-
-	std::vector<Eigen::Vector3d>& getPoints();
 
 	const std::vector<Eigen::Vector3d>& getPoints() const;
 
@@ -56,10 +54,9 @@ public:
 
 private:
 
-    std::vector<Eigen::Vector3d> computeCameraCoordinates(std::vector<double> depthMap,
-                                                          unsigned int width, unsigned int height, Eigen::Matrix3d intrinsics);
+    std::vector<Eigen::Vector3d> computeCameraCoordinates(unsigned int width, unsigned int height);
 
-    std::vector<Eigen::Vector3d> computeNormals(std::vector<double> depthMap, unsigned int width, unsigned int height, double maxDistance = 0.1);
+    std::vector<Eigen::Vector3d> computeNormals(std::vector<double>& depthMap, unsigned int width, unsigned int height, double maxDistance = 0.1);
 
     void addValidPoints(std::vector<Eigen::Vector3d> points, std::vector<Eigen::Vector3d> normals, int downsampleFactor);
 
@@ -71,8 +68,6 @@ private:
     std::vector<Eigen::Vector3d> m_normals_global;
     Sophus::SE3d global_pose;
     Eigen::Matrix3d m_intrinsic_matrix;
-    size_t width;
-    size_t height;
 
     const unsigned int m_width;
     const unsigned int m_height;

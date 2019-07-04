@@ -40,7 +40,11 @@ void icp::findCorrespondence(std::shared_ptr<Frame> prev_frame, std::shared_ptr<
 
     size_t frame_width = curr_frame->getWidth();
     size_t frame_height = curr_frame->getHeight();
-    std::vector<double> curr_depth_map = curr_frame->getDepthMap();
+
+    std::vector<double> curr_depth_map;
+    curr_depth_map.reserve(frame_width*frame_height);
+    curr_depth_map = curr_frame->getDepthMap();
+
     std::vector<Eigen::Vector3d> prev_frame_points = prev_frame->getGlobalPoints();
     std::vector<Eigen::Vector3d> prev_frame_normal_map = prev_frame->getGlobalNormals();
     Sophus::SE3d prev_frame_pose = prev_frame->getGlobalPose();
@@ -48,6 +52,7 @@ void icp::findCorrespondence(std::shared_ptr<Frame> prev_frame, std::shared_ptr<
 
     std::vector<Eigen::Vector3d> curr_frame_vertex_map = curr_frame->getPoints();
     std::vector<Eigen::Vector3d> curr_frame_normal_map = curr_frame->getNormals();
+
 
 
     for(size_t v = 0; v < frame_height; v++){
