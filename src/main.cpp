@@ -25,7 +25,7 @@ bool writeToFile(std::string filename, int width, int height, std::vector<double
 int main(){
     double dist_threshold = 0.001;
     double normal_threshold = 0.001;
-    icp icp = icp()
+    icp m_icp(dist_threshold,normal_threshold);
 
 
     DepthSensor sensor;
@@ -38,7 +38,7 @@ int main(){
     sensor.ProcessNextFrame();
     std::vector<double> depthMap = sensor.GetDepth();
 
-    Frame prevFrame = Frame(depthMap);
+    /*Frame prevFrame = Frame(depthMap);
 
     while(sensor.ProcessNextFrame()){
 
@@ -46,7 +46,7 @@ int main(){
         std::vector<double> depthMap = sensor.GetDepth();
         Frame prevFrame = Frame();
 
-    }
+    }*/
 
 
 
@@ -77,11 +77,6 @@ int main(){
         // frame.writeToMesh()
 
     // 5. visual in a mesh.off
-
-
-
-
-    icp m_icp();
 
     //sensor.start();
     sensor.ProcessNextFrame();

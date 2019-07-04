@@ -15,6 +15,15 @@ SET(CMAKE_CXX_FLAGS_RELEASE "-O3 -DNDEBUG")
 SET(CMAKE_CXX_FLAGS_RELWITHDEBINFO "-O3 -g -DNDEBUG -ftree-vectorize")
 SET(CMAKE_CXX_FLAGS " -ftemplate-backtrace-limit=0 -Wall ${EXTRA_WARNING_FLAGS} ${CMAKE_CXX_FLAGS}")
 
+find_package(Eigen3 3.3.4 REQUIRED)
+include_directories(${EIGEN3_INCLUDE_DIR})
+
+find_package(Ceres 1.14 REQUIRED)
+include_directories(${CERES_INCLUDE_DIRS})
+
+find_package(Sophus REQUIRED)
+include_directories(${SOPHUS_INCLUDE_DIR})
+
 find_package(FreeImage REQUIRED)
 
 find_package(realsense2 REQUIRED)
@@ -27,26 +36,14 @@ set(SOURCE_FILES
         ${PROJECT_SOURCE_DIR}/src/icp.cpp
         ${PROJECT_SOURCE_DIR}/src/FreeImageHelper.cpp
         ${PROJECT_SOURCE_DIR}/src/DepthSensor.cpp
-        ${PROJECT_SOURCE_DIR}/src/Frame.cpp
-        ${PROJECT_SOURCE_DIR}/src/VirtualSensor.cpp)
+        ${PROJECT_SOURCE_DIR}/src/Frame.cpp)
 
 # Libraries to be linked
 set(TARGET_LIBS
+    ${CERES_LIBRARIES}
     ${FREEIMAGE_LIBRARIES}
     realsense2
-    eigenI
-    catch2I
-    sophusI
-    ceresI
     )
-
-#adds gitsubmodules
-add_subdirectory(extern)
 
 add_executable(${PROJECT_NAME} src/main.cpp ${SOURCE_FILES})
 target_link_libraries (${PROJECT_NAME} ${TARGET_LIBS})
-
-### Copy Data to cmake-build, this need to be applied to each new executable###
-add_custom_command(TARGET ${PROJECT_NAME} PRE_BUILD
-        COMMAND ${CMAKE_COMMAND} -E copy_directory
-        ${CMAKE_SOURCE_DIR}/data $<TARGET_FILE_DIR:${PROJECT_NAME}>/data)

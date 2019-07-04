@@ -12,22 +12,10 @@ bool PointToPlaneConstraint::operator()(T const* const sPose, T* sResiduals) con
     // map inputs
     Eigen::Map<Sophus::SE3<T> const> const pose(sPose);
 
-    T* s_transformed_point = new T(sizeof(T) * 3);
-    s_transformed_point[0] = T(0.0);
-    s_transformed_point[1] = T(0.0);
-    s_transformed_point[2] = T(0.0);
+    Eigen::Matrix<T, 3, 1> transformed_point = pose * m_source_point;
 
-    Eigen::Map<Eigen::Matrix<T, 3, 1>> transformed_point(s_transformed_point);
+    Eigen::Matrix<T, 3, 1> diff_point = transformed_point - m_target_point;
 
-    T* s_diff_point = new T(sizeof(T) * 3);
-    s_diff_point[0] = T(0.0);
-    s_diff_point[1] = T(0.0);
-    s_diff_point[2] = T(0.0);
-
-    Eigen::Map<Eigen::Matrix<T, 3, 1>> diff_point(s_diff_point);
-
-    transformed_point = pose * m_source_point;
-    diff_point = transformed_point - m_target_point;
     sResiduals[0] = diff_point.dot(m_target_normal);
 
     return true;
@@ -40,7 +28,7 @@ ceres::CostFunction* PointToPlaneConstraint::create(const Eigen::Vector3d& sourc
 }
 
 
-icp::icp(std::shared_ptr<Frame> previous_frame, std::shared_ptr<Frame> current_frame, double dist_thresh, double normal_thresh):prev_frame(previous_frame), curr_frame(current_frame){
+icp::icp(double dist_thresh, double normal_thresh){
     dist_threshold = dist_thresh;
     normal_threshold = normal_thresh;
 }
@@ -48,13 +36,13 @@ icp::icp(std::shared_ptr<Frame> previous_frame, std::shared_ptr<Frame> current_f
 // Find corresponding points between current frame and previous frame
 // Method Used : Projective Point-Plane data association
 // Return : vector of pairs of source and target vertex indices
-void icp::findCorrespondence(std::vector<std::pair<size_t,size_t>>& corresponding_points){
+void icp::findCorrespondence(std::shared_ptr<Frame> prev_frame, std::shared_ptr<Frame> curr_frame, std::vector<std::pair<size_t,size_t>>& corresponding_points){
 
     size_t frame_width = curr_frame->getWidth();
     size_t frame_height = curr_frame->getHeight();
     std::vector<double> curr_depth_map = curr_frame->getDepthMap();
     std::vector<Eigen::Vector3d> prev_frame_points = prev_frame->getGlobalPoints();
-    std::vector<Eigen::Vector3d> prev_frame_normal_map = prev_frame->getNormals();
+    std::vector<Eigen::Vector3d> prev_frame_normal_map = prev_frame->getGlobalNormals();
     Sophus::SE3d prev_frame_pose = prev_frame->getGlobalPose();
     Eigen::Matrix3d camera_intrinsics = prev_frame->getIntrinsics();
 
@@ -89,10 +77,10 @@ void icp::findCorrespondence(std::vector<std::pair<size_t,size_t>>& correspondin
 
 }
 
-void icp::prepareConstraints(std::vector<std::pair<size_t,size_t>>& corresponding_points, Sophus::SE3d& pose, ceres::Problem& problem) {
+void icp::prepareConstraints(std::shared_ptr<Frame> prev_frame, std::shared_ptr<Frame> curr_frame, std::vector<std::pair<size_t,size_t>>& corresponding_points, Sophus::SE3d& pose, ceres::Problem& problem) {
 
     std::vector<Eigen::Vector3d> target_vertex_map = prev_frame->getGlobalPoints();
-    std::vector<Eigen::Vector3d> target_normal_map = prev_frame->getNormals();
+    std::vector<Eigen::Vector3d> target_normal_map = prev_frame->getGlobalNormals();
     std::vector<Eigen::Vector3d> source_vertex_map = curr_frame->getPoints();
 
     problem.AddParameterBlock(pose.data(),
@@ -126,20 +114,20 @@ void icp::configureSolver(ceres::Solver::Options& options) {
     options.num_threads = 8;
 }
 
-void icp::estimatePose(const Sophus::SE3d& initial_pose, Sophus::SE3d& estimated_pose, size_t m_nIterations) {
+void icp::estimatePose(std::shared_ptr<Frame> prev_frame, std::shared_ptr<Frame> curr_frame, size_t m_nIterations) {
 
-    estimated_pose = initial_pose;
+    Sophus::SE3d estimated_pose;
 
     for (int i = 0; i < m_nIterations; ++i) {
         // Find corresponding points
         std::vector<std::pair<size_t, size_t>> corresponding_points;
-        findCorrespondence(corresponding_points);
+        findCorrespondence(prev_frame, curr_frame, corresponding_points);
 
         // Prepare constraints
 
         Sophus::SE3d incremental_pose;
         ceres::Problem problem;
-        prepareConstraints(corresponding_points, incremental_pose, problem);
+        prepareConstraints(prev_frame, curr_frame, corresponding_points, incremental_pose, problem);
 
         // Configure options for the solver.
         ceres::Solver::Options options;

@@ -7,7 +7,7 @@
 
 #include "Eigen.h"
 
-#include "FreeImageHelper.h"
+#include "FreeImageHelper.hpp"
 
 typedef unsigned char BYTE;
 

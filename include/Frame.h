@@ -39,6 +39,8 @@ public:
 
     const std::vector<Eigen::Vector3d>& getGlobalPoints() const;
 
+    const std::vector<Eigen::Vector3d>& getGlobalNormals() const;
+
     const Sophus::SE3d& getGlobalPose() const;
 
     const std::vector<double>& getDepthMap() const;
@@ -58,7 +60,7 @@ private:
 
     void addValidPoints(std::vector<Eigen::Vector3d> points, std::vector<Eigen::Vector3d> normals, int downsampleFactor);
 
-    std::vector<Eigen::Vector3d> applyGlobalPose(Sophus::SE3d estimated_pose)
+    void applyGlobalPose(Sophus::SE3d& estimated_pose);
 
 	std::vector<Eigen::Vector3d> m_points;
 	std::vector<Eigen::Vector3d> m_normals;

@@ -13,8 +13,6 @@ Frame::Frame(std::vector<double> depthMap, const Eigen::Matrix3d &depthIntrinsic
     addValidPoints(pointsTmp, normalsTmp, downsampleFactor);
 }
 
-Frame::
-
 void Frame::addValidPoints(std::vector<Eigen::Vector3d> points, std::vector<Eigen::Vector3d> normals,
                            int downsampleFactor) {
 
@@ -108,18 +106,16 @@ std::vector<Eigen::Vector3d> Frame::computeNormals(std::vector<double> depthMap,
     return normalsTmp;
 }
 
-std::vector<Eigen::Vector3d> Frame::applyGlobalPose(Sophus::SE3d estimated_pose){
-    for(auto point=m_points.begin();point!=m_points.end(),++point){
-        Eigen::Vector3d g_point = estimated_pose*point;
-        m_points_global.push_back(g_point)
+void Frame::applyGlobalPose(Sophus::SE3d& estimated_pose){
+    for(auto& point : m_points){
+        Eigen::Vector3d g_point = estimated_pose * point;
+        m_points_global.push_back(g_point);
     }
 
-    for(auto normal=m_normals.begin();normal!=m_normals.end(),++normal){
+    for(auto& normal : m_normals){
         Eigen::Vector3d g_normal = estimated_pose.rotationMatrix()*normal;
-        m_normals_global.push_back(g_normal)
+        m_normals_global.push_back(g_normal);
     }
-
-
 }
 
 
@@ -131,15 +127,15 @@ const std::vector<Eigen::Vector3d>& Frame::getPoints() const {
         return m_points;
 }
 
-std::vector<Eigen::Vector3d>& Frame::getNormals() {
-        return m_normals;
-}
-
 const std::vector<Eigen::Vector3d>& Frame::getNormals() const {
         return m_normals;
 }
 
-std::vector<Eigen::Vector3d>& Frame::getGlobalPoints() {
+const std::vector<Eigen::Vector3d>& Frame::getGlobalNormals() const{
+    return m_normals_global;
+}
+
+const std::vector<Eigen::Vector3d>& Frame::getGlobalPoints() const{
         return m_points_global;
 }
 
@@ -162,17 +158,3 @@ const unsigned int Frame::getWidth() const{
 const unsigned int Frame:: getHeight() const{
         return height;
 }
-
-private:
-    std::vector<Eigen::Vector3d> m_points;
-    std::vector<Eigen::Vector3d> m_normals;
-    std::vector<double> m_depth_map;
-    std::vector<Eigen::Vector3d> m_points_global;
-    Sophus::SE3d global_pose;
-    Eigen::Matrix3d m_intrinsic_matrix;
-    size_t width;
-    size_t height;
-
-    const unsigned int m_width;
-    const unsigned int m_height;
-};
