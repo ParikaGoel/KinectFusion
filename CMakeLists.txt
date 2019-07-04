@@ -15,8 +15,8 @@ SET(CMAKE_CXX_FLAGS_RELEASE "-O3 -DNDEBUG")
 SET(CMAKE_CXX_FLAGS_RELWITHDEBINFO "-O3 -g -DNDEBUG -ftree-vectorize")
 SET(CMAKE_CXX_FLAGS " -ftemplate-backtrace-limit=0 -Wall ${EXTRA_WARNING_FLAGS} ${CMAKE_CXX_FLAGS}")
 
-find_package(Eigen3 3.3.4 REQUIRED)
-include_directories(${EIGEN3_INCLUDE_DIR})
+#find_package(Eigen3 3.3.4 REQUIRED)
+#include_directories(${EIGEN3_INCLUDE_DIR})
 
 find_package(Ceres 1.14 REQUIRED)
 include_directories(${CERES_INCLUDE_DIRS})
@@ -31,6 +31,9 @@ include_directories(${realsense2_INCLUDE_DIRS})
 
 include_directories(${PROJECT_SOURCE_DIR}/include)
 
+#adds gitsubmodules
+add_subdirectory(extern)
+
 # Source Files
 set(SOURCE_FILES
         ${PROJECT_SOURCE_DIR}/src/icp.cpp
@@ -43,6 +46,7 @@ set(TARGET_LIBS
     ${CERES_LIBRARIES}
     ${FREEIMAGE_LIBRARIES}
     realsense2
+    eigenI
     )
 
 add_executable(${PROJECT_NAME} main.cpp ${SOURCE_FILES})
