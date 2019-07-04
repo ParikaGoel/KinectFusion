@@ -45,5 +45,5 @@ set(TARGET_LIBS
     realsense2
     )
 
-add_executable(${PROJECT_NAME} src/main.cpp ${SOURCE_FILES})
+add_executable(${PROJECT_NAME} main.cpp ${SOURCE_FILES})
 target_link_libraries (${PROJECT_NAME} ${TARGET_LIBS})
