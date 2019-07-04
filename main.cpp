@@ -65,7 +65,6 @@ int main(){
 
     while(sensor.ProcessNextFrame()){
 
-        sensor.ProcessNextFrame();
         std::vector<double> depthMap = sensor.GetDepth();
         std::shared_ptr<Frame> currentFrame = std::make_shared<Frame>(Frame(depthMap, depthIntrinsics, depthWidth, depthHeight));
 
