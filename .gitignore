@@ -1,5 +1,4 @@
-
-#data
+bin
 data/rgbd_dataset_freiburg1_xyz
 
 # Compiled Object files
