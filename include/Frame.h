@@ -31,6 +31,9 @@ public:
 
 	bool readFromFile(const std::string& filename);
 
+
+    void applyGlobalPose(Sophus::SE3d& estimated_pose);
+
 	std::vector<Eigen::Vector3d>& getPoints();
 
 	const std::vector<Eigen::Vector3d>& getPoints() const;
@@ -54,15 +57,14 @@ public:
 private:
 
     std::vector<Eigen::Vector3d> computeCameraCoordinates(std::vector<double> depthMap,
-            unsigned int width, unsigned int height, Eigen::Matrix3d intrinsics);
+                                                          unsigned int width, unsigned int height, Eigen::Matrix3d intrinsics);
 
     std::vector<Eigen::Vector3d> computeNormals(std::vector<double> depthMap, unsigned int width, unsigned int height, double maxDistance = 0.1);
 
     void addValidPoints(std::vector<Eigen::Vector3d> points, std::vector<Eigen::Vector3d> normals, int downsampleFactor);
 
-    void applyGlobalPose(Sophus::SE3d& estimated_pose);
 
-	std::vector<Eigen::Vector3d> m_points;
+    std::vector<Eigen::Vector3d> m_points;
 	std::vector<Eigen::Vector3d> m_normals;
     std::vector<double> m_depth_map;
     std::vector<Eigen::Vector3d> m_points_global;

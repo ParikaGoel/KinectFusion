@@ -45,7 +45,7 @@ bool DepthSensor::ProcessNextFrame() {
 
     std::vector<double> depthMap (m_points.size(), 0);
 
-    for (int i = 0; i < m_points.size(); ++i ){
+    for (size_t i = 0; i < m_points.size(); ++i ){
         depthMap[i] = m_vertices[i].z;
     }
     m_depthMap = depthMap;

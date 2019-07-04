@@ -118,7 +118,7 @@ void icp::estimatePose(std::shared_ptr<Frame> prev_frame, std::shared_ptr<Frame>
 
     Sophus::SE3d estimated_pose;
 
-    for (int i = 0; i < m_nIterations; ++i) {
+    for (size_t i = 0; i < m_nIterations; ++i) {
         // Find corresponding points
         std::vector<std::pair<size_t, size_t>> corresponding_points;
         findCorrespondence(prev_frame, curr_frame, corresponding_points);

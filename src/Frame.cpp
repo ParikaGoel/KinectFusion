@@ -21,7 +21,7 @@ void Frame::addValidPoints(std::vector<Eigen::Vector3d> points, std::vector<Eige
     m_points.reserve(std::floor(double(nPoints) / downsampleFactor));
     m_normals.reserve(std::floor(double(nPoints) / downsampleFactor));
 
-    for (int i = 0; i < nPoints; i = i + downsampleFactor) {
+    for (size_t i = 0; i < nPoints; i = i + downsampleFactor) {
         const auto& point = points[i];
         const auto& normal = normals[i];
 
@@ -30,8 +30,8 @@ void Frame::addValidPoints(std::vector<Eigen::Vector3d> points, std::vector<Eige
             m_normals.push_back(normal);
         }else{
             m_depth_map[i] = -1;
-            m_points.push_back(Eigen::Vector3d(MINF, MINF, MINF));
-            m_normals.push_back(Eigen::Vector3d(MINF, MINF, MINF));
+            m_points.emplace_back(Eigen::Vector3d(MINF, MINF, MINF));
+            m_normals.emplace_back(Eigen::Vector3d(MINF, MINF, MINF));
         }
     }
 }
@@ -46,8 +46,8 @@ std::vector<Eigen::Vector3d> Frame::computeCameraCoordinates(std::vector<double>
     // Back-project the pixel depths into the camera space.
     std::vector<Eigen::Vector3d> pointsTmp(width * height);
 
-    for (int x = 0; x < width; ++x){
-        for (int y = 0; y < height; ++y){
+    for (size_t x = 0; x < width; ++x){
+        for (size_t y = 0; y < height; ++y){
             unsigned int idx = x + (y * width);
             double depth = depthMap[idx];
 
@@ -71,8 +71,8 @@ std::vector<Eigen::Vector3d> Frame::computeNormals(std::vector<double> depthMap,
     // We need to compute derivatives and then the normalized normal vector (for valid pixels).
     std::vector<Eigen::Vector3d> normalsTmp(width * height);
 
-    for (int v = 1; v < height - 1; ++v) {
-        for (int u = 1; u < width - 1; ++u) {
+    for (size_t v = 1; v < height - 1; ++v) {
+        for (size_t u = 1; u < width - 1; ++u) {
             unsigned int idx = v*width + u; // linearized index
 
             const double du = depthMap[idx + 1] - depthMap[idx - 1];
@@ -95,11 +95,11 @@ std::vector<Eigen::Vector3d> Frame::computeNormals(std::vector<double> depthMap,
     }
 
     // We set invalid normals for border regions.
-    for (int u = 0; u < width; ++u) {
+    for (size_t u = 0; u < width; ++u) {
         normalsTmp[u] = Eigen::Vector3d(MINF, MINF, MINF);
         normalsTmp[u + (height - 1) * width] = Eigen::Vector3d(MINF, MINF, MINF);
     }
-    for (int v = 0; v < height; ++v) {
+    for (size_t v = 0; v < height; ++v) {
         normalsTmp[v * width] = Eigen::Vector3d(MINF, MINF, MINF);
         normalsTmp[(width - 1) + v * width] = Eigen::Vector3d(MINF, MINF, MINF);
     }
