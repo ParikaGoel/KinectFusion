@@ -31,46 +31,29 @@ include_directories(${realsense2_INCLUDE_DIRS})
 
 include_directories(${PROJECT_SOURCE_DIR}/include)
 
-# find_package(OpenGL REQUIRED)
-# include_directories(${OPENGL_INCLUDE_DIR})
-
-# find_package(glfw3 REQUIRED)
-
-
-# if (OPENGL_FOUND)
-#     message("opengl found")
-#     message("include dir: ${OPENGL_INCLUDE_DIR}")
-#     message("link libraries: ${OPENGL_gl_LIBRARY}")
-# else (OPENGL_FOUND)
-#     message("opengl not found")
-# endif()
-
 # Source Files
 set(SOURCE_FILES
         ${PROJECT_SOURCE_DIR}/src/icp.cpp
         ${PROJECT_SOURCE_DIR}/src/FreeImageHelper.cpp
-        ${PROJECT_SOURCE_DIR}/src/main.cpp
-        src/DepthSensor.cpp src/Frame.cpp)
+        ${PROJECT_SOURCE_DIR}/src/DepthSensor.cpp
+        ${PROJECT_SOURCE_DIR}/src/Frame.cpp
+        ${PROJECT_SOURCE_DIR}/src/VirtualSensor.cpp)
 
 # Libraries to be linked
 set(TARGET_LIBS
     ${FREEIMAGE_LIBRARIES}
-    ${CERES_LIBRARIES}
     realsense2
+    eigenI
+    catch2I
+    sophusI
+    ceresI
     )
 
 #adds gitsubmodules
 add_subdirectory(extern)
-### if CMAKE Build Time
-#adds our KinectFusion Lib
-add_subdirectory(FusionLib)
 
-#<-------Stuff for directly building an Application----->
-set(APP_ONE ${PROJECT_NAME} )
-add_executable(${APP_ONE} main.cpp)
-#target_link_libraries (${TEST_TARGET_ONE} graph Eigen3::Eigen )# libdl)# pybind11)
-target_link_libraries (${APP_ONE} kfusion eigenI ${FREEIMAGE_LIBRARIES})# libdl)# pybind11)
-target_compile_features(${APP_ONE} PUBLIC cxx_std_17)
+add_executable(${PROJECT_NAME} src/main.cpp ${SOURCE_FILES})
+target_link_libraries (${PROJECT_NAME} ${TARGET_LIBS})
 
 ### Copy Data to cmake-build, this need to be applied to each new executable###
 add_custom_command(TARGET ${PROJECT_NAME} PRE_BUILD
