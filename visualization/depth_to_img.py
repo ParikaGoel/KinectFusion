@@ -5,7 +5,7 @@ import cv2
 
 
 def load_depth(idx):
-    path = "../bin/to/depth"+str(idx)+".txt"
+    path = "../data/sample/depth"+str(idx)+".txt"
     
     with open(path) as f:
         text = f.read()
