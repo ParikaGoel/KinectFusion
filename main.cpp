@@ -7,7 +7,7 @@
 
 #include <iostream>
 #include <vector>
-#include <zconf.h>
+//#include <zconf.h>
 #include <VirtualSensor.h>
 #include "DepthSensor.h"
 #include "icp.h"
@@ -51,7 +51,7 @@ int main(){
     //DepthSensor sensor;
     //sensor.start();
 
-    VirtualSensor sensor(PROJECT_DIR + std::string("/data/sample"));
+    VirtualSensor sensor(PROJECT_DATA_DIR + std::string("sample"));
 
     const Eigen::Matrix3d depthIntrinsics = sensor.GetIntrinsics();
     const unsigned int depthWidth         = sensor.GetDepthImageWidth();
