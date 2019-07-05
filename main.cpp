@@ -58,8 +58,8 @@ int main(){
 
     // Setup the optimizer.
 
-    double dist_threshold = 0.001;
-    double normal_threshold = 0.001;
+    double dist_threshold = 0.1;
+    double normal_threshold = 1;
     icp icp(dist_threshold,normal_threshold);
 
 

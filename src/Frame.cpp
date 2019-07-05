@@ -8,14 +8,15 @@ Frame::Frame(double * depthMap, const Eigen::Matrix3d &depthIntrinsics,
         : m_width(width), m_height(height),m_intrinsic_matrix(depthIntrinsics){
 
     m_depth_map.reserve(width*height);
+
     for (size_t x = 0; x < width*height; x++) {
-            m_depth_map[x] = depthMap[x];
+            m_depth_map.push_back(depthMap[x]);
     }
 
     auto pointsTmp = computeCameraCoordinates(width, height);
     auto normalsTmp = computeNormals(m_depth_map, width, height, maxDistance);
-
     addValidPoints(pointsTmp, normalsTmp, downsampleFactor);
+
 }
 
 void Frame::addValidPoints(std::vector<Eigen::Vector3d> points, std::vector<Eigen::Vector3d> normals,

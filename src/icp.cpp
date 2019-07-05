@@ -1,4 +1,5 @@
 #include "icp.h"
+#include "iterator"
 
 PointToPlaneConstraint::PointToPlaneConstraint(const Eigen::Vector3d& sourcePoint, const Eigen::Vector3d& targetPoint, const Eigen::Vector3d& targetNormal) :
         m_source_point(sourcePoint),
@@ -45,7 +46,8 @@ void icp::findCorrespondence(std::shared_ptr<Frame> prev_frame, std::shared_ptr<
     curr_depth_map.reserve(frame_width*frame_height);
     curr_depth_map = curr_frame->getDepthMap();
 
-    std::vector<double> prev_depth_map = prev_frame->m_depth_map;
+
+    std::vector<double> prev_depth_map = prev_frame->getDepthMap();
 
 
     std::vector<Eigen::Vector3d> prev_frame_points = prev_frame->getGlobalPoints();
@@ -68,11 +70,13 @@ void icp::findCorrespondence(std::shared_ptr<Frame> prev_frame, std::shared_ptr<
 
                 if(target_point_image[0] < frame_width && target_point_image[1] < frame_height){
                     size_t source_idx = (target_point_image[1] * frame_width) + target_point_image[0];
+                    if(curr_depth_map[source_idx]<0)
+                        continue;
                     Eigen::Vector3d source_point_camera = prev_frame_pose * curr_frame_vertex_map[source_idx];
                     Eigen::Vector3d source_point_normal = prev_frame_pose.rotationMatrix() * curr_frame_normal_map[source_idx];
 
                     if ((source_point_camera - target_point_camera).norm() < dist_threshold){
-                        if(source_point_normal.dot(prev_frame_normal_map[target_idx]) < normal_threshold){
+                        if(abs(source_point_normal.dot(prev_frame_normal_map[target_idx]))< normal_threshold){
                             corresponding_points.push_back(std::make_pair(source_idx,target_idx));
                         }
                     }
