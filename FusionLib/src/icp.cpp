@@ -42,11 +42,7 @@ void icp::findCorrespondence(std::shared_ptr<Frame> prev_frame, std::shared_ptr<
     size_t frame_width = curr_frame->getWidth();
     size_t frame_height = curr_frame->getHeight();
 
-    std::vector<double> curr_depth_map;
-    curr_depth_map.reserve(frame_width*frame_height);
-    curr_depth_map = curr_frame->getDepthMap();
-
-
+    std::vector<double> curr_depth_map = curr_frame->getDepthMap();
     std::vector<double> prev_depth_map = prev_frame->getDepthMap();
 
 

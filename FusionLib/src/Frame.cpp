@@ -1,6 +1,3 @@
-//
-// Created by frankzl on 03.07.19.
-//
 #include "Frame.h"
 
 Frame::Frame(double * depthMap, const Eigen::Matrix3d &depthIntrinsics,
@@ -119,13 +116,25 @@ std::vector<Eigen::Vector3d> Frame::computeNormals(std::vector<double>& depthMap
 
 void Frame::applyGlobalPose(Sophus::SE3d& estimated_pose){
     for(auto& point : m_points){
-        Eigen::Vector3d g_point = estimated_pose * point;
-        m_points_global.emplace_back(g_point);
+        if(point.allFinite()) {
+            Eigen::Vector3d g_point = estimated_pose * point;
+            m_points_global.emplace_back(g_point);
+        }
+        else
+        {
+            m_points_global.emplace_back(Eigen::Vector3d(MINF, MINF, MINF));
+        }
     }
 
     for(auto& normal : m_normals){
+        if(normal.allFinite()) {
         Eigen::Vector3d g_normal = estimated_pose.rotationMatrix()*normal;
         m_normals_global.emplace_back(g_normal);
+        }
+        else
+        {
+            m_normals_global.emplace_back(Eigen::Vector3d(MINF, MINF, MINF));
+        }
     }
 }
 
@@ -146,7 +155,12 @@ const std::vector<Eigen::Vector3d>& Frame::getGlobalPoints() const{
 }
 
 const Sophus::SE3d& Frame::getGlobalPose() const{
-        return global_pose;
+        return m_global_pose;
+}
+
+void Frame::setGlobalPose(const Sophus::SE3d& pose) {
+    m_global_pose = pose;
+    applyGlobalPose(m_global_pose);
 }
 
 const std::vector<double>& Frame::getDepthMap() const{

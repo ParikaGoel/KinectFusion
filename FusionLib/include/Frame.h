@@ -44,6 +44,8 @@ public:
 
     const Sophus::SE3d& getGlobalPose() const;
 
+    void setGlobalPose(const Sophus::SE3d& pose);
+
     const std::vector<double>& getDepthMap() const;
 
     const Eigen::Matrix3d& getIntrinsics() const;
