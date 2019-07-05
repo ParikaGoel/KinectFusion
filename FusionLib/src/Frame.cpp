@@ -15,26 +15,28 @@ Frame::Frame(double * depthMap, const Eigen::Matrix3d &depthIntrinsics,
 
     auto pointsTmp = computeCameraCoordinates(width, height);
     auto normalsTmp = computeNormals(m_depth_map, width, height, maxDistance);
-    addValidPoints(pointsTmp, normalsTmp, downsampleFactor);
+    addValidPoints(pointsTmp, normalsTmp);
+
 
 }
 
-void Frame::addValidPoints(std::vector<Eigen::Vector3d> points, std::vector<Eigen::Vector3d> normals,
-                           int downsampleFactor) {
+void Frame::addValidPoints(std::vector<Eigen::Vector3d> points, std::vector<Eigen::Vector3d> normals
+                           ) {
 
     // We filter out measurements where either point or normal is invalid.
     const unsigned nPoints = points.size();
-    m_points.reserve(std::floor(double(nPoints) / downsampleFactor));
-    m_normals.reserve(std::floor(double(nPoints) / downsampleFactor));
+    m_points.reserve(nPoints);
+    m_normals.reserve(nPoints);
 
-    for (size_t i = 0; i < nPoints; i = i + downsampleFactor) {
+    for (size_t i = 0; i < nPoints; i++) {
         const auto& point = points[i];
         const auto& normal = normals[i];
 
         if ( (point.allFinite() && normal.allFinite()) ) {
             m_points.push_back(point);
             m_normals.push_back(normal);
-        }else{
+        }
+        else{
             m_depth_map[i] = MINF;
             m_points.emplace_back(Eigen::Vector3d(MINF, MINF, MINF));
             m_normals.emplace_back(Eigen::Vector3d(MINF, MINF, MINF));

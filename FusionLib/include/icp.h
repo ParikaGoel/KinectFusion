@@ -33,7 +33,7 @@ class icp {
 public:
     EIGEN_MAKE_ALIGNED_OPERATOR_NEW
     icp(double dist_threshold, double normal_threshold);
-    void estimatePose(std::shared_ptr<Frame> prev_frame, std::shared_ptr<Frame> current_frame, size_t m_nIterations);
+    void estimatePose(std::shared_ptr<Frame> prev_frame, std::shared_ptr<Frame> current_frame, size_t m_nIterations,Sophus::SE3d& estimated_pose);
 
 private:
 

@@ -4,12 +4,13 @@
 #include <fstream>
 
 #include "Eigen.h"
+#include "VirtualSensor.h"
 
 struct Vertex {
 	EIGEN_MAKE_ALIGNED_OPERATOR_NEW
 
-	// Position stored as 4 floats (4th component is supposed to be 1.0)
-	Vector4f position;
+	// Position stored as 4 double (4th component is supposed to be 1.0)
+	Vector4d position;
 	// Color stored as 4 unsigned char
 	Vector4uc color;
 };
@@ -33,26 +34,26 @@ public:
 	/**
 	 * Constructs a mesh from the current color and depth image.
 	 */
-	SimpleMesh(VirtualSensor& sensor, const Matrix4f& cameraPose, float edgeThreshold = 0.01f) {
+	SimpleMesh(VirtualSensor& sensor, const Matrix4d& cameraPose, double edgeThreshold = 0.01f) {
 		// Get ptr to the current depth frame.
 		// Depth is stored in row major (get dimensions via sensor.GetDepthImageWidth() / GetDepthImageHeight()).
-		float* depthMap = sensor.getDepth();
+		double* depthMap = sensor.getDepth();
 		// Get ptr to the current color frame.
 		// Color is stored as RGBX in row major (4 byte values per pixel, get dimensions via sensor.GetColorImageWidth() / GetColorImageHeight()).
-		BYTE* colorMap = sensor.getColorRGBX();
+//		BYTE* colorMap = sensor.getColorRGBX();
 
 		// Get depth intrinsics.
-		Matrix3f depthIntrinsics = sensor.getDepthIntrinsics();
-		float fovX = depthIntrinsics(0, 0);
-		float fovY = depthIntrinsics(1, 1);
-		float cX = depthIntrinsics(0, 2);
-		float cY = depthIntrinsics(1, 2);
+		Matrix3d depthIntrinsics = sensor.getDepthIntrinsics();
+        double fovX = depthIntrinsics(0, 0);
+		double fovY = depthIntrinsics(1, 1);
+		double cX = depthIntrinsics(0, 2);
+		double cY = depthIntrinsics(1, 2);
 
 		// Compute inverse depth extrinsics.
-		Matrix4f depthExtrinsicsInv = sensor.getDepthExtrinsics().inverse();
+		Matrix4d depthExtrinsicsInv = sensor.getDepthExtrinsics().inverse();
 
 		// Compute inverse camera pose (mapping from camera CS to world CS).
-		Matrix4f cameraPoseInverse = cameraPose.inverse();
+		Matrix4d cameraPoseInverse = cameraPose.inverse();
 
 		// Compute vertices with back-projection.
 		m_vertices.resize(sensor.getDepthImageWidth() * sensor.getDepthImageHeight());
@@ -61,17 +62,18 @@ public:
 			// For every pixel in a row.
 			for (unsigned int u = 0; u < sensor.getDepthImageWidth(); ++u) {
 				unsigned int idx = v*sensor.getDepthImageWidth() + u; // linearized index
-				float depth = depthMap[idx];
+				double depth = depthMap[idx];
+
 				if (depth == MINF) {
-					m_vertices[idx].position = Vector4f(MINF, MINF, MINF, MINF);
+					m_vertices[idx].position = Vector4d(MINF, MINF, MINF, MINF);
 					m_vertices[idx].color = Vector4uc(0, 0, 0, 0);
 				}
 				else {
 					// Back-projection and tranformation to world space.
-					m_vertices[idx].position = cameraPoseInverse * depthExtrinsicsInv * Vector4f((u - cX) / fovX * depth, (v - cY) / fovY * depth, depth, 1.0f);
+					m_vertices[idx].position = cameraPoseInverse * depthExtrinsicsInv * Vector4d((u - cX) / fovX * depth, (v - cY) / fovY * depth, depth, 1.0f);
 
 					// Project position to color map.
-					Vector3f proj = sensor.getColorIntrinsics() * (sensor.getColorExtrinsics() * cameraPose * m_vertices[idx].position).block<3, 1>(0, 0);
+					Vector3d proj = sensor.getColorIntrinsics() * (sensor.getColorExtrinsics() * cameraPose * m_vertices[idx].position).block<3, 1>(0, 0);
 					proj /= proj.z(); // dehomogenization
 					unsigned int uCol = (unsigned int)std::floor(proj.x());
 					unsigned int vCol = (unsigned int)std::floor(proj.y());
@@ -81,7 +83,7 @@ public:
 																					//unsigned int idxCol = idx; // linearized index color
 
 					// Write color to vertex.
-					m_vertices[idx].color = Vector4uc(colorMap[4 * idxCol + 0], colorMap[4 * idxCol + 1], colorMap[4 * idxCol + 2], colorMap[4 * idxCol + 3]);
+//					m_vertices[idx].color = Vector4uc(colorMap[4 * idxCol + 0], colorMap[4 * idxCol + 1], colorMap[4 * idxCol + 2], colorMap[4 * idxCol + 3]);
 				}
 			}
 		}
@@ -101,16 +103,16 @@ public:
 				bool valid3 = m_vertices[i3].position.allFinite();
 
 				if (valid0 && valid1 && valid2) {
-					float d0 = (m_vertices[i0].position - m_vertices[i1].position).norm();
-					float d1 = (m_vertices[i0].position - m_vertices[i2].position).norm();
-					float d2 = (m_vertices[i1].position - m_vertices[i2].position).norm();
+                    double d0 = (m_vertices[i0].position - m_vertices[i1].position).norm();
+                    double d1 = (m_vertices[i0].position - m_vertices[i2].position).norm();
+                    double d2 = (m_vertices[i1].position - m_vertices[i2].position).norm();
 					if (edgeThreshold > d0 && edgeThreshold > d1 && edgeThreshold > d2)
 						addFace(i0, i1, i2);
 				}
 				if (valid1 && valid2 && valid3) {
-					float d0 = (m_vertices[i3].position - m_vertices[i1].position).norm();
-					float d1 = (m_vertices[i3].position - m_vertices[i2].position).norm();
-					float d2 = (m_vertices[i1].position - m_vertices[i2].position).norm();
+                    double d0 = (m_vertices[i3].position - m_vertices[i1].position).norm();
+					double d1 = (m_vertices[i3].position - m_vertices[i2].position).norm();
+					double d2 = (m_vertices[i1].position - m_vertices[i2].position).norm();
 					if (edgeThreshold > d0 && edgeThreshold > d1 && edgeThreshold > d2)
 						addFace(i1, i3, i2);
 				}
@@ -152,7 +154,7 @@ public:
 		return m_triangles;
 	}
 
-	void transform(const Matrix4f& transformation) {
+	void transform(const Matrix4d& transformation) {
 		for (Vertex& v : m_vertices) {
 			v.position = transformation * v.position;
 		}
@@ -262,7 +264,7 @@ public:
 	 * Joins two meshes together by putting them into the common mesh and transforming the vertex positions of
 	 * mesh1 with transformation 'pose1to2'. 
 	 */
-	static SimpleMesh joinMeshes(const SimpleMesh& mesh1, const SimpleMesh& mesh2, Matrix4f pose1to2 = Matrix4f::Identity()) {
+	static SimpleMesh joinMeshes(const SimpleMesh& mesh1, const SimpleMesh& mesh2, Matrix4d pose1to2 = Matrix4d::Identity()) {
 		SimpleMesh joinedMesh;
 		const auto& vertices1  = mesh1.getVertices();
 		const auto& triangles1 = mesh1.getTriangles();
@@ -304,9 +306,9 @@ public:
 	/**
 	 * Generates a sphere around the given center point.
 	 */
-	static SimpleMesh sphere(Vector3f center, float scale = 1.f, Vector4uc color = { 0, 0, 255, 255 }) {
+	static SimpleMesh sphere(Vector3d center, double scale = 1.f, Vector4uc color = { 0, 0, 255, 255 }) {
 		SimpleMesh mesh;
-		Vector4f centerHomogenous = Vector4f{ center.x(), center.y(), center.z(), 1.f };
+		Vector4d centerHomogenous = Vector4d{ center.x(), center.y(), center.z(), 1.f };
 		
 		// These are precomputed values for sphere aproximation.
 		const std::vector<double> vertexComponents = { -0.525731, 0, 0.850651 ,0.525731, 0 ,0.850651, -0.525731, 0 ,-0.850651, 0.525731, 0 ,-0.850651, 0, 0.850651, 0.525731, 0, 0.850651, -0.525731, 0, 
@@ -317,7 +319,7 @@ public:
 		// Add vertices.
 		for (int i = 0; i < 12; ++i) {
 			Vertex v;
-			v.position = centerHomogenous + scale * Vector4f{ float(vertexComponents[3 * i + 0]), float(vertexComponents[3 * i + 1]), float(vertexComponents[3 * i + 2]), 0.f };
+			v.position = centerHomogenous + scale * Vector4d{ double(vertexComponents[3 * i + 0]), double(vertexComponents[3 * i + 1]), double(vertexComponents[3 * i + 2]), 0.f };
 			v.color = color;
 			mesh.addVertex(v);
 		}
@@ -333,9 +335,9 @@ public:
 	/**
 	 * Generates a camera object with a given pose.
 	 */
-	static SimpleMesh camera(const Matrix4f& cameraPose, float scale = 1.f, Vector4uc color = { 255, 0, 0, 255 }) {
+	static SimpleMesh camera(const Matrix4d& cameraPose, double scale = 1.f, Vector4uc color = { 255, 0, 0, 255 }) {
 		SimpleMesh mesh;
-		Matrix4f cameraToWorld = cameraPose.inverse();
+		Matrix4d cameraToWorld = cameraPose.inverse();
 
 		// These are precomputed values for sphere aproximation.
 		std::vector<double> vertexComponents = { 25, 25, 0, -50, 50, 100, 49.99986, 49.9922, 99.99993, -24.99998, 25.00426, 0.005185, 
@@ -345,7 +347,7 @@ public:
 		// Add vertices.
 		for (int i = 0; i < 8; ++i) {
 			Vertex v;
-			v.position = cameraToWorld * Vector4f{ scale * float(vertexComponents[3 * i + 0]), scale * float(vertexComponents[3 * i + 1]), scale * float(vertexComponents[3 * i + 2]), 1.f };
+			v.position = cameraToWorld * Vector4d{ scale * double(vertexComponents[3 * i + 0]), scale * double(vertexComponents[3 * i + 1]), scale * double(vertexComponents[3 * i + 2]), 1.f };
 			v.color = color;
 			mesh.addVertex(v);
 		}
@@ -361,7 +363,7 @@ public:
 	/**
 	 * Generates a cylinder, ranging from point p0 to point p1.
 	 */
-	static SimpleMesh cylinder(const Vector3f& p0, const Vector3f& p1, float radius, unsigned stacks, unsigned slices, const Vector4uc color = Vector4uc{ 0, 0, 255, 255 }) {
+	static SimpleMesh cylinder(const Vector3d& p0, const Vector3d& p1, double radius, unsigned stacks, unsigned slices, const Vector4uc color = Vector4uc{ 0, 0, 255, 255 }) {
 		SimpleMesh mesh;
 		auto& vertices = mesh.getVertices();
 		auto& triangles = mesh.getTriangles();
@@ -369,15 +371,15 @@ public:
 		vertices.resize((stacks + 1) * slices);
 		triangles.resize(stacks * slices * 2);
 
-		float height = (p1 - p0).norm();
+		double height = (p1 - p0).norm();
 
 		unsigned vIndex = 0;
 		for (unsigned i = 0; i <= stacks; i++)
 			for (unsigned i2 = 0; i2 < slices; i2++)
 			{
 				auto& v = vertices[vIndex++];
-				float theta = float(i2) * 2.0f * M_PI / float(slices);
-				v.position = Vector4f{ p0.x() + radius * cosf(theta), p0.y() + radius * sinf(theta), p0.z() + height * float(i) / float(stacks), 1.f };
+                double theta = double(i2) * 2.0f * M_PI / double(slices);
+				v.position = Vector4d{ p0.x() + radius * cosf(theta), p0.y() + radius * sinf(theta), p0.z() + height * double(i) / double(stacks), 1.f };
 				v.color = color;
 			}
 
@@ -397,8 +399,8 @@ public:
 				iIndex += 2;
 			}
 
-		Matrix4f transformation = Matrix4f::Identity();
-		transformation.block(0, 0, 3, 3) = face(Vector3f{ 0, 0, 1 }, p1 - p0);
+		Matrix4d transformation = Matrix4d::Identity();
+		transformation.block(0, 0, 3, 3) = face(Vector3d{ 0, 0, 1 }, p1 - p0);
 		transformation.block(0, 3, 3, 1) = p0;
 		mesh.transform(transformation);
 
@@ -412,26 +414,26 @@ private:
 	/**
 	 * Returns a rotation that transforms vector vA into vector vB.
 	 */
-	static Matrix3f face(const Vector3f& vA, const Vector3f& vB) {
+	static Matrix3d face(const Vector3d& vA, const Vector3d& vB) {
 		auto a = vA.normalized();
 		auto b = vB.normalized();
 		auto axis = b.cross(a);
-		float angle = acosf(a.dot(b));
+        double angle = acosf(a.dot(b));
 		
 		if (angle == 0.0f) {  // No rotation
-			return Matrix3f::Identity();
+			return Matrix3d::Identity();
 		}
 
 		// Convert the rotation from SO3 to matrix notation.
 		// First we create a skew symetric matrix from the axis vector.
-		Matrix3f skewSymetricMatrix;
+		Matrix3d skewSymetricMatrix;
 		skewSymetricMatrix.setIdentity();
 		skewSymetricMatrix(0, 0) = 0;			skewSymetricMatrix(0, 1) = -axis.z();	skewSymetricMatrix(0, 2) = axis.y();
 		skewSymetricMatrix(1, 0) = axis.z();	skewSymetricMatrix(1, 1) = 0;			skewSymetricMatrix(1, 2) = -axis.x();
 		skewSymetricMatrix(2, 0) = -axis.y();	skewSymetricMatrix(2, 1) = axis.x();	skewSymetricMatrix(2, 2) = 0;
 
 		// We compute a rotation matrix using Rodrigues formula.
-		Matrix3f rotation = Matrix3f::Identity() + sinf(angle) * skewSymetricMatrix + (1 - cos(angle)) * skewSymetricMatrix * skewSymetricMatrix;
+		Matrix3d rotation = Matrix3d::Identity() + sinf(angle) * skewSymetricMatrix + (1 - cos(angle)) * skewSymetricMatrix * skewSymetricMatrix;
 
 		return rotation;
 	}

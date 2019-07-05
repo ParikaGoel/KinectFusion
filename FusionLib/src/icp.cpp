@@ -126,11 +126,9 @@ void icp::configureSolver(ceres::Solver::Options& options) {
     options.num_threads = 8;
 }
 
-void icp::estimatePose(std::shared_ptr<Frame> prev_frame, std::shared_ptr<Frame> curr_frame, size_t m_nIterations) {
+void icp::estimatePose(std::shared_ptr<Frame> prev_frame, std::shared_ptr<Frame> curr_frame, size_t m_nIterations,Sophus::SE3d& estimated_pose) {
 
-    Sophus::SE3d estimated_pose;
-
-    for (size_t i = 0; i < m_nIterations; ++i) {
+     for (size_t i = 0; i < m_nIterations; ++i) {
         // Find corresponding points
         std::vector<std::pair<size_t, size_t>> corresponding_points;
         findCorrespondence(prev_frame, curr_frame, corresponding_points);
