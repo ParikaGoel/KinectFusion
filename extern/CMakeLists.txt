@@ -31,7 +31,8 @@ add_library(eigen INTERFACE)
 target_include_directories(eigen INTERFACE ${PROJECT_SOURCE_DIR}/extern/eigen-git-mirror)
 #target_sources(eigenI INTERFACE ${PROJECT_SOURCE_DIR}/extern/eigen-git-mirror/Eigen/src)
 add_library(catch2 INTERFACE)
-target_include_directories(catch2 INTERFACE ${PROJECT_SOURCE_DIR}/extern/Catch2/include)
+target_include_directories(catch2 INTERFACE ${PROJECT_SOURCE_DIR}/extern/Catch2/single_include)
+
 add_library(librealsense INTERFACE)
 target_include_directories(librealsense INTERFACE ${PROJECT_SOURCE_DIR}/extern/librealsense/include)
 
