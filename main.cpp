@@ -120,6 +120,7 @@ int main(){
         std::shared_ptr<Frame> currentFrame = std::make_shared<Frame>(Frame(depthMap,depthIntrinsics, depthWidth, depthHeight));
         process_frame(prevFrame,currentFrame,volume,config);
         i++;
+        
         prevFrame = std::move(currentFrame);
 
 

@@ -37,7 +37,7 @@ public:
 
 private:
 
-    void findCorrespondence(std::shared_ptr<Frame> prev_frame, std::shared_ptr<Frame> curr_frame,std::vector<std::pair<size_t,size_t>>& corresponding_points);
+    void findCorrespondence(std::shared_ptr<Frame> prev_frame, std::shared_ptr<Frame> curr_frame,std::vector<std::pair<size_t,size_t>>& corresponding_points,Sophus::SE3d& estimated_pose);
     void prepareConstraints(std::shared_ptr<Frame> prev_frame, std::shared_ptr<Frame> curr_frame,std::vector<std::pair<size_t,size_t>>& corresponding_points, Sophus::SE3d& pose, ceres::Problem& problem);
     void configureSolver(ceres::Solver::Options& options);
 
