@@ -96,9 +96,7 @@ int main(){
 
     // Setup the optimizer.
     //TODO truncationDistance is completly random Value right now
-    Config config (0.1,1,0.5,512,512,512,1.0);
-    double dist_threshold = 0.1;
-    double normal_threshold = 1;
+    Config config (0.1,0.5,0.5,512,512,512,1.0);
 
     //Setup Volume
     auto volume = std::make_shared<Volume>(config.m_volumeSize,config.m_voxelScale) ;
@@ -108,9 +106,11 @@ int main(){
     const unsigned int depthHeight        = sensor.getDepthImageHeight();
 
     double * depthMap = sensor.getDepth();
-    Sophus::SE3d init_gl_pose = Sophus::SE3d();
     std::shared_ptr<Frame> prevFrame = std::make_shared<Frame>(Frame(depthMap, depthIntrinsics, depthWidth, depthHeight));
-    prevFrame->applyGlobalPose(init_gl_pose);
+
+    Sophus::SE3d init_gl_pose = Sophus::SE3d();
+    Sophus::SE3d current_camera_to_world = init_gl_pose;
+    prevFrame->setGlobalPose(init_gl_pose);
 
 
     int i = 0;
@@ -120,7 +120,7 @@ int main(){
         std::shared_ptr<Frame> currentFrame = std::make_shared<Frame>(Frame(depthMap,depthIntrinsics, depthWidth, depthHeight));
         process_frame(prevFrame,currentFrame,volume,config);
         i++;
-        
+
         prevFrame = std::move(currentFrame);
 
 

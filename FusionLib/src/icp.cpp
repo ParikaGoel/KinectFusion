@@ -60,19 +60,19 @@ void icp::findCorrespondence(std::shared_ptr<Frame> prev_frame, std::shared_ptr<
         for(size_t u = 0; u< frame_width; u++){
             size_t target_idx = (v * frame_width) + u;
             if (curr_depth_map[target_idx] > 0 && prev_depth_map[target_idx] > 0){
-                Eigen::Vector3d target_point_camera = estimated_pose.inverse() * prev_frame_points[target_idx];
+                Eigen::Vector3d target_point_camera = prev_frame_pose.inverse() * prev_frame_points[target_idx];
                 Eigen::Vector3d target_point_image = camera_intrinsics * target_point_camera;
                 target_point_image = target_point_image/target_point_image[2];
 
                 if(target_point_image[0] < frame_width && target_point_image[1] < frame_height){
-                    size_t source_idx = (target_point_image[1] * frame_width) + target_point_image[0];
+                    size_t source_idx = (round(target_point_image[1]) * frame_width) + round(target_point_image[0]);
                     if(curr_depth_map[source_idx]<0)
                         continue;
                     Eigen::Vector3d source_point_camera = estimated_pose * curr_frame_vertex_map[source_idx];
                     Eigen::Vector3d source_point_normal = estimated_pose.rotationMatrix() * curr_frame_normal_map[source_idx];
 
                     if ((source_point_camera - target_point_camera).norm() < dist_threshold){
-                        if(abs(source_point_normal.dot(prev_frame_normal_map[target_idx]))< normal_threshold){
+                        if(abs(source_point_normal.dot(prev_frame_normal_map[target_idx])) > normal_threshold){
                             corresponding_points.push_back(std::make_pair(source_idx,target_idx));
                         }
                     }
@@ -123,7 +123,7 @@ void icp::configureSolver(ceres::Solver::Options& options) {
 }
 
 void icp::estimatePose(std::shared_ptr<Frame> prev_frame, std::shared_ptr<Frame> curr_frame, size_t m_nIterations,Sophus::SE3d& estimated_pose) {
-     estimated_pose = prev_frame->getGlobalPose();
+
      for (size_t i = 0; i < m_nIterations; ++i) {
         // Find corresponding points
         std::vector<std::pair<size_t, size_t>> corresponding_points;
@@ -132,6 +132,7 @@ void icp::estimatePose(std::shared_ptr<Frame> prev_frame, std::shared_ptr<Frame>
         // Prepare constraints
 
         Sophus::SE3d incremental_pose;
+
         ceres::Problem problem;
         prepareConstraints(prev_frame, curr_frame, corresponding_points, incremental_pose, problem);
 
