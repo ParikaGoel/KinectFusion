@@ -4,3 +4,10 @@
 [submodule "extern/eigen-git-mirror"]
 	path = extern/eigen-git-mirror
 	url = https://github.com/eigenteam/eigen-git-mirror.git
+[submodule "extern/librealsense"]
+	path = extern/librealsense
+	url = https://github.com/IntelRealSense/librealsense.git
+[submodule "extern/Sophus"]
+	path = extern/Sophus
+	url = https://github.com/strasdat/Sophus.git
+
