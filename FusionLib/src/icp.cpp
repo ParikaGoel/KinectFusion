@@ -34,55 +34,56 @@ icp::icp(double dist_thresh, double normal_thresh){
     normal_threshold = normal_thresh;
 }
 
+bool icp::hasValidDistance(const Eigen::Vector3d& point1, const Eigen::Vector3d& point2) {
+    return (point1- point2).norm() < dist_threshold;
+}
+
+bool icp::hasValidAngle(const Eigen::Vector3d& normal1, const Eigen::Vector3d& normal2) {
+    return std::abs(normal1.dot(normal2) > normal_threshold);
+}
+
 // Find corresponding points between current frame and previous frame
 // Method Used : Projective Point-Plane data association
 // Return : vector of pairs of source and target vertex indices
 void icp::findCorrespondence(std::shared_ptr<Frame> prev_frame, std::shared_ptr<Frame> curr_frame, std::vector<std::pair<size_t,size_t>>& corresponding_points,Sophus::SE3d& estimated_pose){
 
-    size_t frame_width = curr_frame->getWidth();
-    size_t frame_height = curr_frame->getHeight();
+    std::vector<Eigen::Vector3d> prev_frame_global_points = prev_frame->getGlobalPoints();
+    std::vector<Eigen::Vector3d> prev_frame_global_normals = prev_frame->getGlobalNormals();
 
-    std::vector<double> curr_depth_map = curr_frame->getDepthMap();
-    std::vector<double> prev_depth_map = prev_frame->getDepthMap();
+    std::vector<Eigen::Vector3d> curr_frame_points = curr_frame->getPoints();
+    std::vector<Eigen::Vector3d> curr_frame_normals = curr_frame->getNormals();
 
+    for(size_t idx = 0; idx < curr_frame_points.size(); idx++){
 
-    std::vector<Eigen::Vector3d> prev_frame_points = prev_frame->getGlobalPoints();
-    std::vector<Eigen::Vector3d> prev_frame_normal_map = prev_frame->getGlobalNormals();
-    Sophus::SE3d prev_frame_pose = prev_frame->getGlobalPose();
-    Eigen::Matrix3d camera_intrinsics = prev_frame->getIntrinsics();
+        Eigen::Vector3d curr_point = curr_frame_points[idx];
+        Eigen::Vector3d curr_normal = curr_frame_normals[idx];
 
-    std::vector<Eigen::Vector3d> curr_frame_vertex_map = curr_frame->getPoints();
-    std::vector<Eigen::Vector3d> curr_frame_normal_map = curr_frame->getNormals();
+        if (curr_point.allFinite() && curr_normal.allFinite()) {
+            const Eigen::Vector3d curr_global_point = estimated_pose * curr_point;
+            const Eigen::Vector3d curr_global_normal = estimated_pose.rotationMatrix() * curr_normal;
 
+            const Eigen::Vector3d curr_point_prev_frame = prev_frame->projectIntoCamera(curr_global_point);
+            const Eigen::Vector2d curr_point_img_coord = prev_frame->projectOntoPlane(curr_point_prev_frame);
 
+            if (prev_frame->contains(curr_point_img_coord)) {
 
-    for(size_t v = 0; v < frame_height; v++){
-        for(size_t u = 0; u< frame_width; u++){
-            size_t target_idx = (v * frame_width) + u;
-            if (curr_depth_map[target_idx] > 0 && prev_depth_map[target_idx] > 0){
-                Eigen::Vector3d target_point_camera = prev_frame_pose.inverse() * prev_frame_points[target_idx];
-                Eigen::Vector3d target_point_image = camera_intrinsics * target_point_camera;
-                target_point_image = target_point_image/target_point_image[2];
+                size_t prev_idx = curr_point_img_coord[1] * prev_frame->getWidth() + curr_point_img_coord[0];
 
-                if(target_point_image[0] < frame_width && target_point_image[1] < frame_height){
-                    size_t source_idx = (round(target_point_image[1]) * frame_width) + round(target_point_image[0]);
-                    if(curr_depth_map[source_idx]<0)
-                        continue;
-                    Eigen::Vector3d source_point_camera = estimated_pose * curr_frame_vertex_map[source_idx];
-                    Eigen::Vector3d source_point_normal = estimated_pose.rotationMatrix() * curr_frame_normal_map[source_idx];
+                Eigen::Vector3d prev_global_point = prev_frame_global_points[prev_idx];
+                Eigen::Vector3d prev_global_normal = prev_frame_global_normals[prev_idx];
 
-                    if ((source_point_camera - target_point_camera).norm() < dist_threshold){
-                        if(abs(source_point_normal.dot(prev_frame_normal_map[target_idx])) > normal_threshold){
-                            corresponding_points.push_back(std::make_pair(source_idx,target_idx));
-                        }
+                if (prev_global_point.allFinite() && prev_global_normal.allFinite()) {
+
+                    if(hasValidDistance(prev_global_point, curr_global_point) &&
+                        hasValidAngle(prev_global_normal, curr_global_normal)) {
+
+                        corresponding_points.push_back(std::make_pair(prev_idx, idx));
+
                     }
-                }
+               }
             }
-
         }
     }
-
-
 }
 
 void icp::prepareConstraints(std::shared_ptr<Frame> prev_frame, std::shared_ptr<Frame> curr_frame, std::vector<std::pair<size_t,size_t>>& corresponding_points, Sophus::SE3d& pose, ceres::Problem& problem) {
@@ -91,9 +92,9 @@ void icp::prepareConstraints(std::shared_ptr<Frame> prev_frame, std::shared_ptr<
     std::vector<Eigen::Vector3d> target_normal_map = prev_frame->getGlobalNormals();
     std::vector<Eigen::Vector3d> source_vertex_map = curr_frame->getPoints();
 
-    problem.AddParameterBlock(pose.data(),
-                              Sophus::SE3d::num_parameters,
-                              new Sophus::test::LocalParameterizationSE3);
+    // problem.AddParameterBlock(pose.data(),
+    //                           Sophus::SE3d::num_parameters,
+    //                           new Sophus::test::LocalParameterizationSE3);
 
     for (const auto& match : corresponding_points){
         size_t source_idx = match.first;
@@ -124,9 +125,11 @@ void icp::configureSolver(ceres::Solver::Options& options) {
 
 void icp::estimatePose(std::shared_ptr<Frame> prev_frame, std::shared_ptr<Frame> curr_frame, size_t m_nIterations,Sophus::SE3d& estimated_pose) {
 
-     for (size_t i = 0; i < m_nIterations; ++i) {
+    for (size_t i = 0; i < m_nIterations; ++i) {
         // Find corresponding points
         std::vector<std::pair<size_t, size_t>> corresponding_points;
+
+        // findCorrespondence(prev_frame, curr_frame, corresponding_points,estimated_pose);
         findCorrespondence(prev_frame, curr_frame, corresponding_points,estimated_pose);
 
         // Prepare constraints
@@ -146,8 +149,14 @@ void icp::estimatePose(std::shared_ptr<Frame> prev_frame, std::shared_ptr<Frame>
         std::cout << summary.BriefReport() << std::endl;
         //std::cout << summary.FullReport() << std::endl;
 
+        std::cout << estimated_pose.matrix3x4()<< std::endl;
+
+        std::cout << incremental_pose.matrix3x4()<< std::endl;
+
         // Update the current pose estimate (we always update the pose from the left, using left-increment notation).
         estimated_pose = incremental_pose * estimated_pose;
+
+        std::cout << estimated_pose.matrix3x4()<< std::endl;
 
         std::cout << "Optimization iteration done." << std::endl;
     }

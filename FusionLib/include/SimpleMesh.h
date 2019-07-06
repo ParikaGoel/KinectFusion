@@ -245,8 +245,8 @@ public:
 			if (vertex.position.allFinite())
 				outFile << vertex.position.x() << " " << vertex.position.y() << " " << vertex.position.z() << " "
 				<< int(vertex.color.x()) << " " << int(vertex.color.y()) << " " << int(vertex.color.z()) << " " << int(vertex.color.w()) << std::endl;
-			else
-				outFile << "0.0 0.0 0.0 0 0 0 0" << std::endl;
+			// else
+			// 	outFile << "0.0 0.0 0.0 0 0 0 0" << std::endl;
 		}
 
 		// Save faces.

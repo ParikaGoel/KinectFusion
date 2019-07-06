@@ -6,6 +6,7 @@ Frame::Frame(double * depthMap, const Eigen::Matrix3d &depthIntrinsics,
 
     m_depth_map.reserve(width*height);
 
+    std::cout << std::endl;
     for (size_t x = 0; x < width*height; x++) {
             m_depth_map.push_back(depthMap[x]);
     }
@@ -13,8 +14,21 @@ Frame::Frame(double * depthMap, const Eigen::Matrix3d &depthIntrinsics,
     auto pointsTmp = computeCameraCoordinates(width, height);
     auto normalsTmp = computeNormals(m_depth_map, width, height, maxDistance);
     addValidPoints(pointsTmp, normalsTmp);
+}
 
 
+Eigen::Vector3d Frame::projectIntoCamera(const Eigen::Vector3d& globalCoord){
+    return m_global_pose.inverse() * globalCoord;
+}
+
+bool Frame::contains(const Eigen::Vector2d& img_coord){
+    return img_coord[0] < m_width && img_coord[1] < m_height && img_coord[0] >= 0 && img_coord[1] >= 0;
+}
+
+Eigen::Vector2d Frame::projectOntoPlane(const Eigen::Vector3d& cameraCoord){
+    Eigen::Vector3d projected = (m_intrinsic_matrix*cameraCoord);
+    projected /= projected[2];
+    return (Eigen::Vector2d (round(projected.x()), round(projected.y())));
 }
 
 void Frame::addValidPoints(std::vector<Eigen::Vector3d> points, std::vector<Eigen::Vector3d> normals
@@ -34,13 +48,36 @@ void Frame::addValidPoints(std::vector<Eigen::Vector3d> points, std::vector<Eige
             m_normals.push_back(normal);
         }
         else{
-            m_depth_map[i] = MINF;
+            //m_depth_map[i] = MINF;
             m_points.emplace_back(Eigen::Vector3d(MINF, MINF, MINF));
             m_normals.emplace_back(Eigen::Vector3d(MINF, MINF, MINF));
         }
     }
 }
 
+bool Frame::WriteMesh(const std::string& filename, std::string color) {
+    // Write off file.
+    std::ofstream outFile(filename);
+    if (!outFile.is_open()) return false;
+
+    // Write header.
+    outFile << "COFF" << std::endl;
+    outFile << m_points_global.size() << " " << "0" << " 0" << std::endl;
+
+    // Save vertices.
+    for (unsigned int i = 0; i < m_points_global.size(); i++) {
+        const auto& vertex = m_points_global[i];
+        if (vertex.allFinite())
+            outFile << vertex.x() << " " << vertex.y() << " " << vertex.z() << " "
+                    << color << std::endl;
+        else
+            outFile << "0.0 0.0 0.0 0 0 0 0" << std::endl;
+    }
+    // Close file.
+    outFile.close();
+
+    return true;
+}
 
 std::vector<Eigen::Vector3d> Frame::computeCameraCoordinates(unsigned int width, unsigned int height){
     double fovX = m_intrinsic_matrix(0, 0);
@@ -65,7 +102,7 @@ std::vector<Eigen::Vector3d> Frame::computeCameraCoordinates(unsigned int width,
             else {
                 // Back-projection to camera space.
 //                Eigen::Vector3d point (x, y, depth);
-                  pointsTmp[idx] = Eigen::Vector3d((x - cX) / fovX * depth, (y - cY) / fovY * depth, depth);
+                pointsTmp[idx] = Eigen::Vector3d((x - cX) / fovX * depth, (y - cY) / fovY * depth, depth);
 //                pointsTmp[idx] = intrinsicInverse * point;
             }
         }
@@ -128,8 +165,8 @@ void Frame::applyGlobalPose(Sophus::SE3d& estimated_pose){
 
     for(auto& normal : m_normals){
         if(normal.allFinite()) {
-        Eigen::Vector3d g_normal = estimated_pose.rotationMatrix()*normal;
-        m_normals_global.emplace_back(g_normal);
+            Eigen::Vector3d g_normal = estimated_pose.rotationMatrix()*normal;
+            m_normals_global.emplace_back(g_normal);
         }
         else
         {
@@ -139,11 +176,11 @@ void Frame::applyGlobalPose(Sophus::SE3d& estimated_pose){
 }
 
 const std::vector<Eigen::Vector3d>& Frame::getPoints() const {
-        return m_points;
+    return m_points;
 }
 
 const std::vector<Eigen::Vector3d>& Frame::getNormals() const {
-        return m_normals;
+    return m_normals;
 }
 
 const std::vector<Eigen::Vector3d>& Frame::getGlobalNormals() const{
@@ -151,11 +188,11 @@ const std::vector<Eigen::Vector3d>& Frame::getGlobalNormals() const{
 }
 
 const std::vector<Eigen::Vector3d>& Frame::getGlobalPoints() const{
-        return m_points_global;
+    return m_points_global;
 }
 
 const Sophus::SE3d& Frame::getGlobalPose() const{
-        return m_global_pose;
+    return m_global_pose;
 }
 
 void Frame::setGlobalPose(const Sophus::SE3d& pose) {
@@ -164,19 +201,19 @@ void Frame::setGlobalPose(const Sophus::SE3d& pose) {
 }
 
 const std::vector<double>& Frame::getDepthMap() const{
-        return m_depth_map;
+    return m_depth_map;
 }
 
 const Eigen::Matrix3d& Frame::getIntrinsics() const{
-        return m_intrinsic_matrix;
+    return m_intrinsic_matrix;
 }
 
 const unsigned int Frame::getWidth() const{
-        return m_width;
+    return m_width;
 }
 
 const unsigned int Frame:: getHeight() const{
-        return m_height;
+    return m_height;
 }
 
 double *Frame::getRawDepthMap() const {

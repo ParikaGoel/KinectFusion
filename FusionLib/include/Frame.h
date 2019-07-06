@@ -31,6 +31,7 @@ public:
 
 	bool readFromFile(const std::string& filename);
 
+    bool WriteMesh(const std::string& filename, std::string color);
 
     void applyGlobalPose(Sophus::SE3d& estimated_pose);
 
@@ -55,6 +56,13 @@ public:
     const unsigned int getHeight() const;
 
     double *getRawDepthMap() const;
+
+    bool contains(const Eigen::Vector2d& point);
+
+    Eigen::Vector3d projectIntoCamera(const Eigen::Vector3d& globalCoord);
+
+    Eigen::Vector2d projectOntoPlane(const Eigen::Vector3d& cameraCoord);
+
 
 private:
 

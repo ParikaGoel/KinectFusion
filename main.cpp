@@ -112,17 +112,43 @@ int main(){
     Sophus::SE3d current_camera_to_world = init_gl_pose;
     prevFrame->setGlobalPose(init_gl_pose);
 
+    auto normals   = prevFrame->getNormals();
+    auto g_normals = prevFrame->getGlobalNormals();
+    for (int i = 0; i < normals.size(); i++){
+        if((normals[i] - g_normals[i]).norm() > 0.001)
+        {
+            std::cout << "err" << normals[i] << std::endl;
+        }
+    }
+
+    // auto points   = prevFrame->getPoints();
+    // auto g_points = prevFrame->getGlobalPoints();
+    // for (int i = 0; i < points.size(); i++){
+    //     if((points[i] - g_points[i]).norm() > 0.001)
+    //     {
+    //         std::cout << "err" << points[i] << std::endl;
+    //     }
+    // }
+
+    std::cout << "all good for far?";
 
     int i = 0;
-    const int iMax = 3;
+    const int iMax = 0;
+
+    std::stringstream ss;
+    ss << filenameBaseOut << i << ".off";
+
+    //prevFrame->WriteMesh(ss.str(), "255 255 255 255");
+
     while(sensor.processNextFrame() && i <= iMax){
+
         double* depthMap = sensor.getDepth();
         std::shared_ptr<Frame> currentFrame = std::make_shared<Frame>(Frame(depthMap,depthIntrinsics, depthWidth, depthHeight));
         process_frame(prevFrame,currentFrame,volume,config);
         i++;
 
+        ss << filenameBaseOut << i << ".off";
+        currentFrame->WriteMesh(ss.str(), "255 0 0 255");
         prevFrame = std::move(currentFrame);
-
-
     }
 }

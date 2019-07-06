@@ -37,11 +37,13 @@ public:
 
 private:
 
+    bool hasValidDistance(const Eigen::Vector3d& point1, const Eigen::Vector3d& point2);
+    bool hasValidAngle(const Eigen::Vector3d& normal1, const Eigen::Vector3d& normal2);
+
     void findCorrespondence(std::shared_ptr<Frame> prev_frame, std::shared_ptr<Frame> curr_frame,std::vector<std::pair<size_t,size_t>>& corresponding_points,Sophus::SE3d& estimated_pose);
     void prepareConstraints(std::shared_ptr<Frame> prev_frame, std::shared_ptr<Frame> curr_frame,std::vector<std::pair<size_t,size_t>>& corresponding_points, Sophus::SE3d& pose, ceres::Problem& problem);
     void configureSolver(ceres::Solver::Options& options);
 
     double dist_threshold;
     double normal_threshold;
-
 };
