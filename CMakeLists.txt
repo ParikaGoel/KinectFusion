@@ -1,20 +1,13 @@
-cmake_minimum_required(VERSION 3.5)
+cmake_minimum_required(VERSION 3.10)
 set(PROJECT_NAME KinectFusion)
-
-
-
-
-
-#
-#add_executable(${PROJECT_NAME} main.cpp ${SOURCE_FILES})
-#target_link_libraries (${PROJECT_NAME} ${TARGET_LIBS})
-
 project(${PROJECT_NAME})
 
+set (CMAKE_CXX_STANDARD 14)
 set(CMAKE_MODULE_PATH ${PROJECT_SOURCE_DIR}/cmake ${CMAKE_MODULE_PATH})
+add_definitions(-DPROJECT_DIR="${PROJECT_SOURCE_DIR}")
+
 set(EXECUTABLE_OUTPUT_PATH bin)
 set(LIBRARY_OUTPUT_PATH lib)
-set (CMAKE_CXX_STANDARD 14)
 
 # for some reason clang doesn't include them in Wall whereas gcc does, so include them explicitly.
 SET(EXTRA_WARNING_FLAGS "-Wsign-compare")

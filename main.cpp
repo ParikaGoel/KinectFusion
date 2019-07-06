@@ -7,8 +7,8 @@
 
 #include <iostream>
 #include <vector>
-//#include <zconf.h>
-#include <VirtualSensor.h>
+#include <zconf.h>
+
 #include "DepthSensor.h"
 #include "icp.h"
 #include "Frame.h"
@@ -42,35 +42,57 @@ int main(){
     // frame.writeToMesh()
 
     // 5. visual in a mesh.off
+    std::string filenameIn = PROJECT_DATA_DIR + std::string("/rgbd_dataset_freiburg1_xyz/");
+    std::string filenameBaseOut = PROJECT_DATA_DIR + std::string("/results/mesh_");
 
-    double dist_threshold = 0.001;
-    double normal_threshold = 0.001;
+    // Load video
+    std::cout << "Initialize virtual sensor..." << std::endl;
+    VirtualSensor sensor;
+    if (!sensor.init(filenameIn)) {
+        std::cout << "Failed to initialize the sensor!\nCheck file path!" << std::endl;
+        return -1;
+    }
+
+    // We store a first frame as a reference frame. All next frames are tracked relatively to the first frame.
+    sensor.processNextFrame();
+
+    // Setup the optimizer.
+
+    double dist_threshold = 0.1;
+    double normal_threshold = 1;
     icp icp(dist_threshold,normal_threshold);
 
 
-    //DepthSensor sensor;
-    //sensor.start();
+    DepthSensor sensor;
+    sensor.start();
 
-    VirtualSensor sensor(PROJECT_DATA_DIR + std::string("sample"));
+//    VirtualSensor sensor(PROJECT_DATA_DIR + std::string("sample"));
+//    DepthSensor sensor;
+//    sensor.start();
+//
+    const Eigen::Matrix3d depthIntrinsics = sensor.getDepthIntrinsics();
+    const unsigned int depthWidth         = sensor.getDepthImageWidth();
+    const unsigned int depthHeight        = sensor.getDepthImageHeight();
 
-    const Eigen::Matrix3d depthIntrinsics = sensor.GetIntrinsics();
-    const unsigned int depthWidth         = sensor.GetDepthImageWidth();
-    const unsigned int depthHeight        = sensor.GetDepthImageHeight();
-
-    sensor.ProcessNextFrame();
-    std::vector<double> depthMap = sensor.GetDepth();
+//    sensor.ProcessNextFrame();
+    double * depthMap = sensor.getDepth();
     Sophus::SE3d init_gl_pose = Sophus::SE3d();
     std::shared_ptr<Frame> prevFrame = std::make_shared<Frame>(Frame(depthMap, depthIntrinsics, depthWidth, depthHeight));
     prevFrame->applyGlobalPose(init_gl_pose);
 
-    while(sensor.ProcessNextFrame()){
+    int i = 0;
+    const int iMax = 3;
+    while(sensor.processNextFrame() && i <= iMax){
 
         std::vector<double> depthMap = sensor.GetDepth();
+        double* depthMap = sensor.getDepth();
         std::shared_ptr<Frame> currentFrame = std::make_shared<Frame>(Frame(depthMap, depthIntrinsics, depthWidth, depthHeight));
 
         icp.estimatePose(prevFrame,currentFrame, 20);
 
         prevFrame = std::move(currentFrame);
+
+        i++;
 
     }
 }

@@ -3,14 +3,20 @@
 //
 #include "Frame.h"
 
-Frame::Frame(std::vector<double> depthMap, const Eigen::Matrix3d &depthIntrinsics,
+Frame::Frame(double * depthMap, const Eigen::Matrix3d &depthIntrinsics,
         const unsigned int width, const unsigned int height, int downsampleFactor, double maxDistance)
-        : m_depth_map(depthMap), m_width(width), m_height(height){
+        : m_width(width), m_height(height),m_intrinsic_matrix(depthIntrinsics){
 
-    auto pointsTmp = computeCameraCoordinates(depthMap, width, height, depthIntrinsics);
-    auto normalsTmp = computeNormals(depthMap, width, height, maxDistance);
+    m_depth_map.reserve(width*height);
 
+    for (size_t x = 0; x < width*height; x++) {
+            m_depth_map.push_back(depthMap[x]);
+    }
+
+    auto pointsTmp = computeCameraCoordinates(width, height);
+    auto normalsTmp = computeNormals(m_depth_map, width, height, maxDistance);
     addValidPoints(pointsTmp, normalsTmp, downsampleFactor);
+
 }
 
 void Frame::addValidPoints(std::vector<Eigen::Vector3d> points, std::vector<Eigen::Vector3d> normals,
@@ -29,7 +35,7 @@ void Frame::addValidPoints(std::vector<Eigen::Vector3d> points, std::vector<Eige
             m_points.push_back(point);
             m_normals.push_back(normal);
         }else{
-            m_depth_map[i] = -1;
+            m_depth_map[i] = MINF;
             m_points.emplace_back(Eigen::Vector3d(MINF, MINF, MINF));
             m_normals.emplace_back(Eigen::Vector3d(MINF, MINF, MINF));
         }
@@ -37,28 +43,31 @@ void Frame::addValidPoints(std::vector<Eigen::Vector3d> points, std::vector<Eige
 }
 
 
-std::vector<Eigen::Vector3d> Frame::computeCameraCoordinates(std::vector<double> depthMap,
-                                                             unsigned int width, unsigned int height, Eigen::Matrix3d intrinsics){
+std::vector<Eigen::Vector3d> Frame::computeCameraCoordinates(unsigned int width, unsigned int height){
+    double fovX = m_intrinsic_matrix(0, 0);
+    double fovY = m_intrinsic_matrix(1, 1);
+    double cX = m_intrinsic_matrix(0, 2);
+    double cY = m_intrinsic_matrix(1, 2);
 
-    auto intrinsicInverse = intrinsics.inverse();
+//    auto intrinsicInverse = m_intrinsic_matrix.inverse();
 
 
     // Back-project the pixel depths into the camera space.
     std::vector<Eigen::Vector3d> pointsTmp(width * height);
 
-    for (size_t x = 0; x < width; ++x){
-        for (size_t y = 0; y < height; ++y){
+    for (size_t y = 0; y < height; ++y){
+        for (size_t x = 0; x < width; ++x){
             unsigned int idx = x + (y * width);
-            double depth = depthMap[idx];
+            double depth = m_depth_map[idx];
 
             if (depth == MINF) {
                 pointsTmp[idx] = Eigen::Vector3d(MINF, MINF, MINF);
             }
             else {
                 // Back-projection to camera space.
-                Eigen::Vector3d point (x, y, depth);
-                // pointsTmp[idx] = Eigen::Vector3d((u - cX) / fovX * depth, (v - cY) / fovY * depth, depth) + translationInv;
-                pointsTmp[idx] = intrinsicInverse * point;
+//                Eigen::Vector3d point (x, y, depth);
+                  pointsTmp[idx] = Eigen::Vector3d((x - cX) / fovX * depth, (y - cY) / fovY * depth, depth);
+//                pointsTmp[idx] = intrinsicInverse * point;
             }
         }
     }
@@ -66,7 +75,7 @@ std::vector<Eigen::Vector3d> Frame::computeCameraCoordinates(std::vector<double>
 }
 
 
-std::vector<Eigen::Vector3d> Frame::computeNormals(std::vector<double> depthMap, unsigned int width, unsigned int height,  double maxDistance){
+std::vector<Eigen::Vector3d> Frame::computeNormals(std::vector<double>& depthMap, unsigned int width, unsigned int height,  double maxDistance){
 
     // We need to compute derivatives and then the normalized normal vector (for valid pixels).
     std::vector<Eigen::Vector3d> normalsTmp(width * height);
@@ -109,18 +118,13 @@ std::vector<Eigen::Vector3d> Frame::computeNormals(std::vector<double> depthMap,
 void Frame::applyGlobalPose(Sophus::SE3d& estimated_pose){
     for(auto& point : m_points){
         Eigen::Vector3d g_point = estimated_pose * point;
-        m_points_global.push_back(g_point);
+        m_points_global.emplace_back(g_point);
     }
 
     for(auto& normal : m_normals){
         Eigen::Vector3d g_normal = estimated_pose.rotationMatrix()*normal;
-        m_normals_global.push_back(g_normal);
+        m_normals_global.emplace_back(g_normal);
     }
-}
-
-
-std::vector<Eigen::Vector3d>& Frame::getPoints() {
-        return m_points;
 }
 
 const std::vector<Eigen::Vector3d>& Frame::getPoints() const {
@@ -152,9 +156,9 @@ const Eigen::Matrix3d& Frame::getIntrinsics() const{
 }
 
 const unsigned int Frame::getWidth() const{
-        return width;
+        return m_width;
 }
 
 const unsigned int Frame:: getHeight() const{
-        return height;
+        return m_height;
 }
