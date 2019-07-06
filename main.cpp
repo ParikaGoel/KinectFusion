@@ -63,13 +63,9 @@ int main(){
     icp icp(dist_threshold,normal_threshold);
 
 
-    DepthSensor sensor;
-    sensor.start();
 
-//    VirtualSensor sensor(PROJECT_DATA_DIR + std::string("sample"));
-//    DepthSensor sensor;
-//    sensor.start();
-//
+
+
     const Eigen::Matrix3d depthIntrinsics = sensor.getDepthIntrinsics();
     const unsigned int depthWidth         = sensor.getDepthImageWidth();
     const unsigned int depthHeight        = sensor.getDepthImageHeight();
@@ -84,7 +80,6 @@ int main(){
     const int iMax = 3;
     while(sensor.processNextFrame() && i <= iMax){
 
-        std::vector<double> depthMap = sensor.GetDepth();
         double* depthMap = sensor.getDepth();
         std::shared_ptr<Frame> currentFrame = std::make_shared<Frame>(Frame(depthMap, depthIntrinsics, depthWidth, depthHeight));
 
@@ -95,4 +90,6 @@ int main(){
         i++;
 
     }
+
+
 }
