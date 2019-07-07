@@ -40,7 +40,7 @@ bool icp::hasValidDistance(const Eigen::Vector3d& point1, const Eigen::Vector3d&
 }
 
 bool icp::hasValidAngle(const Eigen::Vector3d& normal1, const Eigen::Vector3d& normal2) {
-    return std::abs(normal1.dot(normal2) > normal_threshold);
+    return std::abs(normal1.dot(normal2)) > normal_threshold;
 }
 
 // Find corresponding points between current frame and previous frame
@@ -99,17 +99,40 @@ const Eigen::Matrix4d icp::getPose(Eigen::Matrix<double, 6, 1>& x){
     double t_z = x(5);
 
     Eigen::Matrix4d pose;
-    pose <<   1   , -gamma,   beta, t_x,
-            gamma ,    1  , -alpha, t_y,
-            -beta , alpha ,    1  , t_z,
-            0   ,    0  ,    0  ,   1;
+    pose(0,0) = 1;
+    pose(0,1) = alpha * beta - gamma;
+    pose(0,2) = alpha * gamma + beta;
+    pose(0,3) = t_x;
+
+    pose(1,0) = gamma;
+    pose(1,1) = alpha * beta * gamma + 1;
+    pose(1,2) = beta * gamma - alpha;
+    pose(1,3) = t_y;
+
+    pose(2,0) = -beta;
+    pose(2,1) = alpha;
+    pose(2,2) = 1;
+    pose(2,3) = t_z;
+
+    pose(3,0) = 0;
+    pose(3,1) = 0;
+    pose(3,2) = 0;
+    pose(3,3) = 1;
+
+
+    //pose <<   1   , -gamma,   beta, t_x,
+    //        gamma ,    1  , -alpha, t_y,
+    //        -beta , alpha ,    1  , t_z,
+    //        0   ,    0  ,    0  ,   1;
+
+    return pose;
 }
 
-double icp::getb(Eigen::Vector3d& s_i, Eigen::Vector3d& n_i, Eigen::Vector3d& d_i){
+double icp::getb_i(Eigen::Vector3d& s_i, Eigen::Vector3d& n_i, Eigen::Vector3d& d_i){
     return n_i.dot(d_i) - n_i.dot(s_i);
 }
 
-Eigen::Matrix<double, 6, 1> icp::getA(Eigen::Vector3d& s_i, Eigen::Vector3d& n_i){
+Eigen::Matrix<double, 6, 1> icp::getA_i(Eigen::Vector3d& s_i, Eigen::Vector3d& n_i){
     // double a_i1 = n_i.z() * s_i.y()  - n_i.y() * s_i.z();
     // double a_i2 = n_i.x() * s_i.z()  - n_i.z() * s_i.x();
     // double a_i3 = n_i.y() * s_i.x()  - n_i.x() * s_i.y();
@@ -140,7 +163,7 @@ Eigen::Matrix4d icp::solveForPose(std::shared_ptr<Frame> prev_frame, std::shared
     Eigen::MatrixXd b( N , 1);
 
     //for (const auto &match : corresponding_points){
-    for (int i = 0; i < corresponding_points.size(); ++i ){
+    for (size_t i = 0; i < corresponding_points.size(); ++i ){
 
         auto match = corresponding_points[i];
 
@@ -148,10 +171,11 @@ Eigen::Matrix4d icp::solveForPose(std::shared_ptr<Frame> prev_frame, std::shared
         Eigen::Vector3d n_i = prev_global_normals[ match.first ];
         Eigen::Vector3d s_i = curr_points[ match.second ];
 
-        A.row(i) = getA(s_i, n_i);
-        b.row(i) = getA(s_i, n_i);
+        A.row(i) = getA_i(s_i, n_i);
+        b(i) = getb_i(s_i, n_i, d_i);
     }
-    Eigen::Matrix<double, 6,1> x = A.colPivHouseholderQr().solve(b);
+    // Eigen::Matrix<double, 6,1> x = A.colPivHouseholderQr().solve(b);
+    Eigen::Matrix<double, 6,1> x = A.bdcSvd(Eigen::ComputeThinU | Eigen::ComputeThinV).solve(b);
     return getPose(x);
 }
 

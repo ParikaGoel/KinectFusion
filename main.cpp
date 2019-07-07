@@ -108,7 +108,8 @@ int main(){
     double * depthMap = sensor.getDepth();
     std::shared_ptr<Frame> prevFrame = std::make_shared<Frame>(Frame(depthMap, depthIntrinsics, depthWidth, depthHeight));
 
-    Eigen::Matrix4d init_gl_pose;
+    Eigen::Matrix4d init_gl_pose = Eigen::Matrix4d::Identity();
+
     Eigen::Matrix4d current_camera_to_world = init_gl_pose;
 
     prevFrame->setGlobalPose(init_gl_pose);

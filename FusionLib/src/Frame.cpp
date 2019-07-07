@@ -20,7 +20,7 @@ Frame::Frame(double * depthMap, const Eigen::Matrix3d &depthIntrinsics,
 Eigen::Vector3d Frame::projectIntoCamera(const Eigen::Vector3d& globalCoord){
     Eigen::Matrix4d pose_inverse = m_global_pose.inverse();
     const auto rotation_inv = pose_inverse.block(0,0,3,3);
-    const auto translation_inv = pose_inverse.block(0,0,3,1);
+    const auto translation_inv = pose_inverse.block(0,3,3,1);
     return rotation_inv * globalCoord + translation_inv;
 }
 
@@ -156,7 +156,7 @@ std::vector<Eigen::Vector3d> Frame::computeNormals(std::vector<double>& depthMap
 
 void Frame::applyGlobalPose(Eigen::Matrix4d& estimated_pose){
     const auto rotation = estimated_pose.block(0,0,3,3);
-    const auto translation = estimated_pose.block(0,0,3,1);
+    const auto translation = estimated_pose.block(0,3,3,1);
     for(auto& point : m_points){
         if(point.allFinite()) {
             Eigen::Vector3d g_point = rotation * point + translation;
