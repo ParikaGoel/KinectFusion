@@ -18,7 +18,10 @@ Frame::Frame(double * depthMap, const Eigen::Matrix3d &depthIntrinsics,
 
 
 Eigen::Vector3d Frame::projectIntoCamera(const Eigen::Vector3d& globalCoord){
-    return m_global_pose.inverse() * globalCoord;
+    Eigen::Matrix4d pose_inverse = m_global_pose.inverse();
+    const auto rotation_inv = pose_inverse.block(0,0,3,3);
+    const auto translation_inv = pose_inverse.block(0,0,3,1);
+    return rotation_inv * globalCoord + translation_inv;
 }
 
 bool Frame::contains(const Eigen::Vector2d& img_coord){
@@ -151,10 +154,12 @@ std::vector<Eigen::Vector3d> Frame::computeNormals(std::vector<double>& depthMap
     return normalsTmp;
 }
 
-void Frame::applyGlobalPose(Sophus::SE3d& estimated_pose){
+void Frame::applyGlobalPose(Eigen::Matrix4d& estimated_pose){
+    const auto rotation = estimated_pose.block(0,0,3,3);
+    const auto translation = estimated_pose.block(0,0,3,1);
     for(auto& point : m_points){
         if(point.allFinite()) {
-            Eigen::Vector3d g_point = estimated_pose * point;
+            Eigen::Vector3d g_point = rotation * point + translation;
             m_points_global.emplace_back(g_point);
         }
         else
@@ -165,7 +170,7 @@ void Frame::applyGlobalPose(Sophus::SE3d& estimated_pose){
 
     for(auto& normal : m_normals){
         if(normal.allFinite()) {
-            Eigen::Vector3d g_normal = estimated_pose.rotationMatrix()*normal;
+            Eigen::Vector3d g_normal = rotation * normal;
             m_normals_global.emplace_back(g_normal);
         }
         else
@@ -191,7 +196,7 @@ const std::vector<Eigen::Vector3d>& Frame::getGlobalPoints() const{
     return m_points_global;
 }
 
-const Sophus::SE3d& Frame::getGlobalPose() const{
+const Eigen::Matrix4d& Frame::getGlobalPose() const{
     return m_global_pose;
 }
 

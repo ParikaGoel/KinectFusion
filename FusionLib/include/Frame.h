@@ -11,21 +11,12 @@
 #define MINF -std::numeric_limits<double>::infinity()
 #endif
 
-
-
-
 class Frame {
 public:
     EIGEN_MAKE_ALIGNED_OPERATOR_NEW
 
     Frame(double* depthMap, const Eigen::Matrix3d& depthIntrinsics,
             const unsigned int width, const unsigned int height, int downsampleFactor = 1, double maxDistance = 0.1);
-
-//    Frame(std::vector<double> depthMap, const Eigen::Matrix3d& depthIntrinsics, const Eigen::Matrix4d& depthExtrinsics,
-//            const unsigned int width, const unsigned int height);
-//
-//    Frame(std::vector<double> depthMap, const Eigen::Matrix3d& depthIntrinsics, const Eigen::Matrix4d& depthExtrinsics,
-//            const unsigned width, const unsigned height, unsigned downsampleFactor = 1, float maxDistance = 0.1f);
 
 	void computeNormals(double maxDistance=0.1);
 

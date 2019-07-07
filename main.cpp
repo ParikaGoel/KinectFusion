@@ -108,13 +108,14 @@ int main(){
     double * depthMap = sensor.getDepth();
     std::shared_ptr<Frame> prevFrame = std::make_shared<Frame>(Frame(depthMap, depthIntrinsics, depthWidth, depthHeight));
 
-    Sophus::SE3d init_gl_pose = Sophus::SE3d();
-    Sophus::SE3d current_camera_to_world = init_gl_pose;
+    Eigen::Matrix4d init_gl_pose;
+    Eigen::Matrix4d current_camera_to_world = init_gl_pose;
+
     prevFrame->setGlobalPose(init_gl_pose);
 
     auto normals   = prevFrame->getNormals();
     auto g_normals = prevFrame->getGlobalNormals();
-    for (int i = 0; i < normals.size(); i++){
+    for (size_t i = 0; i < normals.size(); i++){
         if((normals[i] - g_normals[i]).norm() > 0.001)
         {
             std::cout << "err" << normals[i] << std::endl;
