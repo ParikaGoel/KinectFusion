@@ -1,3 +1,4 @@
+#include "MeshWriter.h"
 #include "icp.h"
 #include "iterator"
 
@@ -266,6 +267,31 @@ void icp::estimatePose(std::shared_ptr<Frame> prev_frame, std::shared_ptr<Frame>
 
         std::vector<std::pair<size_t, size_t>> corresponding_points;
         findCorrespondence(prev_frame, curr_frame, corresponding_points, estimated_pose);
+
+        size_t N = corresponding_points.size();
+        // N = 200000;
+
+        std::vector<Eigen::Vector3d> matchA (N);
+        std::vector<Eigen::Vector3d> matchB (N);
+
+
+        for (size_t idx = 200000; idx < N; idx++){
+            matchA.push_back((prev_frame->getPoints())[corresponding_points[idx].first]);
+            matchB.push_back((curr_frame->getPoints())[corresponding_points[idx].second]);
+        }
+
+        std::cout << "writing" << MeshWriter::toFile(
+                "corrA" + std::to_string(i), "255 0 0 255", matchA);
+        std::cout << "writing" << MeshWriter::toFile(
+                "corrB" + std::to_string(i), "255 255 0 255", matchB);
+
+        MeshWriter::toFile(
+                "meshA", "255 255 255 255", prev_frame->getPoints()
+                );
+
+        MeshWriter::toFile(
+                "meshB", "255 255 0 255", curr_frame->getPoints()
+                );
 
         Eigen::Matrix4d pose = solveForPose(prev_frame, curr_frame, corresponding_points);
 

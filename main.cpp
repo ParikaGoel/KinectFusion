@@ -35,13 +35,20 @@ public:
     const double m_voxelScale;
     Eigen::Vector3i m_volumeSize;
 
-
-
 };
+
+bool writeToFile(std::string filename, int width, int height, std::vector<double> vector){
+    std::ofstream outFile(filename);
+    if (!outFile.is_open()) return false;
+
+    outFile << width << "," << height << std::endl;
+    for(auto vec : vector)
+        outFile << vec<<",";
+    return true;
+}
+
 bool process_frame( std::shared_ptr<Frame> prevFrame,std::shared_ptr<Frame> currentFrame, std::shared_ptr<Volume> volume,const Config& config)
 {
-
-
     // STEP 1: estimate Pose
     icp icp(config.m_dist_threshold,config.m_normal_threshold);
 
@@ -52,10 +59,6 @@ bool process_frame( std::shared_ptr<Frame> prevFrame,std::shared_ptr<Frame> curr
 
     icp.estimatePose(prevFrame,currentFrame, 20);
 
-
-
-
-
     // STEP 2: Surface reconstruction
     //TODO does icp.estimate set the new Pose to currentFrame? Otherwise it needs to be added as function parameter
     Fusion fusion;
@@ -63,22 +66,16 @@ bool process_frame( std::shared_ptr<Frame> prevFrame,std::shared_ptr<Frame> curr
         throw "Surface reconstruction failed";
     };
 
-
-
     // Step 4: Surface prediction
     Raycast raycast;
     if(!raycast.surfacePrediction(currentFrame,volume, config.m_truncationDistance)){
         throw "Raycasting failed";
     };
 
-
-
     return true;
 }
 
 int main(){
-
-
     // 5. visual in a mesh.off
     std::string filenameIn = PROJECT_DATA_DIR + std::string("/rgbd_dataset_freiburg1_xyz/");
     std::string filenameBaseOut = PROJECT_DATA_DIR + std::string("/results/mesh_");
