@@ -7,7 +7,10 @@ set(FUSION_SOURCES
         src/icp.cpp
         src/VirtualSensor.cpp
         src/DepthSensor.cpp
-        src/Frame.cpp)
+        src/Frame.cpp
+        src/Volume.cpp
+        src/Raycast.cpp
+        src/Fusion.cpp)
 
 add_library(${FUSION_Name}  ${FUSION_SOURCES})
 target_include_directories(${FUSION_Name} PUBLIC ${CMAKE_CURRENT_LIST_DIR}/include)

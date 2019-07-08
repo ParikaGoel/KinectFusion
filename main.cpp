@@ -8,38 +8,75 @@
 #include <iostream>
 #include <vector>
 #include <zconf.h>
+#include <Volume.hpp>
+#include <Fusion.hpp>
+#include <Raycast.hpp>
 
 #include "DepthSensor.h"
 #include "icp.h"
 #include "Frame.h"
 
-bool writeToFile(std::string filename, int width, int height, std::vector<double> vector){
-    std::ofstream outFile(filename);
-    if (!outFile.is_open()) return false;
+//TODO this should be moved to one File containing all data_declarations class
+struct Config{
 
-    outFile << width << "," << height << std::endl;
-    for(auto vec : vector)
-        outFile << vec<<",";
+public:
+    Config(const double dist_threshold, const double normal_threshold, const double truncationDistance,const double voxelScale, const int x,const int y, const int z):
+    m_dist_threshold(dist_threshold),
+    m_normal_threshold(normal_threshold),
+    m_truncationDistance(truncationDistance),
+    m_voxelScale(voxelScale),
+    m_volumeSize(x,y,z)
+    {};
+
+    const double m_dist_threshold;
+    const double m_normal_threshold;
+    const double m_truncationDistance;
+    const double m_voxelScale;
+    Eigen::Vector3i m_volumeSize;
+
+
+
+};
+bool process_frame( std::shared_ptr<Frame> prevFrame,std::shared_ptr<Frame> currentFrame, std::shared_ptr<Volume> volume,const Config& config)
+{
+
+
+    // STEP 1: estimate Pose
+    icp icp(config.m_dist_threshold,config.m_normal_threshold);
+
+    //TODO give some bool return if icp.estimate was succesfull
+   /* if(!icp.estimatePose(prevFrame,currentFrame, 20)){
+        throw "ICP Pose Estimation failed";
+    };*/
+
+    icp.estimatePose(prevFrame,currentFrame, 20);
+
+
+
+
+
+    // STEP 2: Surface reconstruction
+    //TODO does icp.estimate set the new Pose to currentFrame? Otherwise it needs to be added as function parameter
+    Fusion fusion;
+    if(!fusion.reconstructSurface(currentFrame,volume, config.m_truncationDistance)){
+        throw "Surface reconstruction failed";
+    };
+
+
+
+    // Step 4: Surface prediction
+    Raycast raycast;
+    if(!raycast.surfacePrediction(currentFrame,volume, config.m_truncationDistance)){
+        throw "Raycasting failed";
+    };
+
+
+
     return true;
 }
 
 int main(){
 
-    // create icp
-
-    // 0. create 1st frame
-
-    // 1. get depth map
-
-    // 2. create Frame (without extrinsics)
-
-    // 3. feed previous frame and created frame to icp
-    // frame.setExtrinsics(Sophus::SE3d)
-    // frame.applyGlobalTransform()
-
-    // icp.estimatePose(prev, current)
-
-    // frame.writeToMesh()
 
     // 5. visual in a mesh.off
     std::string filenameIn = PROJECT_DATA_DIR + std::string("/rgbd_dataset_freiburg1_xyz/");
@@ -57,37 +94,33 @@ int main(){
     sensor.processNextFrame();
 
     // Setup the optimizer.
-
+    //TODO truncationDistance is completly random Value right now
+    Config config (0.1,1,0.5,512,512,512,1.0);
     double dist_threshold = 0.1;
     double normal_threshold = 1;
-    icp icp(dist_threshold,normal_threshold);
 
-
-
-
+    //Setup Volume
+    auto volume = std::make_shared<Volume>(config.m_volumeSize,config.m_voxelScale) ;
 
     const Eigen::Matrix3d depthIntrinsics = sensor.getDepthIntrinsics();
     const unsigned int depthWidth         = sensor.getDepthImageWidth();
     const unsigned int depthHeight        = sensor.getDepthImageHeight();
 
-//    sensor.ProcessNextFrame();
     double * depthMap = sensor.getDepth();
     Sophus::SE3d init_gl_pose = Sophus::SE3d();
     std::shared_ptr<Frame> prevFrame = std::make_shared<Frame>(Frame(depthMap, depthIntrinsics, depthWidth, depthHeight));
     prevFrame->applyGlobalPose(init_gl_pose);
 
+
     int i = 0;
     const int iMax = 3;
     while(sensor.processNextFrame() && i <= iMax){
-
         double* depthMap = sensor.getDepth();
-        std::shared_ptr<Frame> currentFrame = std::make_shared<Frame>(Frame(depthMap, depthIntrinsics, depthWidth, depthHeight));
-
-        icp.estimatePose(prevFrame,currentFrame, 20);
-
+        std::shared_ptr<Frame> currentFrame = std::make_shared<Frame>(Frame(depthMap,depthIntrinsics, depthWidth, depthHeight));
+        process_frame(prevFrame,currentFrame,volume,config);
+        i++;
         prevFrame = std::move(currentFrame);
 
-        i++;
 
     }
 
