@@ -99,8 +99,10 @@ int main(){
     auto volume = std::make_shared<Volume>(config.m_volumeSize,config.m_voxelScale) ;
 
     const Eigen::Matrix3d depthIntrinsics = sensor.getDepthIntrinsics();
-    const unsigned int depthWidth         = sensor.getDepthImageWidth();
-    const unsigned int depthHeight        = sensor.getDepthImageHeight();
+    // const unsigned int depthWidth         = sensor.getDepthImageWidth();
+    // const unsigned int depthHeight        = sensor.getDepthImageHeight();
+    const unsigned int depthWidth = 100;
+    const unsigned int depthHeight = 100;
 
     double * depthMap = sensor.getDepth();
     std::shared_ptr<Frame> prevFrame = std::make_shared<Frame>(Frame(depthMap, depthIntrinsics, depthWidth, depthHeight));
@@ -140,7 +142,7 @@ int main(){
     //prevFrame->WriteMesh(ss.str(), "255 255 255 255");
 
     while(sensor.processNextFrame() && i <= iMax){
-
+        
         double* depthMap = sensor.getDepth();
         std::shared_ptr<Frame> currentFrame = std::make_shared<Frame>(Frame(depthMap,depthIntrinsics, depthWidth, depthHeight));
         process_frame(prevFrame,currentFrame,volume,config);

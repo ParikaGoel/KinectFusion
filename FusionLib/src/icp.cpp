@@ -143,7 +143,9 @@ Eigen::Matrix<double, 6, 1> icp::getA_i(Eigen::Vector3d& s_i, Eigen::Vector3d& n
 
     Eigen::Matrix<double, 6, 1> row;
     // TODO check
+
     row << s_i.cross(n_i) , n_i;
+    std::cout << row << std::endl;
 
     return row;
 }
@@ -173,7 +175,11 @@ Eigen::Matrix4d icp::solveForPose(std::shared_ptr<Frame> prev_frame, std::shared
         Eigen::Vector3d s_i = curr_points[ match.second ];
 
         A.row(i) = getA_i(s_i, n_i);
+        std::cout << A.row(i) << std::endl;
         b(i) = getb_i(s_i, n_i, d_i);
+        std::cout << b(i) << std::endl;
+
+        std::cout << std::endl;
     }
     // Eigen::Matrix<double, 6,1> x = A.colPivHouseholderQr().solve(b);
     Eigen::Matrix<double, 6,1> x = A.bdcSvd(Eigen::ComputeThinU | Eigen::ComputeThinV).solve(b);
@@ -263,37 +269,36 @@ void icp::estimatePose(std::shared_ptr<Frame> prev_frame, std::shared_ptr<Frame>
 
 void icp::estimatePose(std::shared_ptr<Frame> prev_frame, std::shared_ptr<Frame> curr_frame, size_t m_nIterations,Eigen::Matrix4d& estimated_pose)
 {
+    MeshWriter::toFile("meshA", "0 255 0 255", prev_frame->getGlobalPoints());
+    MeshWriter::toFile("meshB", "255 0 0 255", curr_frame->getPoints());
+
     for (size_t i = 0; i < m_nIterations; ++i) {
 
         std::vector<std::pair<size_t, size_t>> corresponding_points;
         findCorrespondence(prev_frame, curr_frame, corresponding_points, estimated_pose);
 
         size_t N = corresponding_points.size();
-        // N = 200000;
 
         std::vector<Eigen::Vector3d> matchA (N);
         std::vector<Eigen::Vector3d> matchB (N);
 
 
-        for (size_t idx = 200000; idx < N; idx++){
-            matchA.push_back((prev_frame->getPoints())[corresponding_points[idx].first]);
-            matchB.push_back((curr_frame->getPoints())[corresponding_points[idx].second]);
+        for (size_t idx = 0; idx < N; idx++){
+            matchA[idx] = ((prev_frame->getGlobalPoints())[corresponding_points[idx].first]);
+            matchB[idx] = ((curr_frame->getPoints())[corresponding_points[idx].second]);
         }
 
-        std::cout << "writing" << MeshWriter::toFile(
+        MeshWriter::toFile(
                 "corrA" + std::to_string(i), "255 0 0 255", matchA);
-        std::cout << "writing" << MeshWriter::toFile(
+        MeshWriter::toFile(
                 "corrB" + std::to_string(i), "255 255 0 255", matchB);
 
-        MeshWriter::toFile(
-                "meshA", "255 255 255 255", prev_frame->getPoints()
-                );
-
-        MeshWriter::toFile(
-                "meshB", "255 255 0 255", curr_frame->getPoints()
-                );
-
         Eigen::Matrix4d pose = solveForPose(prev_frame, curr_frame, corresponding_points);
+
+        curr_frame->setGlobalPose(pose);
+
+        MeshWriter::toFile(
+                "corrBT" + std::to_string(i), "0 255 0 255", curr_frame->getGlobalPoints());
 
         estimated_pose = pose;
     }
