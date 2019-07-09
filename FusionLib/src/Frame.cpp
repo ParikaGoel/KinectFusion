@@ -5,7 +5,7 @@
 
 Frame::Frame(double * depthMap, const Eigen::Matrix3d &depthIntrinsics,
         const unsigned int width, const unsigned int height, int downsampleFactor, double maxDistance)
-        : m_width(width), m_height(height),m_intrinsic_matrix(depthIntrinsics){
+        : m_width(width), m_height(height),m_intrinsic_matrix(depthIntrinsics),_rawDepthMap(depthMap){
 
     m_depth_map.reserve(width*height);
 
@@ -161,4 +161,8 @@ const unsigned int Frame::getWidth() const{
 
 const unsigned int Frame:: getHeight() const{
         return m_height;
+}
+
+double *Frame::getRawDepthMap() const {
+    return _rawDepthMap;
 }

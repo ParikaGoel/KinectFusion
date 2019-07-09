@@ -52,6 +52,7 @@ public:
 
     const unsigned int getHeight() const;
 
+    double *getRawDepthMap() const;
 
 private:
 
@@ -73,4 +74,5 @@ private:
 
     const unsigned int m_width;
     const unsigned int m_height;
+    double* _rawDepthMap;
 };
