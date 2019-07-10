@@ -20,6 +20,7 @@
 //TODO this should be moved to one File containing all data_declarations class
 struct Config{
 
+<<<<<<< HEAD
 public:
     Config(const double dist_threshold, const double normal_threshold, const double truncationDistance,const double voxelScale, const int x,const int y, const int z):
     m_dist_threshold(dist_threshold),
@@ -36,6 +37,10 @@ public:
     Eigen::Vector3i m_volumeSize;
 
 };
+=======
+#include "SimpleMesh.h"
+
+>>>>>>> spagetthi
 
 bool writeToFile(std::string filename, int width, int height, std::vector<double> vector){
     std::ofstream outFile(filename);
@@ -110,8 +115,6 @@ int main(){
     Eigen::Matrix4d init_gl_pose = Eigen::Matrix4d::Identity();
 
     Eigen::Matrix4d current_camera_to_world = init_gl_pose;
-
-    prevFrame->setGlobalPose(init_gl_pose);
 
     auto normals   = prevFrame->getNormals();
     auto g_normals = prevFrame->getGlobalNormals();

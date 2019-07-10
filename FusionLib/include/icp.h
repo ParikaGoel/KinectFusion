@@ -43,6 +43,7 @@ private:
     Eigen::Matrix<double, 6, 1> getA_i(Eigen::Vector3d& s_i, Eigen::Vector3d& n_i);
 
     Eigen::Matrix4d solveForPose(std::shared_ptr<Frame> prev_frame, std::shared_ptr<Frame> curr_frame,
+            Eigen::Matrix4d& estimated_pose,
             std::vector<std::pair<size_t,size_t>>& corresponding_points);
 
     bool hasValidDistance(const Eigen::Vector3d& point1, const Eigen::Vector3d& point2);

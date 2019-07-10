@@ -13,7 +13,22 @@ Frame::Frame(double * depthMap, const Eigen::Matrix3d &depthIntrinsics,
 
     auto pointsTmp = computeCameraCoordinates(width, height);
     auto normalsTmp = computeNormals(m_depth_map, width, height, maxDistance);
+
     addValidPoints(pointsTmp, normalsTmp);
+
+    setGlobalPose(Eigen::Matrix4d::Identity());
+}
+
+Frame::Frame(std::vector<Eigen::Vector3d> points, const Eigen::Matrix3d &depthIntrinsics,
+        const unsigned int width, const unsigned int height, int downsampleFactor, double maxDistance)
+        : m_width(width), m_height(height),m_intrinsic_matrix(depthIntrinsics){
+
+    auto pointsTmp = computeCameraCoordinates(width, height);
+    auto normalsTmp = computeNormals(m_depth_map, width, height, maxDistance);
+
+    addValidPoints(pointsTmp, normalsTmp);
+
+    setGlobalPose(Eigen::Matrix4d::Identity());
 }
 
 
@@ -155,17 +170,22 @@ std::vector<Eigen::Vector3d> Frame::computeNormals(std::vector<double>& depthMap
 }
 
 void Frame::applyGlobalPose(Eigen::Matrix4d& estimated_pose){
-    const auto rotation = estimated_pose.block(0,0,3,3);
-    const auto translation = estimated_pose.block(0,3,3,1);
-    for(auto& point : m_points){
-        if(point.allFinite()) {
-            Eigen::Vector3d g_point = rotation * point + translation;
-            m_points_global.emplace_back(g_point);
+    Eigen::Matrix3d rotation = estimated_pose.block(0,0,3,3);
+    //Eigen::Vector3d translation = estimated_pose.block(0,3,3,1);
+
+    m_points_global  = transformPoints(m_points, estimated_pose);
+    m_normals_global = rotatePoints(m_normals, rotation);
+
+    /*
+    m_points_global = std::vector<Eigen::Vector3d>(m_points.size());
+
+    for( size_t idx = 0; idx < m_points.size(); ++idx){
+        if(m_points[idx].allFinite()) {
+            Eigen::Vector3d g_point = rotation * m_points[idx] + translation;
+            m_points_global[idx] = (g_point);
         }
         else
-        {
-            m_points_global.emplace_back(Eigen::Vector3d(MINF, MINF, MINF));
-        }
+            m_points_global[idx] = (Eigen::Vector3d(MINF, MINF, MINF));
     }
 
     for(auto& normal : m_normals){
@@ -178,6 +198,33 @@ void Frame::applyGlobalPose(Eigen::Matrix4d& estimated_pose){
             m_normals_global.emplace_back(Eigen::Vector3d(MINF, MINF, MINF));
         }
     }
+     */
+}
+
+std::vector<Eigen::Vector3d> Frame::transformPoints(std::vector<Eigen::Vector3d>& points, Eigen::Matrix4d& transformation){
+    const Eigen::Matrix3d rotation = transformation.block(0,0,3,3);
+    const Eigen::Vector3d translation = transformation.block(0,3,3,1);
+    std::vector<Eigen::Vector3d> transformed (points.size());
+
+    for( size_t idx = 0; idx < points.size(); ++idx){
+        if(points[idx].allFinite())
+            transformed[idx] = rotation * points[idx] + translation;
+        else
+            transformed[idx] = (Eigen::Vector3d(MINF, MINF, MINF));
+    }
+    return transformed;
+}
+
+std::vector<Eigen::Vector3d> Frame::rotatePoints(std::vector<Eigen::Vector3d>& points, Eigen::Matrix3d& rotation){
+    std::vector<Eigen::Vector3d> transformed (points.size());
+
+    for( size_t idx = 0; idx < points.size(); ++idx){
+        if(points[idx].allFinite())
+            transformed[idx] = rotation * points[idx];
+        else
+            transformed[idx] = (Eigen::Vector3d(MINF, MINF, MINF));
+    }
+    return transformed;
 }
 
 const std::vector<Eigen::Vector3d>& Frame::getPoints() const {

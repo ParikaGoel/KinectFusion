@@ -126,6 +126,8 @@ const Eigen::Matrix4d icp::getPose(Eigen::Matrix<double, 6, 1>& x){
     //        -beta , alpha ,    1  , t_z,
     //        0   ,    0  ,    0  ,   1;
 
+    std::cout << "estimated trans:"<< pose << std::endl;
+
     return pose;
 }
 
@@ -134,18 +136,18 @@ double icp::getb_i(Eigen::Vector3d& s_i, Eigen::Vector3d& n_i, Eigen::Vector3d& 
 }
 
 Eigen::Matrix<double, 6, 1> icp::getA_i(Eigen::Vector3d& s_i, Eigen::Vector3d& n_i){
-    // double a_i1 = n_i.z() * s_i.y()  - n_i.y() * s_i.z();
-    // double a_i2 = n_i.x() * s_i.z()  - n_i.z() * s_i.x();
-    // double a_i3 = n_i.y() * s_i.x()  - n_i.x() * s_i.y();
-
-    // Eigen::Matrix<double, 6, 1> row;
-    // row << ( a_i1, a_i2, a_i3, n_i.x(), n_i.y(), n_i.z() );
+    double a_i1 = n_i.z() * s_i.y()  - n_i.y() * s_i.z();
+    double a_i2 = n_i.x() * s_i.z()  - n_i.z() * s_i.x();
+    double a_i3 = n_i.y() * s_i.x()  - n_i.x() * s_i.y();
 
     Eigen::Matrix<double, 6, 1> row;
-    // TODO check
+    row << a_i1, a_i2, a_i3, n_i;
 
-    row << s_i.cross(n_i) , n_i;
-    std::cout << row << std::endl;
+    // Eigen::Matrix<double, 6, 1> row;
+    // // TODO check
+
+    // row << s_i.cross(n_i) , n_i;
+    // std::cout << row << std::endl;
 
     return row;
 }
@@ -154,6 +156,7 @@ Eigen::Matrix<double, 6, 1> icp::getA_i(Eigen::Vector3d& s_i, Eigen::Vector3d& n
 
 
 Eigen::Matrix4d icp::solveForPose(std::shared_ptr<Frame> prev_frame, std::shared_ptr<Frame> curr_frame,
+                                  Eigen::Matrix4d& estimated_pose,
                                   std::vector<std::pair<size_t,size_t>>& corresponding_points){
 
     std::vector<Eigen::Vector3d> prev_global_points  = prev_frame->getGlobalPoints();
@@ -165,6 +168,9 @@ Eigen::Matrix4d icp::solveForPose(std::shared_ptr<Frame> prev_frame, std::shared
     Eigen::MatrixXd A( N , 6);
     Eigen::MatrixXd b( N , 1);
 
+    const auto rotation = estimated_pose.block(0, 0, 3, 3);
+    const auto translation = estimated_pose.block(0, 3, 3, 1);
+
     //for (const auto &match : corresponding_points){
     for (size_t i = 0; i < corresponding_points.size(); ++i ){
 
@@ -172,21 +178,15 @@ Eigen::Matrix4d icp::solveForPose(std::shared_ptr<Frame> prev_frame, std::shared
 
         Eigen::Vector3d d_i = prev_global_points[ match.first ];
         Eigen::Vector3d n_i = prev_global_normals[ match.first ];
-        Eigen::Vector3d s_i = curr_points[ match.second ];
+        Eigen::Vector3d s_i = rotation * curr_points[ match.second ] + translation;
 
         A.row(i) = getA_i(s_i, n_i);
-        std::cout << A.row(i) << std::endl;
         b(i) = getb_i(s_i, n_i, d_i);
-        std::cout << b(i) << std::endl;
-
-        std::cout << std::endl;
     }
     // Eigen::Matrix<double, 6,1> x = A.colPivHouseholderQr().solve(b);
     Eigen::Matrix<double, 6,1> x = A.bdcSvd(Eigen::ComputeThinU | Eigen::ComputeThinV).solve(b);
     return getPose(x);
 }
-
-
 
 /*
 void icp::prepareConstraints(std::shared_ptr<Frame> prev_frame, std::shared_ptr<Frame> curr_frame, std::vector<std::pair<size_t,size_t>>& corresponding_points, Sophus::SE3d& pose, ceres::Problem& problem) {
@@ -269,6 +269,7 @@ void icp::estimatePose(std::shared_ptr<Frame> prev_frame, std::shared_ptr<Frame>
 
 void icp::estimatePose(std::shared_ptr<Frame> prev_frame, std::shared_ptr<Frame> curr_frame, size_t m_nIterations,Eigen::Matrix4d& estimated_pose)
 {
+
     MeshWriter::toFile("meshA", "0 255 0 255", prev_frame->getGlobalPoints());
     MeshWriter::toFile("meshB", "255 0 0 255", curr_frame->getPoints());
 
@@ -285,21 +286,39 @@ void icp::estimatePose(std::shared_ptr<Frame> prev_frame, std::shared_ptr<Frame>
 
         for (size_t idx = 0; idx < N; idx++){
             matchA[idx] = ((prev_frame->getGlobalPoints())[corresponding_points[idx].first]);
-            matchB[idx] = ((curr_frame->getPoints())[corresponding_points[idx].second]);
+            matchB[idx] = ((curr_frame->getGlobalPoints())[corresponding_points[idx].second]);
         }
 
-        MeshWriter::toFile(
-                "corrA" + std::to_string(i), "255 0 0 255", matchA);
-        MeshWriter::toFile(
-                "corrB" + std::to_string(i), "255 255 0 255", matchB);
-
-        Eigen::Matrix4d pose = solveForPose(prev_frame, curr_frame, corresponding_points);
-
-        curr_frame->setGlobalPose(pose);
+        std::vector<std::string> colors (corresponding_points.size());
 
         MeshWriter::toFile(
-                "corrBT" + std::to_string(i), "0 255 0 255", curr_frame->getGlobalPoints());
+                "corrA" + std::to_string(i), "0 255 0 255",matchA);
+        MeshWriter::toFile(
+                "corrB" + std::to_string(i), "255 0 0 255", matchB);
 
-        estimated_pose = pose;
+        Eigen::Matrix4d pose = solveForPose(prev_frame, curr_frame, estimated_pose, corresponding_points);
+
+        estimated_pose = pose * estimated_pose;
+
+        Eigen::Matrix4d transformation;
+        // 10 deg
+        double alpha = -0.1;
+        double beta  = -0.05;
+        double gamma = 0.;
+
+        transformation << 1, alpha*beta - gamma, alpha*gamma + beta, 0.0,
+                        gamma, alpha*beta*gamma + 1, beta*gamma - alpha, 0.0,
+                        -beta, alpha, 1, - 0.05,
+                        0 , 0, 0, 1;
+
+        // estimated_pose = transformation;
+
+        std::cout << "_:" << estimated_pose << std::endl;
+
+        curr_frame->setGlobalPose(estimated_pose);
+
+        MeshWriter::toFile(
+                "corrBT" + std::to_string(i), "0 255 255 255", curr_frame->getGlobalPoints());
+
     }
 }
