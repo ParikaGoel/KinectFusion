@@ -17,8 +17,9 @@ private:
 
     void reconstruct(std::shared_ptr<Frame> currentFrame,std::shared_ptr<Volume> volume,float truncationDistance);
     //Reconstruction
-    bool calculateCurrentCameraPosition(Eigen::Vector3d& currentCameraPosition,int x, int y, int z, Eigen::Matrix<double, 3, 3, Eigen::DontAlign> rotation,
-                               Eigen::Vector3d translation, double voxelScale);
+    bool calculateGlobal2CameraPoint(Eigen::Vector3d &currentCameraPosition, int x, int y, int z,
+									 Eigen::Matrix<double, 3, 3, Eigen::DontAlign> rotation,
+									 Eigen::Vector3d translation, double voxelScale);
 
     bool pi(Eigen::Vector2i& unhomogenized,Eigen::Vector3d homogenized, Eigen::Matrix3d intrinsics,int width, int height);
 

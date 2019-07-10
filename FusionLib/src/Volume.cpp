@@ -15,3 +15,5 @@ const Eigen::Vector3i &Volume::getVolumeSize() const {
 float Volume::getVoxelScale() const {
     return _voxelScale;
 }
+
+

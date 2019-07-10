@@ -6,6 +6,7 @@
 
 #include <Eigen/Dense>
 #include <vector>
+#include <utility>
 
 class Volume {
 public:
@@ -15,15 +16,16 @@ public:
 
     ~Volume()= default;
 
-    const std::vector<Eigen::Vector3d> &getPoints() const;
+    std::vector<std::pair<double,double>> &getPoints() const;
 
-    const Eigen::Vector3i &getVolumeSize() const;
+
+	const Eigen::Vector3i &getVolumeSize() const;
 
     float getVoxelScale() const;
 
 private:
     //TODO: _points should not containt points, but tuples of tsdf & Weight
-    std::vector<Eigen::Vector3d> _points;
+    std::vector<std::pair<double,double>> _points;
     Eigen::Vector3i _volumeSize;
     float _voxelScale;
 
