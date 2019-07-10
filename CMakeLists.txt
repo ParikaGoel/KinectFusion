@@ -33,7 +33,7 @@ add_subdirectory(FusionLib)
 set(APP_ONE ${PROJECT_NAME} )
 add_executable(${APP_ONE} main.cpp)
 #target_link_libraries (${TEST_TARGET_ONE} graph Eigen3::Eigen )# libdl)# pybind11)
-target_link_libraries (${APP_ONE} kfusion eigen sophus ceres ${FREEIMAGE_LIBRARIES})# libdl)# pybind11)
+target_link_libraries (${APP_ONE} kfusion eigen sophus ceres freeimage ${FREEIMAGE_LIBRARIES})# libdl)# pybind11)
 target_compile_features(${APP_ONE} PUBLIC cxx_std_17 )
 target_compile_definitions(${APP_ONE} PRIVATE PROJECT_DATA_DIR="${CMAKE_SOURCE_DIR}/data")
 

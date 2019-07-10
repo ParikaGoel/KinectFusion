@@ -10,12 +10,13 @@ set(FUSION_SOURCES
         src/Frame.cpp
         src/Volume.cpp
         src/Raycast.cpp
-        src/Fusion.cpp)
+        src/Fusion.cpp
+        src/FreeImageHelper.cpp)
 
 add_library(${FUSION_Name}  ${FUSION_SOURCES})
 target_include_directories(${FUSION_Name} PUBLIC ${CMAKE_CURRENT_LIST_DIR}/include)
 ### link external libraries to Kinect Fusion Library
-target_link_libraries(${FUSION_Name}  eigen  librealsense sophus  freeimage ${CERES_LIBRARIES})
+target_link_libraries(${FUSION_Name}  eigen  librealsense sophus  freeimage ${FREEIMAGE_LIBRARIES} ${CERES_LIBRARIES})
 set_target_properties(${FUSION_Name} PROPERTIES POSITION_INDEPENDENT_CODE TRUE)
 
 ### Adds catch2 Tests in FusionLib/tests ###

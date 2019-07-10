@@ -12,7 +12,7 @@
 #include <Fusion.hpp>
 #include <Raycast.hpp>
 
-#include "DepthSensor.h"
+#include "VirtualSensor.h"
 #include "icp.h"
 #include "Frame.h"
 

@@ -10,13 +10,11 @@
 
 class Volume {
 public:
-    Volume(const Eigen::Vector3i volumeSize, const double voxelScale)
-    :_volumeSize(volumeSize),
-    _voxelScale(voxelScale){};
+    Volume(const Eigen::Vector3i volumeSize, const double voxelScale);
 
     ~Volume()= default;
 
-    std::vector<std::pair<double,double>> &getPoints() const;
+    std::vector<std::pair<double,double>> &getPoints() ;
 
 
 	const Eigen::Vector3i &getVolumeSize() const;
@@ -26,8 +24,8 @@ public:
 private:
     //TODO: _points should not containt points, but tuples of tsdf & Weight
     std::vector<std::pair<double,double>> _points;
-    Eigen::Vector3i _volumeSize;
-    float _voxelScale;
+    const Eigen::Vector3i _volumeSize;
+    const double _voxelScale;
 
 };
 

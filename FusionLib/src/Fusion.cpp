@@ -57,7 +57,7 @@ bool Fusion::reconstructSurface(std::shared_ptr<Frame> currentFrame,std::shared_
 														   *volumeSize.y()].first = updated_tsdf;
 					volume->getPoints()[x+y*volumeSize.x()+z*volumeSize.x()
 														   *volumeSize.y()].second = updated_weight;
-					
+
 				}
 			}
         }
@@ -144,10 +144,10 @@ double Fusion::calculateLamdas(Eigen::Vector2i &cameraSpacePoint,Eigen::Matrix3d
     double fovY = intrinsics(1, 1);
     double cX = intrinsics(0, 2);
     double cY = intrinsics(1, 2);
-    const Eigen::Vector2i lambda(
+    const Eigen::Vector3d lambda(
             (cameraSpacePoint.x() - cX) / fovX,
             (cameraSpacePoint.y() - cY) / fovY,
-            1.f);
+            1.);
 
     return lambda.norm();
 }
