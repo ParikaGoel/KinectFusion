@@ -20,11 +20,11 @@
 //TODO this should be moved to one File containing all data_declarations class
 struct Config{
 
-<<<<<<< HEAD
 public:
-    Config(const double dist_threshold, const double normal_threshold, const double truncationDistance,const double voxelScale, const int x,const int y, const int z):
+    Config(const double dist_threshold, const double normal_threshold, const size_t neighbor_range, const double truncationDistance,const double voxelScale, const int x,const int y, const int z):
     m_dist_threshold(dist_threshold),
     m_normal_threshold(normal_threshold),
+    m_neighbor_range(neighbor_range),
     m_truncationDistance(truncationDistance),
     m_voxelScale(voxelScale),
     m_volumeSize(x,y,z)
@@ -32,15 +32,12 @@ public:
 
     const double m_dist_threshold;
     const double m_normal_threshold;
+    const size_t m_neighbor_range;
     const double m_truncationDistance;
     const double m_voxelScale;
     Eigen::Vector3i m_volumeSize;
 
 };
-=======
-#include "SimpleMesh.h"
-
->>>>>>> spagetthi
 
 bool writeToFile(std::string filename, int width, int height, std::vector<double> vector){
     std::ofstream outFile(filename);
@@ -55,7 +52,7 @@ bool writeToFile(std::string filename, int width, int height, std::vector<double
 bool process_frame( std::shared_ptr<Frame> prevFrame,std::shared_ptr<Frame> currentFrame, std::shared_ptr<Volume> volume,const Config& config)
 {
     // STEP 1: estimate Pose
-    icp icp(config.m_dist_threshold,config.m_normal_threshold);
+    icp icp(config.m_dist_threshold,config.m_normal_threshold, config.m_neighbor_range);
 
     //TODO give some bool return if icp.estimate was succesfull
    /* if(!icp.estimatePose(prevFrame,currentFrame, 20)){
@@ -98,16 +95,14 @@ int main(){
 
     // Setup the optimizer.
     //TODO truncationDistance is completly random Value right now
-    Config config (0.1,0.5,0.5,512,512,512,1.0);
+    Config config (0.1,0.5,2,0.5,512,512,512,1.0);
 
     //Setup Volume
     auto volume = std::make_shared<Volume>(config.m_volumeSize,config.m_voxelScale) ;
 
     const Eigen::Matrix3d depthIntrinsics = sensor.getDepthIntrinsics();
-    // const unsigned int depthWidth         = sensor.getDepthImageWidth();
-    // const unsigned int depthHeight        = sensor.getDepthImageHeight();
-    const unsigned int depthWidth = 100;
-    const unsigned int depthHeight = 100;
+    const unsigned int depthWidth         = sensor.getDepthImageWidth();
+    const unsigned int depthHeight        = sensor.getDepthImageHeight();
 
     double * depthMap = sensor.getDepth();
     std::shared_ptr<Frame> prevFrame = std::make_shared<Frame>(Frame(depthMap, depthIntrinsics, depthWidth, depthHeight));
@@ -125,19 +120,8 @@ int main(){
         }
     }
 
-    // auto points   = prevFrame->getPoints();
-    // auto g_points = prevFrame->getGlobalPoints();
-    // for (int i = 0; i < points.size(); i++){
-    //     if((points[i] - g_points[i]).norm() > 0.001)
-    //     {
-    //         std::cout << "err" << points[i] << std::endl;
-    //     }
-    // }
-
-    std::cout << "all good for far?";
-
     int i = 0;
-    const int iMax = 0;
+    const int iMax = 3;
 
     std::stringstream ss;
     ss << filenameBaseOut << i << ".off";

@@ -1,9 +1,10 @@
 #pragma once
-
+#include <algorithm>
 #include <fstream>
 #include <sophus/se3.hpp>
 
 #include <limits>
+#include <cmath>
 
 #include <vector>
 
@@ -16,7 +17,7 @@ public:
     EIGEN_MAKE_ALIGNED_OPERATOR_NEW
 
     Frame(double* depthMap, const Eigen::Matrix3d& depthIntrinsics,
-            const unsigned int width, const unsigned int height, int downsampleFactor = 1, double maxDistance = 0.1);
+            const unsigned int width, const unsigned int height, int downsampleFactor = 1, double maxDistance = 2);
 
 	void computeNormals(double maxDistance=0.1);
 
@@ -48,24 +49,26 @@ public:
 
     double *getRawDepthMap() const;
 
-    bool contains(const Eigen::Vector2d& point);
+    bool contains(const Eigen::Vector2i& point);
 
     Eigen::Vector3d projectIntoCamera(const Eigen::Vector3d& globalCoord);
-
-    Eigen::Vector2d projectOntoPlane(const Eigen::Vector3d& cameraCoord);
+    Eigen::Vector2i projectOntoPlane(const Eigen::Vector3d& cameraCoord);
+    Eigen::Vector2i findClosestPoint( const unsigned int u, const unsigned int v, Eigen::Vector3d target, const unsigned int range );
+    Eigen::Vector2i findClosestDistancePoint( const unsigned int u, const unsigned int v, Eigen::Vector3d target, const unsigned int range );
 
 
 private:
 
     std::vector<Eigen::Vector3d> computeCameraCoordinates(unsigned int width, unsigned int height);
 
-    std::vector<Eigen::Vector3d> computeNormals(std::vector<double>& depthMap, unsigned int width, unsigned int height, double maxDistance = 0.1);
+    std::vector<Eigen::Vector3d> computeNormals(std::vector<Eigen::Vector3d> camera_points, unsigned int width, unsigned int height, double maxDistance = 0.1);
 
     void addValidPoints(std::vector<Eigen::Vector3d> points, std::vector<Eigen::Vector3d> normals, int downsampleFactor);
 
     std::vector<Eigen::Vector3d> transformPoints(std::vector<Eigen::Vector3d>& points, Eigen::Matrix4d& transformation);
 
     std::vector<Eigen::Vector3d> rotatePoints(std::vector<Eigen::Vector3d>& points, Eigen::Matrix3d& rotation);
+
 
     std::vector<Eigen::Vector3d> m_points;
 	std::vector<Eigen::Vector3d> m_normals;

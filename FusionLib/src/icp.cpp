@@ -2,39 +2,79 @@
 #include "icp.h"
 #include "iterator"
 
-PointToPlaneConstraint::PointToPlaneConstraint(const Eigen::Vector3d& sourcePoint, const Eigen::Vector3d& targetPoint, const Eigen::Vector3d& targetNormal) :
-        m_source_point(sourcePoint),
-        m_target_point(targetPoint),
-        m_target_normal(targetNormal)
-{ }
 
-// params: arg to optimize, residuals
-template <typename T>
-bool PointToPlaneConstraint::operator()(T const* const sPose, T* sResiduals) const {
+void LinearSolver::solvePoint2Plane(const std::vector<Eigen::Vector3d>& sourcePoints,
+            const std::vector<Eigen::Vector3d>& destPoints,
+            const std::vector<Eigen::Vector3d> destNormals,
+            const std::vector<std::pair<size_t, size_t>>& correspondence){
 
-    // map inputs
-    Eigen::Map<Sophus::SE3<T> const> const pose(sPose);
+    const size_t N = correspondence.size();
+    Eigen::MatrixXd A( N , 6);
+    Eigen::MatrixXd b( N , 1);
 
-    Eigen::Matrix<T, 3, 1> transformed_point = pose * m_source_point;
+    for (size_t i = 0; i < correspondence.size(); ++i ){
+        auto match = correspondence[i];
 
-    Eigen::Matrix<T, 3, 1> diff_point = transformed_point - m_target_point;
+        Eigen::Vector3d d_i = destPoints[ match.first ];
+        Eigen::Vector3d n_i = destNormals[ match.first ];
+        Eigen::Vector3d s_i = sourcePoints[ match.second ];
 
-    sResiduals[0] = diff_point.dot(m_target_normal);
-
-    return true;
+        Eigen::Matrix<double, 6, 1> A_i;
+        A_i << s_i.cross(n_i) , n_i;
+        A.row(i) = A_i;
+        b(i) = n_i.dot(d_i) - n_i.dot(s_i);
+    }
+    // Eigen::Matrix<double, 6,1> x = A.colPivHouseholderQr().solve(b);
+    Eigen::Matrix<double, 6,1> x = A.bdcSvd(Eigen::ComputeThinU | Eigen::ComputeThinV).solve(b);
+    solution = x;
 }
 
-ceres::CostFunction* PointToPlaneConstraint::create(const Eigen::Vector3d& sourcePoint, const Eigen::Vector3d& targetPoint, const Eigen::Vector3d& targetNormal) {
-    return new ceres::AutoDiffCostFunction<PointToPlaneConstraint, 1, Sophus::SE3d::num_parameters>(
-            new PointToPlaneConstraint(sourcePoint, targetPoint, targetNormal)
-    );
+void LinearSolver::solvePoint2Point(const std::vector<Eigen::Vector3d>& sourcePoints,
+            const std::vector<Eigen::Vector3d>& destPoints,
+            const std::vector<std::pair<size_t, size_t>>& correspondence){
+    const size_t N = correspondence.size();
+    Eigen::MatrixXd A( N*3 , 6);
+    Eigen::MatrixXd b( N*3 , 1);
+    for (size_t i = 0; i < correspondence.size(); ++i ){
+        auto match = correspondence[i];
+
+        Eigen::Vector3d d_i = destPoints[ match.first ];
+        Eigen::Vector3d s_i = sourcePoints[ match.second ];
+
+        Eigen::Matrix<double, 3, 6> A_i;
+        A_i << 0,    s_i.z(), -s_i.y(), 1, 0, 0,
+           -s_i.z(),   0,      s_i.x(), 0, 1, 0,
+            s_i.y(), -s_i.x(), 0, 0, 0, 1;
+
+        A.row(i*3) = A_i.row(0);
+        A.row(i*3+1) = A_i.row(1);
+        A.row(i*3+2) = A_i.row(2);
+
+        b(i*3)     = d_i.x() - s_i.x();
+        b(i*3 + 1) = d_i.y() - s_i.y();
+        b(i*3 + 2) = d_i.z() - s_i.z();
+    }
+    // Eigen::Matrix<double, 6,1> x = A.colPivHouseholderQr().solve(b);
+    Eigen::Matrix<double, 6,1> x = A.bdcSvd(Eigen::ComputeThinU | Eigen::ComputeThinV).solve(b);
+    solution = x;
 }
 
+const Eigen::Matrix4d LinearSolver::getPose(){
+    Eigen::Matrix4d transformation;
+    double alpha = solution[0];
+    double beta  = solution[1];
+    double gamma = solution[2];
 
-icp::icp(double dist_thresh, double normal_thresh){
-    dist_threshold = dist_thresh;
-    normal_threshold = normal_thresh;
+    transformation << 1,     alpha*beta - gamma,   alpha*gamma + beta,     solution[3],
+            gamma, alpha*beta*gamma + 1, beta*gamma - alpha,     solution[4],
+            -beta,    alpha,                  1,                 solution[5],
+            0 , 0, 0, 1;
+    return transformation;
 }
+
+icp::icp(double dist_thresh, double normal_thresh, unsigned int neighbor_range)
+    :dist_threshold(dist_thresh), normal_threshold(normal_thresh), neighbor_range(neighbor_range)
+{}
 
 bool icp::hasValidDistance(const Eigen::Vector3d& point1, const Eigen::Vector3d& point2) {
     return (point1- point2).norm() < dist_threshold;
@@ -68,11 +108,14 @@ void icp::findCorrespondence(std::shared_ptr<Frame> prev_frame, std::shared_ptr<
             const Eigen::Vector3d curr_global_normal = rotation * curr_normal;
 
             const Eigen::Vector3d curr_point_prev_frame = prev_frame->projectIntoCamera(curr_global_point);
-            const Eigen::Vector2d curr_point_img_coord = prev_frame->projectOntoPlane(curr_point_prev_frame);
+            const Eigen::Vector2i curr_point_img_coord = prev_frame->projectOntoPlane(curr_point_prev_frame);
 
-            if (prev_frame->contains(curr_point_img_coord)) {
+            const Eigen::Vector2i closest_img_coord = prev_frame->findClosestPoint( curr_point_img_coord[0], curr_point_img_coord[1], curr_point_prev_frame, neighbor_range);
 
-                size_t prev_idx = curr_point_img_coord[1] * prev_frame->getWidth() + curr_point_img_coord[0];
+            if (prev_frame->contains(closest_img_coord)) {
+
+                // size_t prev_idx = curr_point_img_coord[1] * prev_frame->getWidth() + curr_point_img_coord[0];
+                size_t prev_idx = closest_img_coord[1] * prev_frame->getWidth() + closest_img_coord[0];
 
                 Eigen::Vector3d prev_global_point = prev_frame_global_points[prev_idx];
                 Eigen::Vector3d prev_global_normal = prev_frame_global_normals[prev_idx];
@@ -83,13 +126,55 @@ void icp::findCorrespondence(std::shared_ptr<Frame> prev_frame, std::shared_ptr<
                        hasValidAngle(prev_global_normal, curr_global_normal)) {
 
                         corresponding_points.push_back(std::make_pair(prev_idx, idx));
-
                     }
                 }
             }
         }
     }
 }
+
+void icp::findDistanceCorrespondence(std::shared_ptr<Frame> prev_frame, std::shared_ptr<Frame> curr_frame, std::vector<std::pair<size_t,size_t>>& corresponding_points,Eigen::Matrix4d& estimated_pose){
+
+    std::vector<Eigen::Vector3d> prev_frame_global_points = prev_frame->getGlobalPoints();
+    std::vector<Eigen::Vector3d> prev_frame_global_normals = prev_frame->getGlobalNormals();
+
+    std::vector<Eigen::Vector3d> curr_frame_points = curr_frame->getPoints();
+    std::vector<Eigen::Vector3d> curr_frame_normals = curr_frame->getNormals();
+
+    const auto rotation = estimated_pose.block(0, 0, 3, 3);
+    const auto translation = estimated_pose.block(0, 3, 3, 1);
+
+    for(size_t idx = 0; idx < curr_frame_points.size(); idx++){
+
+        Eigen::Vector3d curr_point = curr_frame_points[idx];
+        Eigen::Vector3d curr_normal = curr_frame_normals[idx];
+
+        if (curr_point.allFinite() && curr_normal.allFinite()) {
+            const Eigen::Vector3d curr_global_point = rotation * curr_point + translation;
+            const Eigen::Vector3d curr_global_normal = rotation * curr_normal;
+
+            const Eigen::Vector3d curr_point_prev_frame = prev_frame->projectIntoCamera(curr_global_point);
+            const Eigen::Vector2i curr_point_img_coord = prev_frame->projectOntoPlane(curr_point_prev_frame);
+
+            const Eigen::Vector2i closest_img_coord = prev_frame->findClosestDistancePoint( curr_point_img_coord[0], curr_point_img_coord[1], curr_point_prev_frame, neighbor_range);
+
+            if (prev_frame->contains(closest_img_coord)) {
+
+                size_t prev_idx = closest_img_coord[1] * prev_frame->getWidth() + closest_img_coord[0];
+
+                Eigen::Vector3d prev_global_point = prev_frame_global_points[prev_idx];
+                Eigen::Vector3d prev_global_normal = prev_frame_global_normals[prev_idx];
+
+                if (prev_global_point.allFinite() ) {
+                    if(hasValidDistance(prev_global_point, curr_global_point)) {
+                        corresponding_points.push_back(std::make_pair(prev_idx, idx));
+                    }
+                }
+            }
+        }
+    }
+}
+
 
 const Eigen::Matrix4d icp::getPose(Eigen::Matrix<double, 6, 1>& x){
     double alpha = x(0);
@@ -188,90 +273,10 @@ Eigen::Matrix4d icp::solveForPose(std::shared_ptr<Frame> prev_frame, std::shared
     return getPose(x);
 }
 
-/*
-void icp::prepareConstraints(std::shared_ptr<Frame> prev_frame, std::shared_ptr<Frame> curr_frame, std::vector<std::pair<size_t,size_t>>& corresponding_points, Sophus::SE3d& pose, ceres::Problem& problem) {
-
-    std::vector<Eigen::Vector3d> target_vertex_map = prev_frame->getGlobalPoints();
-    std::vector<Eigen::Vector3d> target_normal_map = prev_frame->getGlobalNormals();
-    std::vector<Eigen::Vector3d> source_vertex_map = curr_frame->getPoints();
-
-    // problem.AddParameterBlock(pose.data(),
-    //                           Sophus::SE3d::num_parameters,
-    //                           new Sophus::test::LocalParameterizationSE3);
-
-    for (const auto& match : corresponding_points){
-        size_t source_idx = match.first;
-        size_t target_idx = match.second;
-        const auto& source_point = source_vertex_map[source_idx];
-        const auto& target_point = target_vertex_map[target_idx];
-        const auto& target_normal = target_normal_map[target_idx];
-
-        if (!source_point.allFinite() && !target_point.allFinite() && !target_normal.allFinite())
-            continue;
-
-
-        ceres::CostFunction* point_to_plane_cost = PointToPlaneConstraint::create(source_point, target_point, target_normal);
-
-        // params: cost func, loss function (null in our case), argument to optimize)
-        problem.AddResidualBlock(point_to_plane_cost, nullptr,pose.data());
-    }
-}
-
-
- void icp::configureSolver(ceres::Solver::Options& options) {
-    // Ceres options.
-    options.trust_region_strategy_type = ceres::LEVENBERG_MARQUARDT;
-    options.use_nonmonotonic_steps = false;
-    options.linear_solver_type = ceres::DENSE_QR;
-    options.minimizer_progress_to_stdout = 1;
-    options.max_num_iterations = 1;
-    options.num_threads = 8;
-}
-void icp::estimatePose(std::shared_ptr<Frame> prev_frame, std::shared_ptr<Frame> curr_frame, size_t m_nIterations,Sophus::SE3d& estimated_pose) {
-
-    for (size_t i = 0; i < m_nIterations; ++i) {
-        // Find corresponding points
-        std::vector<std::pair<size_t, size_t>> corresponding_points;
-
-        // findCorrespondence(prev_frame, curr_frame, corresponding_points,estimated_pose);
-        findCorrespondence(prev_frame, curr_frame, corresponding_points,estimated_pose);
-
-        // Prepare constraints
-
-        Sophus::SE3d incremental_pose;
-
-        ceres::Problem problem;
-        prepareConstraints(prev_frame, curr_frame, corresponding_points, incremental_pose, problem);
-
-        // Configure options for the solver.
-        ceres::Solver::Options options;
-        configureSolver(options);
-
-        // Run the solver (for one iteration).
-        ceres::Solver::Summary summary;
-        ceres::Solve(options, &problem, &summary);
-        std::cout << summary.BriefReport() << std::endl;
-        //std::cout << summary.FullReport() << std::endl;
-
-        std::cout << estimated_pose.matrix3x4()<< std::endl;
-
-        std::cout << incremental_pose.matrix3x4()<< std::endl;
-
-        // Update the current pose estimate (we always update the pose from the left, using left-increment notation).
-        estimated_pose = incremental_pose * estimated_pose;
-
-        std::cout << estimated_pose.matrix3x4()<< std::endl;
-
-        std::cout << "Optimization iteration done." << std::endl;
-    }
-
-}*/
-
-void icp::estimatePose(std::shared_ptr<Frame> prev_frame, std::shared_ptr<Frame> curr_frame, size_t m_nIterations,Eigen::Matrix4d& estimated_pose)
+void icp::estimatePose(int frame_cnt, std::shared_ptr<Frame> prev_frame, std::shared_ptr<Frame> curr_frame, size_t m_nIterations,Eigen::Matrix4d& estimated_pose)
 {
-
-    MeshWriter::toFile("meshA", "0 255 0 255", prev_frame->getGlobalPoints());
-    MeshWriter::toFile("meshB", "255 0 0 255", curr_frame->getPoints());
+    MeshWriter::toFile("meshA" + std::to_string(frame_cnt), "0 255 0 255", prev_frame->getGlobalPoints());
+    MeshWriter::toFile("meshB" + std::to_string(frame_cnt), "255 0 0 255", curr_frame->getGlobalPoints());
 
     for (size_t i = 0; i < m_nIterations; ++i) {
 
@@ -280,45 +285,54 @@ void icp::estimatePose(std::shared_ptr<Frame> prev_frame, std::shared_ptr<Frame>
 
         size_t N = corresponding_points.size();
 
-        std::vector<Eigen::Vector3d> matchA (N);
-        std::vector<Eigen::Vector3d> matchB (N);
+        size_t num_splits = 4;
+
+        std::vector<std::vector<Eigen::Vector3d>> splitsA (num_splits);
+        std::vector<std::vector<Eigen::Vector3d>> splitsB (num_splits);
+
+        size_t interval_size = N / num_splits;
+
+        std::cout << N;
+
+        // for (size_t q = 0; q < num_splits; q++){
+
+        //     splitsA[q] = std::vector<Eigen::Vector3d>(interval_size);
+        //     splitsB[q] = std::vector<Eigen::Vector3d>(interval_size);
+
+        //     for (size_t idx = interval_size * q; idx < interval_size*(q + 1); idx++){
+        //         splitsA[q][idx - interval_size * q ] = ((prev_frame->getGlobalPoints())[corresponding_points[idx].first]);
+        //         splitsB[q][idx - interval_size * q ] = ((curr_frame->getGlobalPoints())[corresponding_points[idx].second]);
+        //     }
+        // }
+
+        LinearSolver solver;
+        // solver.solvePoint2Point( curr_frame->getGlobalPoints(), prev_frame->getGlobalPoints(), corresponding_points);
+        solver.solvePoint2Plane(curr_frame->getGlobalPoints(), prev_frame->getGlobalPoints(),
+                                prev_frame->getGlobalNormals(),
+                                corresponding_points);
+
+        estimated_pose = solver.getPose() * estimated_pose;
 
 
-        for (size_t idx = 0; idx < N; idx++){
-            matchA[idx] = ((prev_frame->getGlobalPoints())[corresponding_points[idx].first]);
-            matchB[idx] = ((curr_frame->getGlobalPoints())[corresponding_points[idx].second]);
-        }
+        // std::vector<std::string> colors (corresponding_points.size());
+        // colors[0] = "255 0 255 255";
+        // colors[1] = "0 0 255 255";
+        // colors[2] = "255 0 0 255";
+        // colors[3] = "255 255 0 255";
 
-        std::vector<std::string> colors (corresponding_points.size());
+        // for (size_t split_no = 0; split_no < num_splits; split_no++){
+        //     MeshWriter::toFile(
+        //             "corrB" + std::to_string(i) + "_" + std::to_string(split_no), colors[split_no], splitsB[split_no]);
+        //     MeshWriter::toFile(
+        //             "corrA" + std::to_string(i) + "_" + std::to_string(split_no), colors[split_no], splitsA[split_no]);
+        // }
 
-        MeshWriter::toFile(
-                "corrA" + std::to_string(i), "0 255 0 255",matchA);
-        MeshWriter::toFile(
-                "corrB" + std::to_string(i), "255 0 0 255", matchB);
+        //Eigen::Matrix4d pose = solveForPose(prev_frame, curr_frame, estimated_pose, corresponding_points);
 
-        Eigen::Matrix4d pose = solveForPose(prev_frame, curr_frame, estimated_pose, corresponding_points);
-
-        estimated_pose = pose * estimated_pose;
-
-        Eigen::Matrix4d transformation;
-        // 10 deg
-        double alpha = -0.1;
-        double beta  = -0.05;
-        double gamma = 0.;
-
-        transformation << 1, alpha*beta - gamma, alpha*gamma + beta, 0.0,
-                        gamma, alpha*beta*gamma + 1, beta*gamma - alpha, 0.0,
-                        -beta, alpha, 1, - 0.05,
-                        0 , 0, 0, 1;
-
-        // estimated_pose = transformation;
-
-        std::cout << "_:" << estimated_pose << std::endl;
+        //estimated_pose = pose * estimated_pose;
 
         curr_frame->setGlobalPose(estimated_pose);
-
-        MeshWriter::toFile(
-                "corrBT" + std::to_string(i), "0 255 255 255", curr_frame->getGlobalPoints());
-
     }
+    MeshWriter::toFile(
+                "corrBT" + std::to_string(frame_cnt), "0 0 255 255", curr_frame->getGlobalPoints());
 }

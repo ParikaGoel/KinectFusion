@@ -12,19 +12,7 @@ Frame::Frame(double * depthMap, const Eigen::Matrix3d &depthIntrinsics,
     }
 
     auto pointsTmp = computeCameraCoordinates(width, height);
-    auto normalsTmp = computeNormals(m_depth_map, width, height, maxDistance);
-
-    addValidPoints(pointsTmp, normalsTmp);
-
-    setGlobalPose(Eigen::Matrix4d::Identity());
-}
-
-Frame::Frame(std::vector<Eigen::Vector3d> points, const Eigen::Matrix3d &depthIntrinsics,
-        const unsigned int width, const unsigned int height, int downsampleFactor, double maxDistance)
-        : m_width(width), m_height(height),m_intrinsic_matrix(depthIntrinsics){
-
-    auto pointsTmp = computeCameraCoordinates(width, height);
-    auto normalsTmp = computeNormals(m_depth_map, width, height, maxDistance);
+    auto normalsTmp = computeNormals(pointsTmp, width, height, maxDistance);
 
     addValidPoints(pointsTmp, normalsTmp);
 
@@ -39,14 +27,17 @@ Eigen::Vector3d Frame::projectIntoCamera(const Eigen::Vector3d& globalCoord){
     return rotation_inv * globalCoord + translation_inv;
 }
 
-bool Frame::contains(const Eigen::Vector2d& img_coord){
+bool Frame::contains(const Eigen::Vector2i& img_coord){
     return img_coord[0] < m_width && img_coord[1] < m_height && img_coord[0] >= 0 && img_coord[1] >= 0;
 }
 
-Eigen::Vector2d Frame::projectOntoPlane(const Eigen::Vector3d& cameraCoord){
+Eigen::Vector2i Frame::projectOntoPlane(const Eigen::Vector3d& cameraCoord){
     Eigen::Vector3d projected = (m_intrinsic_matrix*cameraCoord);
+    if(projected[2] == 0){
+        return Eigen::Vector2i(MINF, MINF);
+    }
     projected /= projected[2];
-    return (Eigen::Vector2d (round(projected.x()), round(projected.y())));
+    return (Eigen::Vector2i ((int) round(projected.x()), (int)round(projected.y())));
 }
 
 void Frame::addValidPoints(std::vector<Eigen::Vector3d> points, std::vector<Eigen::Vector3d> normals
@@ -103,8 +94,7 @@ std::vector<Eigen::Vector3d> Frame::computeCameraCoordinates(unsigned int width,
     double cX = m_intrinsic_matrix(0, 2);
     double cY = m_intrinsic_matrix(1, 2);
 
-//    auto intrinsicInverse = m_intrinsic_matrix.inverse();
-
+    // auto intrinsicInverse = m_intrinsic_matrix.inverse();
 
     // Back-project the pixel depths into the camera space.
     std::vector<Eigen::Vector3d> pointsTmp(width * height);
@@ -119,9 +109,7 @@ std::vector<Eigen::Vector3d> Frame::computeCameraCoordinates(unsigned int width,
             }
             else {
                 // Back-projection to camera space.
-//                Eigen::Vector3d point (x, y, depth);
                 pointsTmp[idx] = Eigen::Vector3d((x - cX) / fovX * depth, (y - cY) / fovY * depth, depth);
-//                pointsTmp[idx] = intrinsicInverse * point;
             }
         }
     }
@@ -129,7 +117,7 @@ std::vector<Eigen::Vector3d> Frame::computeCameraCoordinates(unsigned int width,
 }
 
 
-std::vector<Eigen::Vector3d> Frame::computeNormals(std::vector<double>& depthMap, unsigned int width, unsigned int height,  double maxDistance){
+std::vector<Eigen::Vector3d> Frame::computeNormals(std::vector<Eigen::Vector3d> camera_points, unsigned int width, unsigned int height,  double maxDistance){
 
     // We need to compute derivatives and then the normalized normal vector (for valid pixels).
     std::vector<Eigen::Vector3d> normalsTmp(width * height);
@@ -138,21 +126,17 @@ std::vector<Eigen::Vector3d> Frame::computeNormals(std::vector<double>& depthMap
         for (size_t u = 1; u < width - 1; ++u) {
             unsigned int idx = v*width + u; // linearized index
 
-            const double du = depthMap[idx + 1] - depthMap[idx - 1];
-            const double dv = depthMap[idx + width] - depthMap[idx - width];
-            if (!std::isfinite(du) || !std::isfinite(dv) || abs(du) > maxDistance || abs(dv) > maxDistance) {
+            const Eigen::Vector3d du = camera_points[idx + 1] - camera_points[idx - 1];
+            const Eigen::Vector3d dv = camera_points[idx + width] - camera_points[idx - width];
+
+            if (!du.allFinite() || !dv.allFinite()
+                    || du.norm() > maxDistance
+                    || dv.norm() > maxDistance) {
                 normalsTmp[idx] = Eigen::Vector3d(MINF, MINF, MINF);
                 continue;
             }
 
-            // TODO: Compute the normals using the cross product of approximate tangent vectors.
-
-            const double xu = 1;
-            const double xv = 0;
-            const double yu = 0;
-            const double yv = 1;
-
-            normalsTmp[idx] = Eigen::Vector3d(yu*dv - yv*du, xv*du - xu*dv, xu*yv - yu*xv);
+            normalsTmp[idx] = du.cross(dv);
             normalsTmp[idx].normalize();
         }
     }
@@ -167,6 +151,43 @@ std::vector<Eigen::Vector3d> Frame::computeNormals(std::vector<double>& depthMap
         normalsTmp[(width - 1) + v * width] = Eigen::Vector3d(MINF, MINF, MINF);
     }
     return normalsTmp;
+}
+
+Eigen::Vector2i Frame::findClosestPoint( const unsigned int u, const unsigned int v, Eigen::Vector3d target, const unsigned int range ){
+    double lowest_err = 10000;
+    int best_u = -1;
+    int best_v = -1;
+
+    for (int x = std::max((unsigned int)1, u - range); x < std::min(u + range, m_width-1); x++){
+        for (int y = std::max((unsigned int)1, v - range); y < std::min(v + range, m_height-1); y++){
+            double err = (m_normals_global[y*m_width + x].transpose() *
+                (m_points_global[ y*m_width + x ] - target)) ;
+            if (err < lowest_err){
+                best_u = x;
+                best_v = y;
+                lowest_err = err;
+            }
+        }
+    }
+    return Eigen::Vector2i(best_u, best_v);
+}
+
+Eigen::Vector2i Frame::findClosestDistancePoint( const unsigned int u, const unsigned int v, Eigen::Vector3d target, const unsigned int range ){
+    double lowest_err = 10000;
+    int best_u = -1;
+    int best_v = -1;
+
+    for (unsigned int x = std::max((unsigned int)0, u - range); x < std::min(u + range, m_width); x++){
+        for (unsigned int y = std::max((unsigned int)0, v - range); y < std::min(v + range, m_height); y++){
+            double err = (m_points_global[ y*m_width + x ] - target).norm() ;
+            if (err < lowest_err){
+                best_u = x;
+                best_v = y;
+                lowest_err = err;
+            }
+        }
+    }
+    return Eigen::Vector2i(best_u, best_v);
 }
 
 void Frame::applyGlobalPose(Eigen::Matrix4d& estimated_pose){
