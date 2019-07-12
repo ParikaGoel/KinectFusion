@@ -110,12 +110,9 @@ void icp::findCorrespondence(std::shared_ptr<Frame> prev_frame, std::shared_ptr<
             const Eigen::Vector3d curr_point_prev_frame = prev_frame->projectIntoCamera(curr_global_point);
             const Eigen::Vector2i curr_point_img_coord = prev_frame->projectOntoPlane(curr_point_prev_frame);
 
-            const Eigen::Vector2i closest_img_coord = prev_frame->findClosestPoint( curr_point_img_coord[0], curr_point_img_coord[1], curr_point_prev_frame, neighbor_range);
+            if (prev_frame->contains(curr_point_img_coord)) {
 
-            if (prev_frame->contains(closest_img_coord)) {
-
-                // size_t prev_idx = curr_point_img_coord[1] * prev_frame->getWidth() + curr_point_img_coord[0];
-                size_t prev_idx = closest_img_coord[1] * prev_frame->getWidth() + closest_img_coord[0];
+                size_t prev_idx = curr_point_img_coord[1] * prev_frame->getWidth() + curr_point_img_coord[0];
 
                 Eigen::Vector3d prev_global_point = prev_frame_global_points[prev_idx];
                 Eigen::Vector3d prev_global_normal = prev_frame_global_normals[prev_idx];
@@ -294,42 +291,12 @@ void icp::estimatePose(int frame_cnt, std::shared_ptr<Frame> prev_frame, std::sh
 
         std::cout << N;
 
-        // for (size_t q = 0; q < num_splits; q++){
-
-        //     splitsA[q] = std::vector<Eigen::Vector3d>(interval_size);
-        //     splitsB[q] = std::vector<Eigen::Vector3d>(interval_size);
-
-        //     for (size_t idx = interval_size * q; idx < interval_size*(q + 1); idx++){
-        //         splitsA[q][idx - interval_size * q ] = ((prev_frame->getGlobalPoints())[corresponding_points[idx].first]);
-        //         splitsB[q][idx - interval_size * q ] = ((curr_frame->getGlobalPoints())[corresponding_points[idx].second]);
-        //     }
-        // }
-
         LinearSolver solver;
-        // solver.solvePoint2Point( curr_frame->getGlobalPoints(), prev_frame->getGlobalPoints(), corresponding_points);
         solver.solvePoint2Plane(curr_frame->getGlobalPoints(), prev_frame->getGlobalPoints(),
                                 prev_frame->getGlobalNormals(),
                                 corresponding_points);
 
         estimated_pose = solver.getPose() * estimated_pose;
-
-
-        // std::vector<std::string> colors (corresponding_points.size());
-        // colors[0] = "255 0 255 255";
-        // colors[1] = "0 0 255 255";
-        // colors[2] = "255 0 0 255";
-        // colors[3] = "255 255 0 255";
-
-        // for (size_t split_no = 0; split_no < num_splits; split_no++){
-        //     MeshWriter::toFile(
-        //             "corrB" + std::to_string(i) + "_" + std::to_string(split_no), colors[split_no], splitsB[split_no]);
-        //     MeshWriter::toFile(
-        //             "corrA" + std::to_string(i) + "_" + std::to_string(split_no), colors[split_no], splitsA[split_no]);
-        // }
-
-        //Eigen::Matrix4d pose = solveForPose(prev_frame, curr_frame, estimated_pose, corresponding_points);
-
-        //estimated_pose = pose * estimated_pose;
 
         curr_frame->setGlobalPose(estimated_pose);
     }

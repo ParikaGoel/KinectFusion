@@ -121,12 +121,10 @@ int main(){
     }
 
     int i = 0;
-    const int iMax = 3;
+    const int iMax = 20;
 
     std::stringstream ss;
     ss << filenameBaseOut << i << ".off";
-
-    //prevFrame->WriteMesh(ss.str(), "255 255 255 255");
 
     while(sensor.processNextFrame() && i <= iMax){
         
