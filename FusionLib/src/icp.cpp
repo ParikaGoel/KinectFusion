@@ -72,8 +72,8 @@ const Eigen::Matrix4d LinearSolver::getPose(){
     return transformation;
 }
 
-icp::icp(double dist_thresh, double normal_thresh, unsigned int neighbor_range)
-    :dist_threshold(dist_thresh), normal_threshold(normal_thresh), neighbor_range(neighbor_range)
+icp::icp(double dist_thresh, double normal_thresh)
+    :dist_threshold(dist_thresh), normal_threshold(normal_thresh)
 {}
 
 bool icp::hasValidDistance(const Eigen::Vector3d& point1, const Eigen::Vector3d& point2) {
@@ -130,148 +130,10 @@ void icp::findCorrespondence(std::shared_ptr<Frame> prev_frame, std::shared_ptr<
     }
 }
 
-void icp::findDistanceCorrespondence(std::shared_ptr<Frame> prev_frame, std::shared_ptr<Frame> curr_frame, std::vector<std::pair<size_t,size_t>>& corresponding_points,Eigen::Matrix4d& estimated_pose){
-
-    std::vector<Eigen::Vector3d> prev_frame_global_points = prev_frame->getGlobalPoints();
-    std::vector<Eigen::Vector3d> prev_frame_global_normals = prev_frame->getGlobalNormals();
-
-    std::vector<Eigen::Vector3d> curr_frame_points = curr_frame->getPoints();
-    std::vector<Eigen::Vector3d> curr_frame_normals = curr_frame->getNormals();
-
-    const auto rotation = estimated_pose.block(0, 0, 3, 3);
-    const auto translation = estimated_pose.block(0, 3, 3, 1);
-
-    for(size_t idx = 0; idx < curr_frame_points.size(); idx++){
-
-        Eigen::Vector3d curr_point = curr_frame_points[idx];
-        Eigen::Vector3d curr_normal = curr_frame_normals[idx];
-
-        if (curr_point.allFinite() && curr_normal.allFinite()) {
-            const Eigen::Vector3d curr_global_point = rotation * curr_point + translation;
-
-            const Eigen::Vector3d curr_point_prev_frame = prev_frame->projectIntoCamera(curr_global_point);
-            const Eigen::Vector2i curr_point_img_coord = prev_frame->projectOntoPlane(curr_point_prev_frame);
-
-            const Eigen::Vector2i closest_img_coord = prev_frame->findClosestDistancePoint( curr_point_img_coord[0], curr_point_img_coord[1], curr_point_prev_frame, neighbor_range);
-
-            if (prev_frame->contains(closest_img_coord)) {
-
-                size_t prev_idx = closest_img_coord[1] * prev_frame->getWidth() + closest_img_coord[0];
-
-                Eigen::Vector3d prev_global_point = prev_frame_global_points[prev_idx];
-
-                if (prev_global_point.allFinite() ) {
-                    if(hasValidDistance(prev_global_point, curr_global_point)) {
-                        corresponding_points.push_back(std::make_pair(prev_idx, idx));
-                    }
-                }
-            }
-        }
-    }
-}
-
-
-const Eigen::Matrix4d icp::getPose(Eigen::Matrix<double, 6, 1>& x){
-    double alpha = x(0);
-    double beta  = x(1);
-    double gamma = x(2);
-    double t_x = x(3);
-    double t_y = x(4);
-    double t_z = x(5);
-
-    Eigen::Matrix4d pose;
-    pose(0,0) = 1;
-    pose(0,1) = alpha * beta - gamma;
-    pose(0,2) = alpha * gamma + beta;
-    pose(0,3) = t_x;
-
-    pose(1,0) = gamma;
-    pose(1,1) = alpha * beta * gamma + 1;
-    pose(1,2) = beta * gamma - alpha;
-    pose(1,3) = t_y;
-
-    pose(2,0) = -beta;
-    pose(2,1) = alpha;
-    pose(2,2) = 1;
-    pose(2,3) = t_z;
-
-    pose(3,0) = 0;
-    pose(3,1) = 0;
-    pose(3,2) = 0;
-    pose(3,3) = 1;
-
-
-    //pose <<   1   , -gamma,   beta, t_x,
-    //        gamma ,    1  , -alpha, t_y,
-    //        -beta , alpha ,    1  , t_z,
-    //        0   ,    0  ,    0  ,   1;
-
-    std::cout << "estimated trans:"<< pose << std::endl;
-
-    return pose;
-}
-
-double icp::getb_i(Eigen::Vector3d& s_i, Eigen::Vector3d& n_i, Eigen::Vector3d& d_i){
-    return n_i.dot(d_i) - n_i.dot(s_i);
-}
-
-Eigen::Matrix<double, 6, 1> icp::getA_i(Eigen::Vector3d& s_i, Eigen::Vector3d& n_i){
-    double a_i1 = n_i.z() * s_i.y()  - n_i.y() * s_i.z();
-    double a_i2 = n_i.x() * s_i.z()  - n_i.z() * s_i.x();
-    double a_i3 = n_i.y() * s_i.x()  - n_i.x() * s_i.y();
-
-    Eigen::Matrix<double, 6, 1> row;
-    row << a_i1, a_i2, a_i3, n_i;
-
-    // Eigen::Matrix<double, 6, 1> row;
-    // // TODO check
-
-    // row << s_i.cross(n_i) , n_i;
-    // std::cout << row << std::endl;
-
-    return row;
-}
-
-
-
-
-Eigen::Matrix4d icp::solveForPose(std::shared_ptr<Frame> prev_frame, std::shared_ptr<Frame> curr_frame,
-                                  Eigen::Matrix4d& estimated_pose,
-                                  std::vector<std::pair<size_t,size_t>>& corresponding_points){
-
-    std::vector<Eigen::Vector3d> prev_global_points  = prev_frame->getGlobalPoints();
-    std::vector<Eigen::Vector3d> prev_global_normals = prev_frame->getGlobalNormals();
-    std::vector<Eigen::Vector3d> curr_points         = curr_frame->getPoints();
-
-    const size_t N = corresponding_points.size();
-
-    Eigen::MatrixXd A( N , 6);
-    Eigen::MatrixXd b( N , 1);
-
-    const auto rotation = estimated_pose.block(0, 0, 3, 3);
-    const auto translation = estimated_pose.block(0, 3, 3, 1);
-
-    //for (const auto &match : corresponding_points){
-    for (size_t i = 0; i < corresponding_points.size(); ++i ){
-
-        auto match = corresponding_points[i];
-
-        Eigen::Vector3d d_i = prev_global_points[ match.first ];
-        Eigen::Vector3d n_i = prev_global_normals[ match.first ];
-        Eigen::Vector3d s_i = rotation * curr_points[ match.second ] + translation;
-
-        A.row(i) = getA_i(s_i, n_i);
-        b(i) = getb_i(s_i, n_i, d_i);
-    }
-
-    Eigen::Matrix<double, 6,1> x = A.bdcSvd(Eigen::ComputeThinU | Eigen::ComputeThinV).solve(b);
-    return getPose(x);
-}
-
 bool icp::estimatePose(int frame_cnt, std::shared_ptr<Frame> prev_frame, std::shared_ptr<Frame> curr_frame, size_t m_nIterations,Eigen::Matrix4d& estimated_pose)
 {
-    MeshWriter::toFile("meshA" + std::to_string(frame_cnt), "0 255 0 255", prev_frame->getGlobalPoints());
-    MeshWriter::toFile("meshB" + std::to_string(frame_cnt), "255 0 0 255", curr_frame->getGlobalPoints());
+//    MeshWriter::toFile("meshA" + std::to_string(frame_cnt), "0 255 0 255", prev_frame->getGlobalPoints());
+//    MeshWriter::toFile("meshB" + std::to_string(frame_cnt), "255 0 0 255", curr_frame->getGlobalPoints());
 
     for (size_t i = 0; i < m_nIterations; ++i) {
 
@@ -287,8 +149,8 @@ bool icp::estimatePose(int frame_cnt, std::shared_ptr<Frame> prev_frame, std::sh
 
         curr_frame->setGlobalPose(estimated_pose);
     }
-    MeshWriter::toFile(
-                "corrBT" + std::to_string(frame_cnt), "0 0 255 255", curr_frame->getGlobalPoints());
+//    MeshWriter::toFile(
+//                "corrBT" + std::to_string(frame_cnt), "0 0 255 255", curr_frame->getGlobalPoints());
 
     return true;
 }

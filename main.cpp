@@ -20,10 +20,9 @@
 struct Config{
 
 public:
-    Config(const double dist_threshold, const double normal_threshold, const size_t neighbor_range, const double truncationDistance,const double voxelScale, const int x,const int y, const int z):
+    Config(const double dist_threshold, const double normal_threshold, const double truncationDistance,const double voxelScale, const int x,const int y, const int z):
     m_dist_threshold(dist_threshold),
     m_normal_threshold(normal_threshold),
-    m_neighbor_range(neighbor_range),
     m_truncationDistance(truncationDistance),
     m_voxelScale(voxelScale),
     m_volumeSize(x,y,z)
@@ -31,7 +30,6 @@ public:
 
     const double m_dist_threshold;
     const double m_normal_threshold;
-    const size_t m_neighbor_range;
     const double m_truncationDistance;
     const double m_voxelScale;
     Eigen::Vector3i m_volumeSize;
@@ -41,7 +39,7 @@ public:
 bool process_frame( size_t frame_cnt, std::shared_ptr<Frame> prevFrame,std::shared_ptr<Frame> currentFrame, std::shared_ptr<Volume> volume,const Config& config)
 {
     // STEP 1: estimate Pose
-    icp icp(config.m_dist_threshold,config.m_normal_threshold, config.m_neighbor_range);
+    icp icp(config.m_dist_threshold,config.m_normal_threshold);
 
     Eigen::Matrix4d estimated_pose = prevFrame->getGlobalPose();
     currentFrame->setGlobalPose(estimated_pose);
@@ -83,7 +81,7 @@ int main(){
     sensor.processNextFrame();
 
     //TODO truncationDistance is completly random Value right now
-    Config config (0.1,0.5,2,0.5,512,512,512,1.0);
+    Config config (0.1,0.5,0.5,512,512,512,1.0);
 
     //Setup Volume
     auto volume = std::make_shared<Volume>(config.m_volumeSize,config.m_voxelScale) ;
@@ -122,7 +120,6 @@ int main(){
         ss << filenameBaseOut << i << ".off";
         currentFrame->WriteMesh(ss.str(), "255 0 0 255");
 
-        // ToDo: Do we need to make current frame as prev frame for next iteration or target frame should always be the same (first frame)
         prevFrame = std::move(currentFrame);
         i++;
     }
