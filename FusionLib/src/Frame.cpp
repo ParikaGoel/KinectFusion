@@ -171,7 +171,7 @@ Eigen::Vector2i Frame::findClosestPoint( const unsigned int u, const unsigned in
             }
         }
     }
-    
+
     return Eigen::Vector2i(best_u, best_v);
 }
 

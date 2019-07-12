@@ -43,9 +43,8 @@ bool process_frame( size_t frame_cnt, std::shared_ptr<Frame> prevFrame,std::shar
     // STEP 1: estimate Pose
     icp icp(config.m_dist_threshold,config.m_normal_threshold, config.m_neighbor_range);
 
-    currentFrame->setGlobalPose(prevFrame->getGlobalPose());
-
-    Eigen::Matrix4d estimated_pose = Eigen::Matrix4d::Identity();
+    Eigen::Matrix4d estimated_pose = prevFrame->getGlobalPose();
+    currentFrame->setGlobalPose(estimated_pose);
 
     if(!icp.estimatePose(frame_cnt, prevFrame,currentFrame, 10, estimated_pose)){
         throw "ICP Pose Estimation failed";
@@ -109,7 +108,7 @@ int main(){
     }
 
     int i = 0;
-    const int iMax = 20;
+    const int iMax = 52;
 
     std::stringstream ss;
     ss << filenameBaseOut << i << ".off";
