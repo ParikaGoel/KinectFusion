@@ -65,8 +65,6 @@ bool VirtualSensor::processNextFrame() {
 			m_depthFrame[i] = dImage.data[i] * 1.0f / 5000.0f;
 	}
 
-	std::cout<<__LINE__ << ", " << __FUNCTION__ << "\n";
-
 	// find transformation (simple nearest neighbor, linear search)
 	double timestamp = m_depthImagesTimeStamps[m_currentIdx];
 	double min = std::numeric_limits<double>::max();

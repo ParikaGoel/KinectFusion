@@ -43,4 +43,3 @@ target_compile_definitions(${APP_ONE} PRIVATE PROJECT_DATA_DIR="${CMAKE_SOURCE_D
 add_custom_command(TARGET ${PROJECT_NAME} PRE_BUILD
         COMMAND ${CMAKE_COMMAND} -E copy_directory
         ${CMAKE_SOURCE_DIR}/data $<TARGET_FILE_DIR:${PROJECT_NAME}>/data)
-
