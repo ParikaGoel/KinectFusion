@@ -1,7 +1,6 @@
 
 #include <librealsense2/rs.h>
 #include <librealsense2/rs.hpp>
-#include "SimpleMesh.h"
 
 #define STB_IMAGE_WRITE_IMPLEMENTATION
 #include "stb_image_write.h"
@@ -39,27 +38,18 @@ public:
 
 };
 
-bool writeToFile(std::string filename, int width, int height, std::vector<double> vector){
-    std::ofstream outFile(filename);
-    if (!outFile.is_open()) return false;
-
-    outFile << width << "," << height << std::endl;
-    for(auto vec : vector)
-        outFile << vec<<",";
-    return true;
-}
-
-bool process_frame( std::shared_ptr<Frame> prevFrame,std::shared_ptr<Frame> currentFrame, std::shared_ptr<Volume> volume,const Config& config)
+bool process_frame( size_t frame_cnt, std::shared_ptr<Frame> prevFrame,std::shared_ptr<Frame> currentFrame, std::shared_ptr<Volume> volume,const Config& config)
 {
     // STEP 1: estimate Pose
     icp icp(config.m_dist_threshold,config.m_normal_threshold, config.m_neighbor_range);
 
-    //TODO give some bool return if icp.estimate was succesfull
-   /* if(!icp.estimatePose(prevFrame,currentFrame, 20)){
-        throw "ICP Pose Estimation failed";
-    };*/
+    currentFrame->setGlobalPose(prevFrame->getGlobalPose());
 
-    icp.estimatePose(prevFrame,currentFrame, 20);
+    Eigen::Matrix4d estimated_pose = Eigen::Matrix4d::Identity();
+
+    if(!icp.estimatePose(frame_cnt, prevFrame,currentFrame, 10, estimated_pose)){
+        throw "ICP Pose Estimation failed";
+    };
 
     // STEP 2: Surface reconstruction
     //TODO does icp.estimate set the new Pose to currentFrame? Otherwise it needs to be added as function parameter
@@ -93,7 +83,6 @@ int main(){
     // We store a first frame as a reference frame. All next frames are tracked relatively to the first frame.
     sensor.processNextFrame();
 
-    // Setup the optimizer.
     //TODO truncationDistance is completly random Value right now
     Config config (0.1,0.5,2,0.5,512,512,512,1.0);
 
@@ -104,8 +93,7 @@ int main(){
     const unsigned int depthWidth         = sensor.getDepthImageWidth();
     const unsigned int depthHeight        = sensor.getDepthImageHeight();
 
-    double * depthMap = sensor.getDepth();
-    std::shared_ptr<Frame> prevFrame = std::make_shared<Frame>(Frame(depthMap, depthIntrinsics, depthWidth, depthHeight));
+    std::shared_ptr<Frame> prevFrame = std::make_shared<Frame>(Frame(sensor.getDepth(), depthIntrinsics, depthWidth, depthHeight));
 
     Eigen::Matrix4d init_gl_pose = Eigen::Matrix4d::Identity();
 
@@ -125,16 +113,18 @@ int main(){
 
     std::stringstream ss;
     ss << filenameBaseOut << i << ".off";
+    prevFrame->WriteMesh(ss.str(), "0 0 255 255");
 
     while(sensor.processNextFrame() && i <= iMax){
-        
-        double* depthMap = sensor.getDepth();
-        std::shared_ptr<Frame> currentFrame = std::make_shared<Frame>(Frame(depthMap,depthIntrinsics, depthWidth, depthHeight));
-        process_frame(prevFrame,currentFrame,volume,config);
-        i++;
+
+        std::shared_ptr<Frame> currentFrame = std::make_shared<Frame>(Frame(sensor.getDepth(),depthIntrinsics, depthWidth, depthHeight));
+        process_frame(i,prevFrame,currentFrame,volume,config);
 
         ss << filenameBaseOut << i << ".off";
         currentFrame->WriteMesh(ss.str(), "255 0 0 255");
+
+        // ToDo: Do we need to make current frame as prev frame for next iteration or target frame should always be the same (first frame)
         prevFrame = std::move(currentFrame);
+        i++;
     }
 }

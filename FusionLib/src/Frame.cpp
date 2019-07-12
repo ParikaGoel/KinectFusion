@@ -1,8 +1,10 @@
 #include "Frame.h"
 
+#include <iostream>
+
 Frame::Frame(double * depthMap, const Eigen::Matrix3d &depthIntrinsics,
         const unsigned int width, const unsigned int height, int downsampleFactor, double maxDistance)
-        : m_width(width), m_height(height),m_intrinsic_matrix(depthIntrinsics),_rawDepthMap(depthMap){
+        : m_height(height),m_width(width),m_intrinsic_matrix(depthIntrinsics),_rawDepthMap(depthMap){
 
     m_depth_map.reserve(width*height);
 
@@ -40,8 +42,8 @@ Eigen::Vector2i Frame::projectOntoPlane(const Eigen::Vector3d& cameraCoord){
     return (Eigen::Vector2i ((int) round(projected.x()), (int)round(projected.y())));
 }
 
-void Frame::addValidPoints(std::vector<Eigen::Vector3d> points, std::vector<Eigen::Vector3d> normals
-                           ) {
+void Frame::addValidPoints(std::vector<Eigen::Vector3d> points, std::vector<Eigen::Vector3d> normals)
+{
 
     // We filter out measurements where either point or normal is invalid.
     const unsigned nPoints = points.size();
@@ -158,8 +160,8 @@ Eigen::Vector2i Frame::findClosestPoint( const unsigned int u, const unsigned in
     int best_u = -1;
     int best_v = -1;
 
-    for (int x = std::max((unsigned int)1, u - range); x < std::min(u + range, m_width-1); x++){
-        for (int y = std::max((unsigned int)1, v - range); y < std::min(v + range, m_height-1); y++){
+    for (size_t x = std::max((unsigned int)1, u - range); x < std::min(u + range, m_width-1); x++){
+        for (size_t y = std::max((unsigned int)1, v - range); y < std::min(v + range, m_height-1); y++){
             double err = (m_normals_global[y*m_width + x].transpose() *
                 (m_points_global[ y*m_width + x ] - target)) ;
             if (err < lowest_err){
@@ -169,6 +171,7 @@ Eigen::Vector2i Frame::findClosestPoint( const unsigned int u, const unsigned in
             }
         }
     }
+    
     return Eigen::Vector2i(best_u, best_v);
 }
 
@@ -192,34 +195,9 @@ Eigen::Vector2i Frame::findClosestDistancePoint( const unsigned int u, const uns
 
 void Frame::applyGlobalPose(Eigen::Matrix4d& estimated_pose){
     Eigen::Matrix3d rotation = estimated_pose.block(0,0,3,3);
-    //Eigen::Vector3d translation = estimated_pose.block(0,3,3,1);
 
     m_points_global  = transformPoints(m_points, estimated_pose);
     m_normals_global = rotatePoints(m_normals, rotation);
-
-    /*
-    m_points_global = std::vector<Eigen::Vector3d>(m_points.size());
-
-    for( size_t idx = 0; idx < m_points.size(); ++idx){
-        if(m_points[idx].allFinite()) {
-            Eigen::Vector3d g_point = rotation * m_points[idx] + translation;
-            m_points_global[idx] = (g_point);
-        }
-        else
-            m_points_global[idx] = (Eigen::Vector3d(MINF, MINF, MINF));
-    }
-
-    for(auto& normal : m_normals){
-        if(normal.allFinite()) {
-            Eigen::Vector3d g_normal = rotation * normal;
-            m_normals_global.emplace_back(g_normal);
-        }
-        else
-        {
-            m_normals_global.emplace_back(Eigen::Vector3d(MINF, MINF, MINF));
-        }
-    }
-     */
 }
 
 std::vector<Eigen::Vector3d> Frame::transformPoints(std::vector<Eigen::Vector3d>& points, Eigen::Matrix4d& transformation){
@@ -268,7 +246,7 @@ const Eigen::Matrix4d& Frame::getGlobalPose() const{
     return m_global_pose;
 }
 
-void Frame::setGlobalPose(const Sophus::SE3d& pose) {
+void Frame::setGlobalPose(const Eigen::Matrix4d& pose) {
     m_global_pose = pose;
     applyGlobalPose(m_global_pose);
 }

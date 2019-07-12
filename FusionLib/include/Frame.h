@@ -1,12 +1,12 @@
 #pragma once
 #include <algorithm>
 #include <fstream>
-#include <sophus/se3.hpp>
 
 #include <limits>
 #include <cmath>
 
 #include <vector>
+#include <Eigen.h>
 
 #ifndef MINF
 #define MINF -std::numeric_limits<double>::infinity()
@@ -25,7 +25,7 @@ public:
 
     bool WriteMesh(const std::string& filename, std::string color);
 
-    void applyGlobalPose(Sophus::SE3d& estimated_pose);
+    void applyGlobalPose(Eigen::Matrix4d& estimated_pose);
 
 	const std::vector<Eigen::Vector3d>& getPoints() const;
 
@@ -35,9 +35,9 @@ public:
 
     const std::vector<Eigen::Vector3d>& getGlobalNormals() const;
 
-    const Sophus::SE3d& getGlobalPose() const;
+    const Eigen::Matrix4d& getGlobalPose() const;
 
-    void setGlobalPose(const Sophus::SE3d& pose);
+    void setGlobalPose(const Eigen::Matrix4d& pose);
 
     const std::vector<double>& getDepthMap() const;
 
@@ -63,8 +63,7 @@ private:
 
     std::vector<Eigen::Vector3d> computeNormals(std::vector<Eigen::Vector3d> camera_points, unsigned int width, unsigned int height, double maxDistance = 0.1);
 
-    void addValidPoints(std::vector<Eigen::Vector3d> points, std::vector<Eigen::Vector3d> normals, int downsampleFactor);
-
+    void addValidPoints(std::vector<Eigen::Vector3d> points, std::vector<Eigen::Vector3d> normals);
     std::vector<Eigen::Vector3d> transformPoints(std::vector<Eigen::Vector3d>& points, Eigen::Matrix4d& transformation);
 
     std::vector<Eigen::Vector3d> rotatePoints(std::vector<Eigen::Vector3d>& points, Eigen::Matrix3d& rotation);
@@ -75,7 +74,7 @@ private:
 
     std::vector<Eigen::Vector3d> m_points_global;
     std::vector<Eigen::Vector3d> m_normals_global;
-    Sophus::SE3d global_pose;
+    Eigen::Matrix4d m_global_pose;
     Eigen::Matrix3d m_intrinsic_matrix;
     std::vector<double> m_depth_map;
 

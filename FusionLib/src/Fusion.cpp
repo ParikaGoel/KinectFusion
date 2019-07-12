@@ -26,7 +26,7 @@ bool Fusion::reconstructSurface(std::shared_ptr<Frame> currentFrame,std::shared_
 				//calculate Camera Position
 				Eigen::Vector3d currentCameraPosition;
 				Eigen::Vector2i X;
-				if (!calculateGlobal2CameraPoint(currentCameraPosition, x, y, z, pose.rotationMatrix(), pose.translation(), voxelScale))continue;
+				if (!calculateGlobal2CameraPoint(currentCameraPosition, x, y, z, pose.block(0,0,3,3), pose.block(0,3,3,1), voxelScale))continue;
 				if (!pi(X, currentCameraPosition, currentFrame->getIntrinsics(), width, height))continue;
 
 				const double depth = currentFrame->getRawDepthMap()[X.y() + (X.x() * width)];
@@ -81,7 +81,7 @@ void Fusion::reconstruct(std::shared_ptr<Frame> currentFrame,std::shared_ptr<Vol
                 //calculate Camera Position
                 Eigen::Vector3d cameraPoint;
                 Eigen::Vector2i X;
-                if(!calculateGlobal2CameraPoint(cameraPoint, x, y, z, pose.rotationMatrix(), pose.translation(), voxelScale))continue;
+                if(!calculateGlobal2CameraPoint(cameraPoint, x, y, z, pose.block(0,0,3,3), pose.block(0,3,3,1), voxelScale))continue;
 
                 if(!pi(X,cameraPoint,currentFrame->getIntrinsics(),width,height))continue;
 

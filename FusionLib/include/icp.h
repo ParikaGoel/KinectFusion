@@ -37,7 +37,7 @@ class icp {
 public:
     EIGEN_MAKE_ALIGNED_OPERATOR_NEW
     icp(double dist_threshold, double normal_threshold, unsigned int neighbor_range);
-    void estimatePose(int i, std::shared_ptr<Frame> prev_frame, std::shared_ptr<Frame> current_frame, size_t m_nIterations,Eigen::Matrix4d& estimated_pose);
+    bool estimatePose(int i, std::shared_ptr<Frame> prev_frame, std::shared_ptr<Frame> current_frame, size_t m_nIterations,Eigen::Matrix4d& estimated_pose);
 
     const Eigen::Matrix4d getPose(Eigen::Matrix<double, 6, 1>& x);
 

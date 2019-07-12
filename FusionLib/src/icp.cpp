@@ -24,7 +24,7 @@ void LinearSolver::solvePoint2Plane(const std::vector<Eigen::Vector3d>& sourcePo
         A.row(i) = A_i;
         b(i) = n_i.dot(d_i) - n_i.dot(s_i);
     }
-    // Eigen::Matrix<double, 6,1> x = A.colPivHouseholderQr().solve(b);
+
     Eigen::Matrix<double, 6,1> x = A.bdcSvd(Eigen::ComputeThinU | Eigen::ComputeThinV).solve(b);
     solution = x;
 }
@@ -54,7 +54,7 @@ void LinearSolver::solvePoint2Point(const std::vector<Eigen::Vector3d>& sourcePo
         b(i*3 + 1) = d_i.y() - s_i.y();
         b(i*3 + 2) = d_i.z() - s_i.z();
     }
-    // Eigen::Matrix<double, 6,1> x = A.colPivHouseholderQr().solve(b);
+
     Eigen::Matrix<double, 6,1> x = A.bdcSvd(Eigen::ComputeThinU | Eigen::ComputeThinV).solve(b);
     solution = x;
 }
@@ -148,7 +148,6 @@ void icp::findDistanceCorrespondence(std::shared_ptr<Frame> prev_frame, std::sha
 
         if (curr_point.allFinite() && curr_normal.allFinite()) {
             const Eigen::Vector3d curr_global_point = rotation * curr_point + translation;
-            const Eigen::Vector3d curr_global_normal = rotation * curr_normal;
 
             const Eigen::Vector3d curr_point_prev_frame = prev_frame->projectIntoCamera(curr_global_point);
             const Eigen::Vector2i curr_point_img_coord = prev_frame->projectOntoPlane(curr_point_prev_frame);
@@ -160,7 +159,6 @@ void icp::findDistanceCorrespondence(std::shared_ptr<Frame> prev_frame, std::sha
                 size_t prev_idx = closest_img_coord[1] * prev_frame->getWidth() + closest_img_coord[0];
 
                 Eigen::Vector3d prev_global_point = prev_frame_global_points[prev_idx];
-                Eigen::Vector3d prev_global_normal = prev_frame_global_normals[prev_idx];
 
                 if (prev_global_point.allFinite() ) {
                     if(hasValidDistance(prev_global_point, curr_global_point)) {
@@ -265,12 +263,12 @@ Eigen::Matrix4d icp::solveForPose(std::shared_ptr<Frame> prev_frame, std::shared
         A.row(i) = getA_i(s_i, n_i);
         b(i) = getb_i(s_i, n_i, d_i);
     }
-    // Eigen::Matrix<double, 6,1> x = A.colPivHouseholderQr().solve(b);
+
     Eigen::Matrix<double, 6,1> x = A.bdcSvd(Eigen::ComputeThinU | Eigen::ComputeThinV).solve(b);
     return getPose(x);
 }
 
-void icp::estimatePose(int frame_cnt, std::shared_ptr<Frame> prev_frame, std::shared_ptr<Frame> curr_frame, size_t m_nIterations,Eigen::Matrix4d& estimated_pose)
+bool icp::estimatePose(int frame_cnt, std::shared_ptr<Frame> prev_frame, std::shared_ptr<Frame> curr_frame, size_t m_nIterations,Eigen::Matrix4d& estimated_pose)
 {
     MeshWriter::toFile("meshA" + std::to_string(frame_cnt), "0 255 0 255", prev_frame->getGlobalPoints());
     MeshWriter::toFile("meshB" + std::to_string(frame_cnt), "255 0 0 255", curr_frame->getGlobalPoints());
@@ -279,17 +277,6 @@ void icp::estimatePose(int frame_cnt, std::shared_ptr<Frame> prev_frame, std::sh
 
         std::vector<std::pair<size_t, size_t>> corresponding_points;
         findCorrespondence(prev_frame, curr_frame, corresponding_points, estimated_pose);
-
-        size_t N = corresponding_points.size();
-
-        size_t num_splits = 4;
-
-        std::vector<std::vector<Eigen::Vector3d>> splitsA (num_splits);
-        std::vector<std::vector<Eigen::Vector3d>> splitsB (num_splits);
-
-        size_t interval_size = N / num_splits;
-
-        std::cout << N;
 
         LinearSolver solver;
         solver.solvePoint2Plane(curr_frame->getGlobalPoints(), prev_frame->getGlobalPoints(),
@@ -302,4 +289,6 @@ void icp::estimatePose(int frame_cnt, std::shared_ptr<Frame> prev_frame, std::sh
     }
     MeshWriter::toFile(
                 "corrBT" + std::to_string(frame_cnt), "0 0 255 255", curr_frame->getGlobalPoints());
+
+    return true;
 }
