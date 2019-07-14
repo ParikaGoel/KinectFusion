@@ -38,7 +38,7 @@ bool Raycast::surfacePrediction(std::shared_ptr<Frame> currentFrame,std::shared_
 
                     if(!calculateCurrentPointOnRay(currentPoint,rayLength,volumeSize,pose.translation(),direction))continue;
                     const double previousTSDF = TSDF;
-                    getTSDF(volume,currentPoint);
+                    TSDF = getTSDF(volume,currentPoint);
 
                     //This equals -ve to +ve in the paper / we cant go from a negative to positive tsdf value as negative is behind the surface
                     if(previousTSDF<0. && TSDF>0.)break;
@@ -111,7 +111,7 @@ Raycast::calculateRayDirection(int x, int y, Eigen::Matrix<double, 3, 3, Eigen::
     double cX = m_intrinsics(0, 2);
     double cY = m_intrinsics(1, 2);
 
-    Eigen::Vector3d cameraPoint = Eigen::Vector3d((x - cX) / fovX , (y - cY) / fovY ,1.d);
+    Eigen::Vector3d cameraPoint = Eigen::Vector3d((x - cX) / fovX , (y - cY) / fovY ,1.);
     Eigen::Vector3d rayDirection = rotation * cameraPoint;
     rayDirection.normalize();
 
@@ -122,8 +122,15 @@ bool Raycast::calculateCurrentPointOnRay(Eigen::Vector3d &currentPoint, double &
                                          const Eigen::Vector3d volumeSize, const Eigen::Vector3d &origin,
                                          const Eigen::Vector3d &direction) {
     // TODO implement, check Method signature
+    rayParameter += voxelScale;
+    currentPoint = (origin + (direction * rayParameter)) / voxelScale;
 
-    return false;
+    if (currentPoint.x() < 1 || currentPoint.x() >= volumeSize.x - 1 || currentPoint.y() < 1 ||
+            currentPoint.y() >= volumeSize.y - 1 ||
+            currentPoint.z() < 1 || currentPoint.z() >= volumeSize.z - 1)
+        return  false;
+
+    return true
 }
 
 double Raycast::getTSDF(std::shared_ptr<Volume> volume, Eigen::Vector3d position) {
