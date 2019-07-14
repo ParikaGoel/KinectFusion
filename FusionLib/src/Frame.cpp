@@ -4,8 +4,8 @@
 #include <iostream>
 
 Frame::Frame(const double * depthMap, const Eigen::Matrix3d &depthIntrinsics,
-        const unsigned int width, const unsigned int height, int downsampleFactor, double maxDistance)
-        : m_height(height),m_width(width),m_intrinsic_matrix(depthIntrinsics),_rawDepthMap(depthMap){
+        const unsigned int width, const unsigned int height, double maxDistance)
+        : m_intrinsic_matrix(depthIntrinsics),m_width(width),m_height(height),_rawDepthMap(depthMap){
 
     m_depth_map = std::vector<double>(width*height);
     for (size_t i = 0; i < width*height; ++i)

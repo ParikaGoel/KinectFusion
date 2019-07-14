@@ -23,10 +23,6 @@ if(NOT EXISTS "${PROJECT_SOURCE_DIR}/extern/librealsense/CMakeLists.txt")
     message(FATAL_ERROR "Problems with submodule realsense.")
 endif()
 
-if(NOT EXISTS "${PROJECT_SOURCE_DIR}/extern/Sophus/CMakeLists.txt")
-    message(FATAL_ERROR "Problems with submodule realsense.")
-endif()
-
 add_library(eigen INTERFACE)
 target_include_directories(eigen INTERFACE ${PROJECT_SOURCE_DIR}/extern/eigen-git-mirror)
 #target_sources(eigenI INTERFACE ${PROJECT_SOURCE_DIR}/extern/eigen-git-mirror/Eigen/src)
@@ -35,7 +31,4 @@ target_include_directories(catch2 INTERFACE ${PROJECT_SOURCE_DIR}/extern/Catch2/
 
 add_library(librealsense INTERFACE)
 target_include_directories(librealsense INTERFACE ${PROJECT_SOURCE_DIR}/extern/librealsense/include)
-
-add_library(sophus INTERFACE)
-target_include_directories(sophus INTERFACE ${PROJECT_SOURCE_DIR}/extern/Sophus)
 

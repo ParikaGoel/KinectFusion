@@ -16,11 +16,6 @@ SET(CMAKE_CXX_FLAGS_RELEASE "-O3 -DNDEBUG")
 SET(CMAKE_CXX_FLAGS_RELWITHDEBINFO "-O3 -g -DNDEBUG -ftree-vectorize")
 SET(CMAKE_CXX_FLAGS " -ftemplate-backtrace-limit=0 -Wall ${EXTRA_WARNING_FLAGS} ${CMAKE_CXX_FLAGS}")
 
-
-### find packages, that can be included via git submodules ###
-find_package(Ceres 1.14 REQUIRED)
-include_directories(${CERES_INCLUDE_DIRS})
-
 find_package(FreeImage REQUIRED)
 
 #adds gitsubmodules
@@ -33,7 +28,7 @@ add_subdirectory(FusionLib)
 set(APP_ONE ${PROJECT_NAME} )
 add_executable(${APP_ONE} main.cpp)
 #target_link_libraries (${TEST_TARGET_ONE} graph Eigen3::Eigen )# libdl)# pybind11)
-target_link_libraries (${APP_ONE} kfusion eigen sophus ceres freeimage ${FREEIMAGE_LIBRARIES})# libdl)# pybind11)
+target_link_libraries (${APP_ONE} kfusion eigen ceres freeimage ${FREEIMAGE_LIBRARIES})# libdl)# pybind11)
 target_compile_features(${APP_ONE} PUBLIC cxx_std_17 )
 target_compile_definitions(${APP_ONE} PRIVATE PROJECT_DATA_DIR="${CMAKE_SOURCE_DIR}/data")
 
