@@ -47,6 +47,7 @@ private:
      * @param direction rotation*currentPoint
      * @return is point in Volume
      */
+
     bool calculateCurrentPointOnRay(Eigen::Vector3d& currentPoint, double& rayParameter, const Eigen::Vector3d volumeSize,const Eigen::Vector3d& origin, const Eigen::Vector3d& direction);
 
     /*!
