@@ -17,7 +17,7 @@ public:
     EIGEN_MAKE_ALIGNED_OPERATOR_NEW
 
     Frame(double* depthMap, const Eigen::Matrix3d& depthIntrinsics,
-            const unsigned int width, const unsigned int height, int downsampleFactor = 1, double maxDistance = 2);
+            const unsigned int width, const unsigned int height, double maxDistance = 2);
 
 	void computeNormals(double maxDistance=0.1);
 

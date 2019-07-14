@@ -92,10 +92,6 @@ int main(){
 
     std::shared_ptr<Frame> prevFrame = std::make_shared<Frame>(Frame(sensor.getDepth(), depthIntrinsics, depthWidth, depthHeight));
 
-    Eigen::Matrix4d init_gl_pose = Eigen::Matrix4d::Identity();
-
-    Eigen::Matrix4d current_camera_to_world = init_gl_pose;
-
     auto normals   = prevFrame->getNormals();
     auto g_normals = prevFrame->getGlobalNormals();
     for (size_t i = 0; i < normals.size(); i++){
