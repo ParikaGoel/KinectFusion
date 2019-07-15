@@ -51,7 +51,7 @@ private:
      */
 
     bool calculateCurrentPointOnRay(Eigen::Vector3d& currentPoint, double& rayParameter,
-            const Eigen::Vector3i& volumeSize,
+            const Eigen::Matrix<size_t,3,1>& volumeSize,
             const double voxelScale,
             const Eigen::Vector3d& origin, const Eigen::Vector3d& direction);
 

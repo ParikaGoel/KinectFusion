@@ -17,11 +17,7 @@ public:
     EIGEN_MAKE_ALIGNED_OPERATOR_NEW
 
     Frame(double* depthMap, const Eigen::Matrix3d& depthIntrinsics,
-            const unsigned int width, const unsigned int height, double maxDistance = 2);
-
-	void computeNormals(double maxDistance=0.1);
-
-	bool readFromFile(const std::string& filename);
+            unsigned int width, unsigned int height, double maxDistance = 2);
 
     bool WriteMesh(const std::string& filename, std::string color);
 
@@ -47,15 +43,10 @@ public:
 
     const unsigned int getHeight() const;
 
-    double *getRawDepthMap() const;
-
     bool contains(const Eigen::Vector2i& point);
 
     Eigen::Vector3d projectIntoCamera(const Eigen::Vector3d& globalCoord);
     Eigen::Vector2i projectOntoPlane(const Eigen::Vector3d& cameraCoord);
-    Eigen::Vector2i findClosestPoint( const unsigned int u, const unsigned int v, Eigen::Vector3d target, const unsigned int range );
-    Eigen::Vector2i findClosestDistancePoint( const unsigned int u, const unsigned int v, Eigen::Vector3d target, const unsigned int range );
-
 
 private:
 
@@ -80,5 +71,4 @@ private:
 
     const unsigned int m_width;
     const unsigned int m_height;
-    double* _rawDepthMap;
 };
