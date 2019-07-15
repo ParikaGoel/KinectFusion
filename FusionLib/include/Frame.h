@@ -47,15 +47,10 @@ public:
 
     const unsigned int getHeight() const;
 
-    const double *getRawDepthMap() const;
-
     bool contains(const Eigen::Vector2i& point);
 
     Eigen::Vector3d projectIntoCamera(const Eigen::Vector3d& globalCoord);
     Eigen::Vector2i projectOntoPlane(const Eigen::Vector3d& cameraCoord);
-    Eigen::Vector2i findClosestPoint( const unsigned int u, const unsigned int v, Eigen::Vector3d target, const unsigned int range );
-    Eigen::Vector2i findClosestDistancePoint( const unsigned int u, const unsigned int v, Eigen::Vector3d target, const unsigned int range );
-
 
 private:
 
@@ -80,7 +75,4 @@ private:
     Eigen::Matrix4d m_global_pose;
     Eigen::Matrix3d m_intrinsic_matrix;
     std::vector<double> m_depth_map;
-
-
-    const double* _rawDepthMap;
 };

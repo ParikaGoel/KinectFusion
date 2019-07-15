@@ -51,7 +51,6 @@ bool VirtualSensor::processNextFrame() {
     FreeImageB rgbImage;
     rgbImage.LoadImageFromFile(m_baseDir + m_filenameColorImages[m_currentIdx]);
     memcpy(m_colorFrame, rgbImage.data, 4 * m_colorImageWidth * m_colorImageHeight);
-    std::cout<<"loaded image";
 
     // depth images are scaled by 5000 (see https://vision.in.tum.de/data/datasets/rgbd-dataset/file_formats)
     FreeImageU16F dImage;
