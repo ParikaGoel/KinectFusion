@@ -1,17 +1,15 @@
 #include "Frame.h"
+#include "MeshWriter.h"
 
 #include <iostream>
 
-Frame::Frame(double * depthMap, const Eigen::Matrix3d &depthIntrinsics,
+Frame::Frame(const double * depthMap, const Eigen::Matrix3d &depthIntrinsics,
         const unsigned int width, const unsigned int height, int downsampleFactor, double maxDistance)
         : m_height(height),m_width(width),m_intrinsic_matrix(depthIntrinsics),_rawDepthMap(depthMap){
 
-    m_depth_map.reserve(width*height);
-
-    std::cout << std::endl;
-    for (size_t x = 0; x < width*height; x++) {
-            m_depth_map.push_back(depthMap[x]);
-    }
+    m_depth_map = std::vector<double>(width*height);
+    for (size_t i = 0; i < width*height; ++i)
+        m_depth_map[i] = depthMap[i];
 
     auto pointsTmp = computeCameraCoordinates(width, height);
     auto normalsTmp = computeNormals(pointsTmp, width, height, maxDistance);
@@ -267,6 +265,6 @@ const unsigned int Frame:: getHeight() const{
     return m_height;
 }
 
-double *Frame::getRawDepthMap() const {
+const double *Frame::getRawDepthMap() const {
     return _rawDepthMap;
 }
