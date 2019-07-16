@@ -7,11 +7,12 @@
 
 #include "Eigen.h"
 #include "FreeImageHelper.hpp"
+#include "Sensor.h"
 
 typedef unsigned char BYTE;
 
 // reads sensor files according to https://vision.in.tum.de/data/datasets/rgbd-dataset/file_formats
-class VirtualSensor {
+class VirtualSensor : public Sensor {
 public:
 
 	VirtualSensor() : m_currentIdx(-1), m_increment(1) { }
@@ -21,7 +22,7 @@ public:
 		SAFE_DELETE_ARRAY(m_colorFrame);
 	}
 
-	bool init(const std::string& datasetDir) ;
+	bool init(const std::string& datasetDir, bool intrinsics=true) ;
 	bool processNextFrame();
 
 	unsigned int getCurrentFrameCnt();
@@ -53,7 +54,9 @@ public:
 	// get current trajectory transformation
 	Eigen::Matrix4d getTrajectory();
 
-private:
+
+
+protected:
 	bool readFileList(const std::string& filename, std::vector<std::string>& result, std::vector<double>& timestamps);
 
 	bool readTrajectoryFile(const std::string& filename, std::vector<Eigen::Matrix4d>& result,
@@ -72,16 +75,10 @@ private:
 	Eigen::Matrix4d m_currentTrajectory;
 
 	// color camera info
-	Eigen::Matrix3d m_colorIntrinsics;
 	Eigen::Matrix4d m_colorExtrinsics;
-	unsigned int m_colorImageWidth;
-	unsigned int m_colorImageHeight;
 
 	// depth (ir) camera info
-	Eigen::Matrix3d m_depthIntrinsics;
 	Eigen::Matrix4d m_depthExtrinsics;
-	unsigned int m_depthImageWidth;
-	unsigned int m_depthImageHeight;
 
 	// base dir
 	std::string m_baseDir;
@@ -95,4 +92,6 @@ private:
 	// trajectory
 	std::vector<Eigen::Matrix4d> m_trajectory;
 	std::vector<double> m_trajectoryTimeStamps;
+
+
 };

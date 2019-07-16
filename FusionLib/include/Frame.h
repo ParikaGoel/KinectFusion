@@ -16,7 +16,7 @@ class Frame {
 public:
     EIGEN_MAKE_ALIGNED_OPERATOR_NEW
 
-    Frame(double* depthMap, const Eigen::Matrix3d& depthIntrinsics,
+    Frame(const double* depthMap, const Eigen::Matrix3d& depthIntrinsics,
             const unsigned int width, const unsigned int height, int downsampleFactor = 1, double maxDistance = 2);
 
 	void computeNormals(double maxDistance=0.1);
@@ -47,7 +47,7 @@ public:
 
     const unsigned int getHeight() const;
 
-    double *getRawDepthMap() const;
+    const double *getRawDepthMap() const;
 
     bool contains(const Eigen::Vector2i& point);
 
@@ -72,13 +72,15 @@ private:
     std::vector<Eigen::Vector3d> m_points;
 	std::vector<Eigen::Vector3d> m_normals;
 
+	const unsigned int m_width;
+    const unsigned int m_height;
+
     std::vector<Eigen::Vector3d> m_points_global;
     std::vector<Eigen::Vector3d> m_normals_global;
     Eigen::Matrix4d m_global_pose;
     Eigen::Matrix3d m_intrinsic_matrix;
     std::vector<double> m_depth_map;
 
-    const unsigned int m_width;
-    const unsigned int m_height;
-    double* _rawDepthMap;
+
+    const double* _rawDepthMap;
 };
