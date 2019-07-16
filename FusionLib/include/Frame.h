@@ -15,7 +15,7 @@
 class Frame {
 public:
     EIGEN_MAKE_ALIGNED_OPERATOR_NEW
-
+    
     Frame(const double* depthMap, const Eigen::Matrix3d& depthIntrinsics,
             const unsigned int width, const unsigned int height, double maxDistance = 2);
 
@@ -51,6 +51,9 @@ public:
 
     Eigen::Vector3d projectIntoCamera(const Eigen::Vector3d& globalCoord);
     Eigen::Vector2i projectOntoPlane(const Eigen::Vector3d& cameraCoord);
+    Eigen::Vector2i findClosestPoint( const unsigned int u, const unsigned int v, Eigen::Vector3d target, const unsigned int range );
+    Eigen::Vector2i findClosestDistancePoint( const unsigned int u, const unsigned int v, Eigen::Vector3d target, const unsigned int range );
+
 
 private:
 

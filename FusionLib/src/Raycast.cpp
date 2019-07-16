@@ -113,7 +113,7 @@ Raycast::calculateRayDirection(int x, int y, const Eigen::Matrix<double, 3, 3, E
 }
 
 bool Raycast::calculateCurrentPointOnRay(Eigen::Vector3d &currentPoint, double &rayParameter,
-                                         const Eigen::Matrix<size_t,3,1>& volumeSize,
+                                         const Eigen::Vector3i& volumeSize,
                                          const double voxelScale,
                                          const Eigen::Vector3d &origin,
                                          const Eigen::Vector3d &direction) {
@@ -129,10 +129,9 @@ bool Raycast::calculateCurrentPointOnRay(Eigen::Vector3d &currentPoint, double &
 }
 
 double Raycast::getTSDF(std::shared_ptr<Volume>& volume, Eigen::Vector3d position) {
-    Eigen::Matrix<size_t,3,1> volumeSize = volume->getVolumeSize();
-//    std::pair<double,double> fusionPoints= volume->getPoints()[position.x() + position.y()*volumeSize.x()
-//                                                               + position.z()*volumeSize.x()*volumeSize.y()];
-//    double tsdf = fusionPoints.first;
-    double tsdf = 0.0f;
+    Eigen::Vector3i volumeSize = volume->getVolumeSize();
+    std::pair<double,double> fusionPoints= volume->getPoints()[position.x() + position.y()*volumeSize.x()
+                                                               + position.z()*volumeSize.x()*volumeSize.y()];
+    double tsdf = fusionPoints.first;
     return tsdf;
 }
