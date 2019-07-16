@@ -1,3 +1,7 @@
+//
+// Created by pbo on 08.07.19.
+//
+
 #pragma once
 
 #include <Eigen/Dense>
@@ -6,30 +10,22 @@
 
 class Volume {
 public:
-    Volume(const Eigen::Matrix<size_t,3,1>& volumeSize, double voxelScale, const double initial_tsdf);
+    Volume(const Eigen::Vector3i volumeSize, const double voxelScale);
 
     ~Volume()= default;
 
-    const std::vector<std::pair<double,double>> &getData() ;
+    std::vector<std::pair<double,double>> &getPoints() ;
 
-    const std::pair<double,double>& getVoxelData(size_t x, size_t y, size_t z);
 
-    void updateVoxelData(size_t x, size_t y, size_t z, double current_tsdf, double current_weight);
-
-    const Eigen::Matrix<size_t,3,1> &getVolumeSize() const;
+	const Eigen::Vector3i &getVolumeSize() const;
 
     float getVoxelScale() const;
 
 private:
-    //tsdf_data contain tuple of tsdf & weight value for each point p in the global model
-    // vector size would be x * y * z
-    std::vector<std::pair<double,double>> _tsdfData;
-
-    // Overall size of the volume in mm
-    Eigen::Matrix<size_t,3,1> _volumeSize;
-
-    // Amount of mm one voxel will represent in each dimension
-    double _voxelScale;
+    //TODO: _points should not containt points, but tuples of tsdf & Weight
+    std::vector<std::pair<double,double>> _points;
+    const Eigen::Vector3i _volumeSize;
+    const double _voxelScale;
 
 };
 

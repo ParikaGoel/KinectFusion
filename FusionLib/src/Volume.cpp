@@ -1,33 +1,25 @@
+//
+// Created by pbo on 08.07.19.
+//
+
 #include "Volume.hpp"
 
-Volume::Volume(const Eigen::Matrix<size_t,3,1>& volumeSize, const double voxelScale, const double initial_tsdf)
-        : _tsdfData(), _volumeSize(volumeSize), _voxelScale(voxelScale) {
+Volume::Volume(const Eigen::Vector3i volumeSize, const double voxelScale)
+        : _points(), _volumeSize(volumeSize), _voxelScale(voxelScale) {
 
-    _tsdfData.reserve(volumeSize.x() * volumeSize.y() * volumeSize.z());
-    for (size_t z = 0;z<volumeSize.z();z++)
-        for( size_t y =0;y<volumeSize.y();y++)
-            for(size_t x=0;x< volumeSize.x();x++)
-                _tsdfData.emplace_back(std::pair<double,double>(initial_tsdf,0));
+    _points.reserve(volumeSize.x() * volumeSize.y() * volumeSize.z());
+    for (int z = 0;z<volumeSize.z();z++)
+        for( int y =0;y<volumeSize.y();y++)
+            for(int x=0;x< volumeSize.x();x++)
+                _points.emplace_back(std::pair<double,double>(0,0));
 
 }
 
-void Volume::updateVoxelData(size_t x, size_t y, size_t z, double updated_tsdf, double updated_weight){
-    size_t index = z * (_volumeSize.x() + _volumeSize.y()) + y * _volumeSize.x() + x;
-
-    _tsdfData[index].first = updated_tsdf;
-    _tsdfData[index].second = updated_weight;
+std::vector<std::pair<double, double>> &Volume::getPoints()  {
+	return _points;
 }
 
-const std::pair<double,double>& Volume::getVoxelData(size_t x, size_t y, size_t z){
-    size_t index = z * (_volumeSize.x() + _volumeSize.y()) + y * _volumeSize.x() + x;
-    return _tsdfData[index];
-}
-
-const std::vector<std::pair<double, double>> &Volume::getData()  {
-	return _tsdfData;
-}
-
-const Eigen::Matrix<size_t,3,1> &Volume::getVolumeSize() const {
+const Eigen::Vector3i &Volume::getVolumeSize() const {
 	return _volumeSize;
 }
 

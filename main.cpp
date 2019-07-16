@@ -20,29 +20,19 @@
 struct Config{
 
 public:
-    Config(const double dist_threshold,
-            const double normal_threshold,
-            const double max_truncation_distance,
-            const double min_truncation_distance,
-            const double tsdf_max_weight,
-            const double voxelScale,
-            const int x,const int y, const int z):
+    Config(const double dist_threshold, const double normal_threshold, const double truncationDistance,const double voxelScale, const int x,const int y, const int z):
     m_dist_threshold(dist_threshold),
     m_normal_threshold(normal_threshold),
-    m_max_truncation_distance(max_truncation_distance),
-    m_min_truncation_distance(min_truncation_distance),
-    m_tsdf_max_weight(tsdf_max_weight),
+    m_truncationDistance(truncationDistance),
     m_voxelScale(voxelScale),
     m_volumeSize(x,y,z)
     {};
 
     const double m_dist_threshold;
     const double m_normal_threshold;
-    const double m_max_truncation_distance;
-    const double m_min_truncation_distance;
+    const double m_truncationDistance;
     const double m_voxelScale;
-    const double m_tsdf_max_weight;
-    Eigen::Matrix<size_t,3,1> m_volumeSize;
+    Eigen::Vector3i m_volumeSize;
 
 };
 
@@ -59,15 +49,15 @@ bool process_frame( size_t frame_cnt, std::shared_ptr<Frame> prevFrame,std::shar
     };
 
     // STEP 2: Surface reconstruction
-    // ToDo(Parika): should not have to recreate a fusion object everytime..make it global somewhere
-   Fusion fusion(config.m_max_truncation_distance,config.m_min_truncation_distance,config.m_tsdf_max_weight);
-    if(!fusion.reconstructSurface(currentFrame,volume)){
+    //TODO does icp.estimate set the new Pose to currentFrame? Otherwise it needs to be added as function parameter
+    Fusion fusion;
+    if(!fusion.reconstructSurface(currentFrame,volume, config.m_truncationDistance)){
         throw "Surface reconstruction failed";
     };
 
     // Step 4: Surface prediction
     Raycast raycast;
-    if(!raycast.surfacePrediction(currentFrame,volume,config.m_max_truncation_distance)){
+    if(!raycast.surfacePrediction(currentFrame,volume, config.m_truncationDistance)){
         throw "Raycasting failed";
     };
 
@@ -91,11 +81,10 @@ int main(){
     sensor.processNextFrame();
 
     //TODO truncationDistance is completly random Value right now
-    // Try truncation distance of 0.0275 m after everything is done
-    Config config (0.1,0.5,0.5,10,-10,1,512,512,512);
+    Config config (0.1,0.5,0.5,512,512,512,1.0);
 
     //Setup Volume
-    auto volume = std::make_shared<Volume>(config.m_volumeSize,config.m_voxelScale, config.m_max_truncation_distance) ;
+    auto volume = std::make_shared<Volume>(config.m_volumeSize,config.m_voxelScale) ;
 
     const Eigen::Matrix3d depthIntrinsics = sensor.getDepthIntrinsics();
     const unsigned int depthWidth         = sensor.getDepthImageWidth();
