@@ -24,12 +24,14 @@
 struct Config{
 
 public:
-    Config(const double dist_threshold, const double normal_threshold, const double truncationDistance,const double voxelScale, const int x,const int y, const int z):
+    Config(const double dist_threshold, const double normal_threshold, const double truncationDistance,
+            const Eigen::Vector3d volumeOrigin,const int x,const int y, const int z, const double voxelScale):
     m_dist_threshold(dist_threshold),
     m_normal_threshold(normal_threshold),
     m_truncationDistance(truncationDistance),
     m_voxelScale(voxelScale),
-    m_volumeSize(x,y,z)
+    m_volumeSize(x,y,z),
+    m_volumeOrigin(volumeOrigin)
     {};
 
     const double m_dist_threshold;
@@ -37,6 +39,7 @@ public:
     const double m_truncationDistance;
     const double m_voxelScale;
     Eigen::Vector3i m_volumeSize;
+    const Eigen::Vector3d m_volumeOrigin;
 
 };
 
@@ -96,10 +99,11 @@ int main(){
     sensor.processNextFrame();
 
     //TODO truncationDistance is completly random Value right now
-    Config config (0.1,0.5,0.5,512,512,512,1.0);
+    const auto volumeOrigin = Eigen::Vector3d (0,0,0);
+    Config config (0.1,0.5,0.5, volumeOrigin, 512,512,512,1.0);
 
     //Setup Volume
-    auto volume = std::make_shared<Volume>(config.m_volumeSize,config.m_voxelScale) ;
+    auto volume = std::make_shared<Volume>(config.m_volumeOrigin, config.m_volumeSize,config.m_voxelScale) ;
 
     Eigen::Matrix3d depthIntrinsics1 = sensor.getDepthIntrinsics();
     // depthIntrinsics1(0,2) = 0;
