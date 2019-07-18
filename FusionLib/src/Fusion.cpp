@@ -24,9 +24,14 @@ bool Fusion::reconstructSurface(std::shared_ptr<Frame> currentFrame,std::shared_
 				 * Volumetric Reconstruction
 				 */
 				//calculate Camera Position
-				Eigen::Vector3d currentCameraPosition;
-				Eigen::Vector2i X;
-				if (!calculateGlobal2CameraPoint(currentCameraPosition, x, y, z, pose.block(0,0,3,3), pose.block(0,3,3,1), voxelScale))continue;
+
+                Eigen::Vector3d currentCameraPosition;
+                Eigen::Vector2i X;
+                if (!calculateGlobal2CameraPoint(currentCameraPosition, x, y, z, pose.block(0,0,3,3), pose.block(0,3,3,1), voxelScale))continue;
+
+                //TODO check
+                currentCameraPosition += volume->getOrigin();
+
 				if (!pi(X, currentCameraPosition, currentFrame->getIntrinsics(), width, height))continue;
 
 				const double depth = currentFrame->getRawDepthMap()[X.y() + (X.x() * width)];
