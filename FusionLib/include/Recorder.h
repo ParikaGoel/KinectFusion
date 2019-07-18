@@ -1,10 +1,4 @@
-//
-// Created by frankzl on 13.07.19.
-//
-
-#ifndef KINECTFUSION_RECORDER_H
-#define KINECTFUSION_RECORDER_H
-
+#pragma once
 
 #include "KinectSensor.h"
 #include "stb_image_write.h"
@@ -23,7 +17,7 @@ public:
         std::stringstream color_info;
         std::stringstream depth_info;
 
-        for (auto i = 0; i < num_frames; i++){
+        for (size_t i = 0; i < num_frames; i++){
             sensor.processNextFrame();
             auto frame = (color_map.process(sensor.getFrameset().get_depth_frame())).as<rs2::video_frame>();
             auto color_frame = sensor.getFrameset().get_color_frame();
@@ -61,6 +55,3 @@ public:
 private:
     KinectSensor sensor;
 };
-
-
-#endif //KINECTFUSION_RECORDER_H

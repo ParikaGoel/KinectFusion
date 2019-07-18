@@ -105,10 +105,7 @@ int main(){
     //Setup Volume
     auto volume = std::make_shared<Volume>(config.m_volumeOrigin, config.m_volumeSize,config.m_voxelScale) ;
 
-    Eigen::Matrix3d depthIntrinsics1 = sensor.getDepthIntrinsics();
-    // depthIntrinsics1(0,2) = 0;
-    // depthIntrinsics1(1,2) = 0;
-    const Eigen::Matrix3d depthIntrinsics = depthIntrinsics1;
+    Eigen::Matrix3d depthIntrinsics = sensor.getDepthIntrinsics();
     const unsigned int depthWidth         = sensor.getDepthImageWidth();
     const unsigned int depthHeight        = sensor.getDepthImageHeight();
 
@@ -129,10 +126,6 @@ int main(){
 
     MeshWriter::toFile( "my_mesh", colors, prevFrame->getPoints());
 
-    Eigen::Matrix4d init_gl_pose = Eigen::Matrix4d::Identity();
-
-    Eigen::Matrix4d current_camera_to_world = init_gl_pose;
-
     int i = 0;
     const int iMax = 45;
 
@@ -145,8 +138,7 @@ int main(){
         const double* depthMap = &sensor.getDepth()[0];
         std::shared_ptr<Frame> currentFrame = std::make_shared<Frame>(Frame(depthMap,depthIntrinsics, depthWidth, depthHeight));
         process_frame(i,prevFrame,currentFrame,volume,config);
-
-        std::stringstream ss;
+        
         ss << filenameBaseOut << i << ".off";
 
         std::cout << "Writing Mesh " << i << std::endl;

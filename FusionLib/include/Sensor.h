@@ -1,11 +1,4 @@
-//
-// Created by frankzl on 04.07.19.
-//
-
-
-#ifndef KINECTFUSION_SENSOR_H
-#define KINECTFUSION_SENSOR_H
-
+#pragma once
 
 #include <Eigen/Core>
 #include <fstream>
@@ -109,6 +102,3 @@ protected:
 };
 
 typedef unsigned char BYTE;
-
-// reads sensor files according to https://vision.in.tum.de/data/datasets/rgbd-dataset/file_formats
-#endif //KINECTFUSION_SENSOR_H

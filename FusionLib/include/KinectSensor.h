@@ -1,11 +1,5 @@
-//
-// Created by frankzl on 28.06.19.
-//
+#pragma once
 
-#ifndef KINECTFUSION_DEPTHSENSOR_H
-#define KINECTFUSION_DEPTHSENSOR_H
-
-#endif //KINECTFUSION_DEPTHSENSOR_H
 #include "VirtualSensor.h"
 #include <vector>
 

@@ -5,7 +5,7 @@
 
 Frame::Frame(const double * depthMap, const Eigen::Matrix3d &depthIntrinsics,
         const unsigned int width, const unsigned int height, double maxDistance)
-        : m_intrinsic_matrix(depthIntrinsics),m_width(width),m_height(height){
+        : m_width(width),m_height(height),m_intrinsic_matrix(depthIntrinsics){
 
     m_depth_map = std::vector<double>(width*height);
     for (size_t i = 0; i < width*height; ++i)
@@ -153,43 +153,6 @@ std::vector<Eigen::Vector3d> Frame::computeNormals(std::vector<Eigen::Vector3d> 
     return normalsTmp;
 }
 
-Eigen::Vector2i Frame::findClosestPoint( const unsigned int u, const unsigned int v, Eigen::Vector3d target, const unsigned int range ){
-    double lowest_err = 10000;
-    int best_u = -1;
-    int best_v = -1;
-
-    for (size_t x = std::max((unsigned int)1, u - range); x < std::min(u + range, m_width-1); x++){
-        for (size_t y = std::max((unsigned int)1, v - range); y < std::min(v + range, m_height-1); y++){
-            double err = (m_normals_global[y*m_width + x].transpose() *
-                (m_points_global[ y*m_width + x ] - target)) ;
-            if (err < lowest_err){
-                best_u = x;
-                best_v = y;
-                lowest_err = err;
-            }
-        }
-    }
-
-    return Eigen::Vector2i(best_u, best_v);
-}
-
-Eigen::Vector2i Frame::findClosestDistancePoint( const unsigned int u, const unsigned int v, Eigen::Vector3d target, const unsigned int range ){
-    double lowest_err = 10000;
-    int best_u = -1;
-    int best_v = -1;
-
-    for (unsigned int x = std::max((unsigned int)0, u - range); x < std::min(u + range, m_width); x++){
-        for (unsigned int y = std::max((unsigned int)0, v - range); y < std::min(v + range, m_height); y++){
-            double err = (m_points_global[ y*m_width + x ] - target).norm() ;
-            if (err < lowest_err){
-                best_u = x;
-                best_v = y;
-                lowest_err = err;
-            }
-        }
-    }
-    return Eigen::Vector2i(best_u, best_v);
-}
 
 void Frame::applyGlobalPose(Eigen::Matrix4d& estimated_pose){
     Eigen::Matrix3d rotation = estimated_pose.block(0,0,3,3);

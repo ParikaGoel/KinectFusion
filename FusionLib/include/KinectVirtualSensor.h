@@ -1,7 +1,3 @@
-//
-// Created by frankzl on 15.07.19.
-//
-
 #pragma once
 
 #include "VirtualSensor.h"
@@ -19,7 +15,8 @@ public:
     bool init(const std::string& datasetDir){
         LoadDepthIntrinsics(datasetDir);
         LoadColorIntrinsics(datasetDir);
-        VirtualSensor::init(datasetDir, false);
+        bool success = VirtualSensor::init(datasetDir, false);
+        return success;
     }
 
     bool processNextFrame() {
@@ -101,9 +98,9 @@ public:
 
        // std::vector<double> cast_points(points.size());
 
-       for (int i=0; i< points.size(); i++)
+       for (size_t i=0; i< points.size(); i++)
        {
-           m_depthFrame[i] = atof(points.at(i).c_str());
+           m_depthFrame[i] = std::atof(points.at(i).c_str());
            //cast_points[i] = num;
        }
 

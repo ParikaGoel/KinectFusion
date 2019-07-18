@@ -6,11 +6,6 @@
 #include <Eigen/Core>
 #include <Eigen/StdVector>
 
-#include <ceres/ceres.h>
-#include <sophus/se3.hpp>
-
-#include "local_parameterization_se3.hpp"
-
 #include "Frame.h"
 
 class LinearSolver{

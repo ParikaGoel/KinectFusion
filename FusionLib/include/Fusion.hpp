@@ -1,7 +1,3 @@
-//
-// Created by pbo on 08.07.19.
-//
-
 #pragma once
 
 #include "Volume.hpp"
