@@ -48,20 +48,11 @@ private:
      */
 
     bool calculatePointOnRay(Eigen::Vector3d& currentPoint,
-            const Eigen::Vector3i& volumeSize,
-            const Eigen::Vector3d& origin,
-            const Eigen::Vector3d& direction,
-            double rayParameter,
-            const double voxelScale);
-
-    /*!
-     * Attention/TODO: make sure the correct tsdf is retrieved as the mapping is dependant on the for loops in fusion
-     *
-     * @param volume
-     * @param position
-     * @return the tsdf from the map in Volume at position, check the way it is done in Fusion
-     */
-    double getTSDF(std::shared_ptr<Volume>& volume, Eigen::Vector3d position);
+                             std::shared_ptr<Volume>& volume,
+                             const Eigen::Vector3d& origin,
+                             const Eigen::Vector3d& direction,
+                             double raylength
+    );
 
     /*!
      * @param ray_origin : originating position of vector to the vertex point at zero crossing
@@ -72,6 +63,11 @@ private:
     Eigen::Vector3d getVertexatZeroCrossing(Eigen::Vector3d& ray_origin,
                                             Eigen::Vector3d& ray_direction,
                                             double ray_length);
+
+    Eigen::Vector3d getZeroCrossing(
+            Eigen::Vector3d& prevPoint, Eigen::Vector3d& currPoint,
+            double prevTSDF, double currTSDF
+            );
 };
 
 
