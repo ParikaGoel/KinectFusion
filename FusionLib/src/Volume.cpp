@@ -27,6 +27,49 @@ Volume::Volume(const Eigen::Vector3d origin, const Eigen::Vector3i volumeSize, c
 
 }
 
+bool Volume::intersects(const Ray &r, Eigen::Vector3d& entry_distance) const{
+
+    Eigen::Vector3d bounds [2] = {_origin,
+                                  _maxPoint};
+
+    float tmin, tmax, tymin, tymax, tzmin, tzmax;
+
+    tmin = (bounds[r.sign[0]].x() - r.orig.x()) * r.invdir.x();
+    tmax = (bounds[1-r.sign[0]].x() - r.orig.x()) * r.invdir.x();
+    tymin = (bounds[r.sign[1]].y() - r.orig.y()) * r.invdir.y();
+    tymax = (bounds[1-r.sign[1]].y() - r.orig.y()) * r.invdir.y();
+
+    if ((tmin > tymax) || (tymin > tmax))
+        return false;
+    if (tymin > tmin)
+        tmin = tymin;
+    if (tymax < tmax)
+        tmax = tymax;
+
+    tzmin = (bounds[r.sign[2]].z() - r.orig.z()) * r.invdir.z();
+    tzmax = (bounds[1-r.sign[2]].z() - r.orig.z()) * r.invdir.z();
+
+    if ((tmin > tzmax) || (tzmin > tmax))
+        return false;
+    if (tzmin > tmin)
+        tmin = tzmin;
+    if (tzmax < tmax)
+        tmax = tzmax;
+
+    entry_distance = tmin*r.dir;
+
+    //double z_entry = r.dir.z() == 0 ? 0 : tzmin;// tzmin*r.dir.z();
+    //double x_entry = r.dir.x() == 0 ? 0 : tmin;// tmin*r.dir.x();
+    //double y_entry = r.dir.y() == 0 ? 0 : tymin;// tymin*r.dir.y();
+    // entry_distance = Eigen::Vector3d(tmin*r.dir.x(), tymin*r.dir.y(), );
+    // entry_distance = Eigen::Vector3d( x_entry, y_entry, z_entry );
+    //Eigen::Vector3d intersecting_voxel = (intersection - _origin) / _voxelScale;
+    // voxel[0] = (int) intersecting_voxel[0];
+    // voxel[1] = (int) intersecting_voxel[1];
+    // voxel[2] = (int) intersecting_voxel[2];
+
+    return true;
+}
 
 const Eigen::Vector3d& Volume::getOrigin() const{
     return _origin;

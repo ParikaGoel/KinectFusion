@@ -21,6 +21,8 @@ public:
     Volume(const Eigen::Vector3d origin, const Eigen::Vector3i volumeSize, const double voxelScale);
     ~Volume()= default;
 
+    bool intersects(const Ray &r, Eigen::Vector3d& entry_distance) const;
+
     std::vector<std::pair<double,double>> &getPoints() ;
 
     const Eigen::Vector3d &getOrigin() const;
