@@ -131,7 +131,7 @@ double Raycast::getTSDF(std::shared_ptr<Volume>& volume, Eigen::Vector3d positio
     currentPosition.z() = int(position.z());
 
     Eigen::Vector3i volumeSize = volume->getVolumeSize();
-    std::pair<double,double> fusionPoints= volume->getPoints()[currentPosition.x() + currentPosition.y()*volumeSize.x()
+    std::pair<double,double> fusionPoints= volume->getTSDFData()[currentPosition.x() + currentPosition.y()*volumeSize.x()
                                                                + currentPosition.z()*volumeSize.x()*volumeSize.y()];
     double tsdf = fusionPoints.first;
     return tsdf;

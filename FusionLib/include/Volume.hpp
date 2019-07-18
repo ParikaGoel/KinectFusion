@@ -19,7 +19,7 @@ public:
 
     bool intersects(const Ray &r, Eigen::Vector3d& entry_distance) const;
 
-    std::vector<std::pair<double,double>> &getPoints() ;
+    std::vector<std::pair<double,double>> &getTSDFData() ;
 
     const Eigen::Vector3d &getOrigin() const;
 
@@ -29,8 +29,8 @@ public:
     float getVoxelScale() const;
 
 private:
-    //TODO: _points should not containt points, but tuples of tsdf & Weight
-    std::vector<std::pair<double,double>> _points;
+    //_tsdfData contains tuples of tsdf & Weight
+    std::vector<std::pair<double,double>> _tsdfData;
     const Eigen::Vector3i _volumeSize;
     const double _voxelScale;
 

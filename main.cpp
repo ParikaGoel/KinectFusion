@@ -131,7 +131,7 @@ int main(){
         const double* depthMap = &sensor.getDepth()[0];
         std::shared_ptr<Frame> currentFrame = std::make_shared<Frame>(Frame(depthMap,depthIntrinsics, depthWidth, depthHeight));
         process_frame(i,prevFrame,currentFrame,volume,config);
-        
+
         ss << filenameBaseOut << i << ".off";
 
         std::cout << "Writing Mesh " << i << std::endl;
