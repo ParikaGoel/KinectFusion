@@ -2,12 +2,41 @@
 #include <fstream>
 #include <Eigen/Core>
 #include <iostream>
-
 #include "Frame.h"
+
+typedef unsigned char BYTE;
+
 
 class MeshWriter{
 public:
+    static bool toFile(std::string filename, BYTE* color,
+                       const std::vector<Eigen::Vector3d>& points){
 
+        std::string filenameBaseOut = PROJECT_DIR + std::string("/results/");
+
+        // Write off file.
+        std::cout << filename << std::endl;
+        std::ofstream outFile(filenameBaseOut + filename + ".off");
+        if (!outFile.is_open()) return false;
+
+        // Write header.
+        outFile << "COFF" << std::endl;
+        outFile << points.size() << " " << "0" << " 0" << std::endl;
+
+        // Save vertices.
+        for (unsigned int i = 0; i < points.size(); i++) {
+            const auto& vertex = points[i];
+            if (vertex.allFinite() && vertex.z() > 0)
+                outFile << vertex.x() << " " << vertex.y() << " " << vertex.z() << " "
+                        << (unsigned int)color[i*4] << " " << (unsigned int)color[i*4 +1] <<
+                        " " << (unsigned int)color[i*4+2]<< " " << (unsigned int)color[i*4 + 3] <<std::endl;
+            else
+                outFile << "0.0 0.0 0.0 0 0 0 0" << std::endl;
+        }
+        // Close file.
+        outFile.close();
+        return true;
+    }
 
     static bool toFile(std::string filename, std::string color,
                        const std::vector<Eigen::Vector3d>& points){

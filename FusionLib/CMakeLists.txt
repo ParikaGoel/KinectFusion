@@ -4,7 +4,7 @@ set(FUSION_Name kfusion)
 set(FUSION_SOURCES
         src/icp.cpp
         src/VirtualSensor.cpp
-        src/DepthSensor.cpp
+        src/KinectSensor.cpp
         src/Frame.cpp
         src/Volume.cpp
         src/Raycast.cpp

@@ -1,7 +1,3 @@
-//
-// Created by pbo on 08.07.19.
-//
-
 #include "Raycast.hpp"
 
 bool Raycast::surfacePrediction(std::shared_ptr<Frame>& currentFrame,std::shared_ptr<Volume>& volume,float truncationDistance){
@@ -29,7 +25,8 @@ bool Raycast::surfacePrediction(std::shared_ptr<Frame>& currentFrame,std::shared
                 if (!calculateRayLength(rayLength, volumeRange, translation, direction))continue;
 
                 Eigen::Vector3d currentPoint;
-                calculateCurrentPointOnRay(currentPoint, rayLength, volumeSize, voxelScale, translation, direction);
+                calculatePointOnRay(currentPoint, volumeSize, translation,
+                                    direction,rayLength,voxelScale);
 
                 double TSDF = getTSDF(volume, currentPoint);
 
@@ -38,8 +35,8 @@ bool Raycast::surfacePrediction(std::shared_ptr<Frame>& currentFrame,std::shared
 
                 for (; rayLength < maxSearchLength; rayLength += truncationDistance * 0.5f) {
 
-                    if (!calculateCurrentPointOnRay(currentPoint, rayLength, volumeSize, voxelScale, translation,
-                                                    direction))
+                    if (!calculatePointOnRay(currentPoint, volumeSize, translation,
+                                                    direction,rayLength+truncationDistance * 0.5f,voxelScale))
                         continue;
                     const double previousTSDF = TSDF;
                     TSDF = getTSDF(volume, currentPoint);
@@ -52,7 +49,7 @@ bool Raycast::surfacePrediction(std::shared_ptr<Frame>& currentFrame,std::shared
                     }
                     //We reached the zero crossing
 
-                    //TODO: Calculate vertex
+                    //TODO: Calculate vertex : Call getVertexatZeroCrossing with appropriate parameter values
 
                     //TODO: Calculated normal using interpolation method
 
@@ -82,7 +79,6 @@ double get_max_time(const Eigen::Vector3d& volumeRange, const Eigen::Vector3d &o
 
 bool Raycast::calculateRayLength(double &rayLength, const Eigen::Vector3d& volumeRange, const Eigen::Vector3d &origin,
                                  const Eigen::Vector3d &direction) {
-    // TODO implement, check Method signature
     float txMin = ((direction.x() > 0 ? 0.f : volumeRange.x()) - origin.x()) / direction.x();
     float tyMin = ((direction.y() > 0 ? 0.f : volumeRange.y()) - origin.y()) / direction.y();
     float tzMin = ((direction.z() > 0 ? 0.f : volumeRange.z()) - origin.z()) / direction.z();
@@ -112,12 +108,12 @@ Raycast::calculateRayDirection(int x, int y, const Eigen::Matrix<double, 3, 3, E
     return rayDirection;
 }
 
-bool Raycast::calculateCurrentPointOnRay(Eigen::Vector3d &currentPoint, double &rayParameter,
+bool Raycast::calculatePointOnRay(Eigen::Vector3d& currentPoint,
                                          const Eigen::Vector3i& volumeSize,
-                                         const double voxelScale,
-                                         const Eigen::Vector3d &origin,
-                                         const Eigen::Vector3d &direction) {
-    rayParameter += voxelScale;
+                                         const Eigen::Vector3d& origin,
+                                         const Eigen::Vector3d& direction,
+                                         double rayParameter,
+                                         const double voxelScale) {
     currentPoint = (origin + (direction * rayParameter)) / voxelScale;
 
     if (currentPoint.x() < 1 || currentPoint.x() >= volumeSize.x() - 1 || currentPoint.y() < 1 ||
@@ -129,9 +125,20 @@ bool Raycast::calculateCurrentPointOnRay(Eigen::Vector3d &currentPoint, double &
 }
 
 double Raycast::getTSDF(std::shared_ptr<Volume>& volume, Eigen::Vector3d position) {
+    Eigen::Vector3i currentPosition;
+    currentPosition.x() = int(position.x());
+    currentPosition.y() = int(position.y());
+    currentPosition.z() = int(position.z());
+
     Eigen::Vector3i volumeSize = volume->getVolumeSize();
-    std::pair<double,double> fusionPoints= volume->getPoints()[position.x() + position.y()*volumeSize.x()
-                                                               + position.z()*volumeSize.x()*volumeSize.y()];
+    std::pair<double,double> fusionPoints= volume->getPoints()[currentPosition.x() + currentPosition.y()*volumeSize.x()
+                                                               + currentPosition.z()*volumeSize.x()*volumeSize.y()];
     double tsdf = fusionPoints.first;
     return tsdf;
+}
+
+Eigen::Vector3d Raycast::getVertexatZeroCrossing(Eigen::Vector3d& ray_origin,
+        Eigen::Vector3d& ray_direction,
+        double ray_length){
+    return Eigen::Vector3d(ray_origin + ray_direction * ray_length);
 }

@@ -1,37 +1,28 @@
-//
-// Created by frankzl on 28.06.19.
-//
+#pragma once
 
-#ifndef KINECTFUSION_DEPTHSENSOR_H
-#define KINECTFUSION_DEPTHSENSOR_H
-
-#endif //KINECTFUSION_DEPTHSENSOR_H
 #include "VirtualSensor.h"
 #include <vector>
 
 #include <librealsense2/rs.hpp>
 
 #include "Frame.h"
+#include "Sensor.h"
 
 
-class DepthSensor {
+class KinectSensor: public Sensor {
 public:
 
-    DepthSensor();
+    KinectSensor();
 
     void start();
 
     void stop();
 
-    unsigned int GetDepthImageWidth();
+    bool processNextFrame();
 
-    unsigned int GetDepthImageHeight();
+    Eigen::Matrix3d getDepthIntrinsics();
 
-    bool ProcessNextFrame();
-
-    Eigen::Matrix3d GetIntrinsics();
-
-    std::vector<double> GetDepth();
+    std::vector<double> getDepth();
 
 
     rs2::points getPoints();
@@ -48,10 +39,6 @@ private:
     rs2::pointcloud m_pc;
     rs2::points m_points;
     const rs2::vertex* m_vertices;
-
-    Eigen::Matrix3d m_intrinsics;
-    std::vector<double> m_depthMap;
-    int m_currentIdx;
 
 
     rs2::decimation_filter dec;

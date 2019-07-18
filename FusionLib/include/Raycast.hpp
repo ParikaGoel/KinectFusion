@@ -1,7 +1,3 @@
-//
-// Created by pbo on 08.07.19.
-//
-
 #pragma once
 #include "Volume.hpp"
 #include <Frame.h>
@@ -16,6 +12,7 @@ public:
 private:
 
     double interpolateNormals(const Eigen::Vector3d& normal, const std::shared_ptr<Volume>& volume);
+
 
     /*!
      *
@@ -50,10 +47,12 @@ private:
      * @return is point in Volume
      */
 
-    bool calculateCurrentPointOnRay(Eigen::Vector3d& currentPoint, double& rayParameter,
+    bool calculatePointOnRay(Eigen::Vector3d& currentPoint,
             const Eigen::Vector3i& volumeSize,
-            const double voxelScale,
-            const Eigen::Vector3d& origin, const Eigen::Vector3d& direction);
+            const Eigen::Vector3d& origin,
+            const Eigen::Vector3d& direction,
+            double rayParameter,
+            const double voxelScale);
 
     /*!
      * Attention/TODO: make sure the correct tsdf is retrieved as the mapping is dependant on the for loops in fusion
@@ -63,6 +62,16 @@ private:
      * @return the tsdf from the map in Volume at position, check the way it is done in Fusion
      */
     double getTSDF(std::shared_ptr<Volume>& volume, Eigen::Vector3d position);
+
+    /*!
+     * @param ray_origin : originating position of vector to the vertex point at zero crossing
+     * @param ray_direction : direction of the vector
+     * @param ray_length: length of the vector specifying how far the point is from origin
+     * @return 3d point of the vertex at zero crossing
+     */
+    Eigen::Vector3d getVertexatZeroCrossing(Eigen::Vector3d& ray_origin,
+                                            Eigen::Vector3d& ray_direction,
+                                            double ray_length);
 };
 
 

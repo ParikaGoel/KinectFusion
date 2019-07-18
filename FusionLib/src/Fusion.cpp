@@ -1,7 +1,3 @@
-//
-// Created by pbo on 08.07.19.
-//
-
 #include "Fusion.hpp"
 
 
@@ -34,7 +30,7 @@ bool Fusion::reconstructSurface(std::shared_ptr<Frame> currentFrame,std::shared_
 
 				if (!pi(X, currentCameraPosition, currentFrame->getIntrinsics(), width, height))continue;
 
-				const double depth = currentFrame->getRawDepthMap()[X.y() + (X.x() * width)];
+				const double depth = currentFrame->getDepthMap()[X.y() + (X.x() * width)];
 				if (depth <= 0) continue;
 
 				auto lambda = calculateLamdas(X, currentFrame->getIntrinsics());
@@ -90,7 +86,7 @@ void Fusion::reconstruct(std::shared_ptr<Frame> currentFrame,std::shared_ptr<Vol
 
                 if(!pi(X,cameraPoint,currentFrame->getIntrinsics(),width,height))continue;
 
-                const double depth = currentFrame->getRawDepthMap()[X.y()+(X.x()*width)];
+                const double depth = currentFrame->getDepthMap()[X.y()+(X.x()*width)];
                 if (depth <= 0) continue;
 
                 auto lambda=calculateLamdas(X, currentFrame->getIntrinsics());

@@ -1,7 +1,3 @@
-//
-// Created by pbo on 08.07.19.
-//
-
 #include "Volume.hpp"
 
 Ray::Ray(const Eigen::Vector3d &origin, const Eigen::Vector3d &dir) : orig(origin), dir(dir) {
@@ -15,16 +11,15 @@ Ray::Ray(const Eigen::Vector3d &origin, const Eigen::Vector3d &dir) : orig(origi
 
 
 Volume::Volume(const Eigen::Vector3d origin, const Eigen::Vector3i volumeSize, const double voxelScale)
-        : _maxPoint(voxelScale * volumeSize.cast<double>()),
-          _origin(origin), _points(), _volumeSize(volumeSize),
-          _voxelScale(voxelScale) {
+        : _points(), _volumeSize(volumeSize),
+          _voxelScale(voxelScale), _origin(origin),
+          _maxPoint(voxelScale * volumeSize.cast<double>()){
 
     _points.reserve(volumeSize.x() * volumeSize.y() * volumeSize.z());
     for (int z = 0;z<volumeSize.z();z++)
         for( int y =0;y<volumeSize.y();y++)
             for(int x=0;x< volumeSize.x();x++)
                 _points.emplace_back(std::pair<double,double>(0,0));
-
 }
 
 bool Volume::intersects(const Ray &r, Eigen::Vector3d& entry_distance) const{
