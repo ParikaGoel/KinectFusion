@@ -8,7 +8,7 @@ bool Fusion::reconstructSurface(const std::shared_ptr<Frame>& currentFrame,const
     auto pose = currentFrame->getGlobalPose().inverse();
     auto width = currentFrame->getWidth();
     auto height = currentFrame->getHeight();
-    auto tsdfVolumeData = volume->getVoxelData();
+    auto voxelData = volume->getVoxelData();
 
      for (int z = 0;z<volumeSize.z();z++) {
 		 for( int y =0;y<volumeSize.y();y++){
@@ -40,16 +40,30 @@ bool Fusion::reconstructSurface(const std::shared_ptr<Frame>& currentFrame,const
 
 				    const double current_tsdf = std::min(1., sdf / truncationDistance); // *sgn(sdf)
 					const double current_weight = 1.0;
-					size_t tsdf_index = x+(y*volumeSize.x())+(z*volumeSize.x()*volumeSize.y());
-					const double old_tsdf=tsdfVolumeData[tsdf_index].tsdf;
-					const double old_weight = tsdfVolumeData[tsdf_index].weight;
+					size_t voxel_index = x+(y*volumeSize.x())+(z*volumeSize.x()*volumeSize.y());
+					const double old_tsdf=voxelData[voxel_index].tsdf;
+					const double old_weight = voxelData[voxel_index].weight;
 
 					const double updated_tsdf = (old_weight*old_tsdf + current_weight*current_tsdf)/
 							(old_weight+current_weight);
 					const double updated_weight = old_weight+current_weight;
 
-                    tsdfVolumeData[tsdf_index].tsdf = updated_tsdf;
-                    tsdfVolumeData[tsdf_index].weight = updated_weight;
+                    voxelData[voxel_index].tsdf = updated_tsdf;
+                    voxelData[voxel_index].weight = updated_weight;
+
+                    if (sdf <= truncationDistance / 2 && sdf >= -truncationDistance / 2) {
+                        Vector4uc& voxel_color = voxelData[voxel_index].color;
+                        const Vector4uc image_color = currentFrame->getColorMap()[X.x() + (X.y() * width)];
+
+                        voxel_color[0] = (old_weight * voxel_color[0] + current_weight * image_color[0]) /
+                                (old_weight + current_weight);
+                        voxel_color[1] = (old_weight * voxel_color[1] + current_weight * image_color[1]) /
+                                (old_weight + current_weight);
+                        voxel_color[2] =(old_weight * voxel_color[2] + current_weight * image_color[2]) /
+                                (old_weight + current_weight);
+                        voxel_color[3] =(old_weight * voxel_color[3] + current_weight * image_color[3]) /
+                                        (old_weight + current_weight);
+                    }
 
 				}
 			}

@@ -34,7 +34,7 @@ public:
     Eigen::Vector3d getTSDFGrad(Eigen::Vector3d global);
 
 private:
-    //_voxelData contains tuples of tsdf & Weight
+    //_voxelData contains color, tsdf & Weight
     std::vector<Voxel> _voxelData;
     const Eigen::Vector3i _volumeSize;
     const double _voxelScale;
