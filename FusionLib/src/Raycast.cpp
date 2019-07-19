@@ -16,11 +16,11 @@ bool Raycast::surfacePrediction(std::shared_ptr<Frame>& currentFrame,std::shared
 
     const Eigen::Vector3d volumeRange(volumeSize.x()*voxelScale,volumeSize.y()*voxelScale,volumeSize.z()*voxelScale);
 
-    for( size_t y =0;y<height;y++){
-        for(size_t x=0;x< width;x++) {
+    for( size_t v =0;v<height;v++){
+        for(size_t u=0;u< width;u++) {
 
             //calculate Normalized Direction
-            auto direction = calculateRayDirection(x, y, rotationMatrix, currentFrame->getIntrinsics());
+            auto direction = calculateRayDirection(u, v, rotationMatrix, currentFrame->getIntrinsics());
 
             //calculate rayLength
             float rayLength(0.0f);
@@ -54,9 +54,9 @@ bool Raycast::surfacePrediction(std::shared_ptr<Frame>& currentFrame,std::shared
                 if (previousTSDF < 0. && currentTSDF > 0.)break;
                 //this equals +ve to -ve in the paper / this means we just crossed a zero value
                 if (previousTSDF > 0. && currentTSDF < 0.) {
-                    /*vertices[x+ y*width] = getVertexAtZeroCrossing(previousPoint, currentPoint, previousTSDF, currentTSDF);
+                    /*vertices[u+ v*width] = getVertexAtZeroCrossing(previousPoint, currentPoint, previousTSDF, currentTSDF);
                     // Eigen::Vector3d normal_point  = volume->getTSDFGrad(surface_point);
-                    depthMap[x + y*width] = vertices[x+ y*width].z();*/
+                    depthMap[u + v*width] = vertices[u+ v*width].z();*/
 
                     Eigen::Vector3d globalVertex = getVertexAtZeroCrossing(previousPoint, currentPoint, previousTSDF, currentTSDF);
 
@@ -69,14 +69,20 @@ bool Raycast::surfacePrediction(std::shared_ptr<Frame>& currentFrame,std::shared
 
                     Eigen::Vector3d normal = calculateNormal(gridVertex, volume);
 
+                    Vector4uc color;
+
+                    if(std::abs(previousTSDF) < std::abs(currentTSDF)){
+                        color = volume->getColor(previousPoint);
+                    }
+                    else{
+                        color = volume->getColor(currentPoint);
+                    }
+
+                    currentFrame->setGlobalPoint(globalVertex,u,v);
+                    currentFrame->setGlobalNormal(normal,u,v);
+                    currentFrame->setColor(color,u,v);
+
                 }
-                //We reached the zero crossing
-
-                //TODO: Calculated normal using interpolation method
-
-                //TODO: Calculate color using interpolation method
-
-                //TODO: set global vertex, normal and color into currentFrame
             }
         }
     }

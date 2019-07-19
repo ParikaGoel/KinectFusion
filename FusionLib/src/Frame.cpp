@@ -205,8 +205,18 @@ const std::vector<Eigen::Vector3d>& Frame::getGlobalNormals() const{
     return m_normals_global;
 }
 
+void Frame::setGlobalNormal(const Eigen::Vector3d& normal, size_t u, size_t v){
+    size_t idx = v * m_width + u;
+    m_normals_global[idx] = normal;
+}
+
 const std::vector<Eigen::Vector3d>& Frame::getGlobalPoints() const{
     return m_points_global;
+}
+
+void Frame::setGlobalPoint(const Eigen::Vector3d& point, size_t u, size_t v){
+    size_t idx = v * m_width + u;
+    m_points_global[idx] = point;
 }
 
 const Eigen::Matrix4d& Frame::getGlobalPose() const{
@@ -224,6 +234,11 @@ const std::vector<double>& Frame::getDepthMap() const{
 
 const std::vector<Vector4uc>& Frame::getColorMap() const{
     return m_color_map;
+}
+
+void Frame::setColor(const Vector4uc& color, size_t u, size_t v){
+    size_t idx = v * m_width + u;
+    m_color_map[idx] = color;
 }
 
 const Eigen::Matrix3d& Frame::getIntrinsics() const{

@@ -110,6 +110,18 @@ double Volume::getTSDF(Eigen::Vector3d global){
     return voxelData.tsdf;
 }
 
+Vector4uc Volume::getColor(Eigen::Vector3d global){
+    Eigen::Vector3d shifted = (global - _origin) / _voxelScale;
+    Eigen::Vector3i currentPosition;
+    currentPosition.x() = int(shifted.x());
+    currentPosition.y() = int(shifted.y());
+    currentPosition.z() = int(shifted.z());
+
+    Voxel voxelData = getVoxelData()[currentPosition.x() + currentPosition.y()*_volumeSize.x()
+                                     + currentPosition.z()*_volumeSize.x()*_volumeSize.y()];
+    return voxelData.color;
+}
+
 Eigen::Vector3d Volume::getTSDFGrad(Eigen::Vector3d global){
     Eigen::Vector3d shifted = (global - _origin) / _voxelScale;
     Eigen::Vector3i currentPosition;

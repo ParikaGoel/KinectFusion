@@ -30,7 +30,11 @@ public:
 
     const std::vector<Eigen::Vector3d>& getGlobalPoints() const;
 
+    void setGlobalPoint(const Eigen::Vector3d& point, size_t u, size_t v);
+
     const std::vector<Eigen::Vector3d>& getGlobalNormals() const;
+
+    void setGlobalNormal(const Eigen::Vector3d& normal, size_t u, size_t v);
 
     const Eigen::Matrix4d& getGlobalPose() const;
 
@@ -39,6 +43,8 @@ public:
     const std::vector<double>& getDepthMap() const;
 
     const std::vector<Vector4uc>& getColorMap() const;
+
+    void setColor(const Vector4uc& color, size_t u, size_t v);
 
     const Eigen::Matrix3d& getIntrinsics() const;
 
