@@ -11,25 +11,20 @@ Ray::Ray(const Eigen::Vector3d &origin, const Eigen::Vector3d &dir) : orig(origi
 
 
 Volume::Volume(const Eigen::Vector3d origin, const Eigen::Vector3i volumeSize, const double voxelScale)
-        : _voxelData(),
-          _volumeSize(volumeSize),
+        : _volumeSize(volumeSize),
           _voxelScale(voxelScale),
           _volumeRange(volumeSize.cast<double>()*voxelScale),
           _origin(origin),
           _maxPoint(voxelScale * volumeSize.cast<double>())
           {
-    _voxelData.reserve(volumeSize.x() * volumeSize.y() * volumeSize.z());
-    for (int z = 0;z<volumeSize.z();z++)
-        for( int y =0;y<volumeSize.y();y++)
-            for(int x=0;x< volumeSize.x();x++)
-                _voxelData.emplace_back(Voxel());
+    _voxelData.resize(volumeSize.x() * volumeSize.y() * volumeSize.z(),Voxel());
 
     Eigen::Vector3d half_voxelSize(voxelScale/2, voxelScale/2, voxelScale/2);
     bounds[0] = _origin + half_voxelSize;
     bounds[1] = _maxPoint - half_voxelSize;
 }
 
-bool Volume::intersects(const Ray &r, double& entry_distance) const{
+bool Volume::intersects(const Ray &r, float& entry_distance) const{
 
     float tmin, tmax, tymin, tymax, tzmin, tzmax;
 

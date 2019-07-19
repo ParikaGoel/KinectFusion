@@ -3,8 +3,6 @@
 
 bool Raycast::surfacePrediction(std::shared_ptr<Frame>& currentFrame,std::shared_ptr<Volume>& volume,float truncationDistance){
 
-    //TODO: implement raycasting
-
     auto volumeSize =volume->getVolumeSize();
     auto voxelScale = volume->getVoxelScale();
     auto pose = currentFrame->getGlobalPose();
@@ -25,8 +23,7 @@ bool Raycast::surfacePrediction(std::shared_ptr<Frame>& currentFrame,std::shared
             auto direction = calculateRayDirection(x, y, rotationMatrix, currentFrame->getIntrinsics());
 
             //calculate rayLength
-            double rayLength(0);
-            //if (!calculateRayLength(rayLength, volumeRange, translation, direction))continue;
+            float rayLength(0.0f);
 
             Ray ray (translation, direction);
             if ( ! (volume->intersects( ray, rayLength))) continue;
@@ -36,34 +33,44 @@ bool Raycast::surfacePrediction(std::shared_ptr<Frame>& currentFrame,std::shared
                                      direction,rayLength))
                 continue;
 
-            double TSDF = volume->getTSDF(currentPoint);
+            double currentTSDF = volume->getTSDF(currentPoint);
 
             const double maxSearchLength = rayLength + volumeRange.norm();
-            //why truncationDistance*0.5?
 
             Eigen::Vector3d previousPoint;
 
             for (; rayLength < maxSearchLength; rayLength += truncationDistance * 0.5f) {
 
                 Eigen::Vector3d previousPoint = currentPoint;
+                const double previousTSDF = currentTSDF;
 
                 if (!calculatePointOnRay(currentPoint, volume, translation,
                                          direction,rayLength+truncationDistance * 0.5f))
                     continue;
-                const double previousTSDF = TSDF;
-                TSDF = volume->getTSDF(currentPoint);
+
+                currentTSDF = volume->getTSDF(currentPoint);
 
                 //This equals -ve to +ve in the paper / we cant go from a negative to positive tsdf value as negative is behind the surface
-                if (previousTSDF < 0. && TSDF > 0.)break;
+                if (previousTSDF < 0. && currentTSDF > 0.)break;
                 //this equals +ve to -ve in the paper / this means we just crossed a zero value
-                if (previousTSDF > 0. && TSDF < 0.) {
-                    vertices[x+ y*width] = getZeroCrossing(previousPoint, currentPoint, previousTSDF, TSDF);
+                if (previousTSDF > 0. && currentTSDF < 0.) {
+                    /*vertices[x+ y*width] = getVertexAtZeroCrossing(previousPoint, currentPoint, previousTSDF, currentTSDF);
                     // Eigen::Vector3d normal_point  = volume->getTSDFGrad(surface_point);
-                    depthMap[x + y*width] = vertices[x+ y*width].z();
+                    depthMap[x + y*width] = vertices[x+ y*width].z();*/
+
+                    Eigen::Vector3d globalVertex = getVertexAtZeroCrossing(previousPoint, currentPoint, previousTSDF, currentTSDF);
+
+                    Eigen::Vector3d gridVertex = globalVertex / voxelScale;
+
+                    if (gridVertex.x()-1 < 1 || gridVertex.x()+1 >= volumeSize.x() - 1 ||
+                            gridVertex.y()-1 < 1 || gridVertex.y()+1 >= volumeSize.y() - 1 ||
+                            gridVertex.z()-1 < 1 || gridVertex.z()+1 >= volumeSize.z() - 1)
+                        break;
+
+                    Eigen::Vector3d normal = calculateNormal(gridVertex, volume);
+
                 }
                 //We reached the zero crossing
-
-                //TODO: Calculate vertex : Call getVertexatZeroCrossing with appropriate parameter values
 
                 //TODO: Calculated normal using interpolation method
 
@@ -78,45 +85,14 @@ bool Raycast::surfacePrediction(std::shared_ptr<Frame>& currentFrame,std::shared
     return true;
 }
 
-Eigen::Vector3d Raycast::getZeroCrossing(
-        Eigen::Vector3d& prevPoint, Eigen::Vector3d& currPoint,
-        double prevTSDF, double currTSDF
-){
+Eigen::Vector3d Raycast::getVertexAtZeroCrossing(
+        const Eigen::Vector3d& prevPoint, const Eigen::Vector3d& currPoint,
+        double prevTSDF, double currTSDF)
+{
     return (prevPoint * (-currTSDF) + currPoint * prevTSDF) / (prevTSDF - currTSDF);
 }
 
-double Raycast::interpolateNormals(const Eigen::Vector3d& normal, const std::shared_ptr<Volume>& volume) {
-    // TODO implement, check Method signature
-    return 0;
-}
-
-double get_max_time(const Eigen::Vector3d& volumeRange, const Eigen::Vector3d &origin, const Eigen::Vector3d &direction)
-{
-    double txMax = ((direction.x() > 0 ? volumeRange.x() : 0.0f) - origin.x()) / direction.x();
-    double tyMax = ((direction.y() > 0 ? volumeRange.y(): 0.0f) - origin.y()) / direction.y();
-    double tzMax = ((direction.z() > 0 ? volumeRange.z() : 0.0f) - origin.z()) / direction.z();
-
-    return std::min(std::min(txMax, tyMax), tzMax);
-}
-
-bool Raycast::calculateRayLength(double &rayLength, const Eigen::Vector3d& volumeRange, const Eigen::Vector3d &origin,
-                                 const Eigen::Vector3d &direction) {
-    float txMin = ((direction.x() > 0 ? 0.f : volumeRange.x()) - origin.x()) / direction.x();
-    float tyMin = ((direction.y() > 0 ? 0.f : volumeRange.y()) - origin.y()) / direction.y();
-    float tzMin = ((direction.z() > 0 ? 0.f : volumeRange.z()) - origin.z()) / direction.z();
-
-    rayLength =  std::max(std::max(txMin, tyMin), tzMin);
-    double maxTime = get_max_time(volumeRange, origin, direction);
-    if(rayLength >= maxTime)
-    {
-        return false;
-    }
-    return  true;
-
-}
-
-const Eigen::Vector3d
-Raycast::calculateRayDirection(int x, int y, const Eigen::Matrix<double, 3, 3, Eigen::DontAlign>& rotation,
+Eigen::Vector3d Raycast::calculateRayDirection(size_t x, size_t y, const Eigen::Matrix3d& rotation,
                                const Eigen::Matrix3d& intrinsics) {
     double fovX = intrinsics(0, 0);
     double fovY = intrinsics(1, 1);
@@ -134,14 +110,77 @@ bool Raycast::calculatePointOnRay(Eigen::Vector3d& currentPoint,
                                   std::shared_ptr<Volume>& volume,
                                   const Eigen::Vector3d& origin,
                                   const Eigen::Vector3d& direction,
-                                  double raylength
+                                  float raylength
 ) {
     currentPoint = (origin + (direction * raylength));
     return volume->contains(currentPoint);
 }
 
-Eigen::Vector3d Raycast::getVertexatZeroCrossing(Eigen::Vector3d& ray_origin,
-                                                 Eigen::Vector3d& ray_direction,
-                                                 double ray_length){
-    return Eigen::Vector3d(ray_origin + ray_direction * ray_length);
+Eigen::Vector3i Raycast::getOriginForInterpolation(const Eigen::Vector3d& point){
+    Eigen::Vector3i point_in_grid = point.cast<int>();
+    Eigen::Vector3d center = point_in_grid.cast<double>() + Eigen::Vector3d(0.5f,0.5f,0.5f);
+
+    point_in_grid.x() = (point.x() < center.x()) ? (point_in_grid.x() - 1) : point_in_grid.x();
+    point_in_grid.y() = (point.y() < center.y()) ? (point_in_grid.y() - 1) : point_in_grid.y();
+    point_in_grid.z() = (point.z() < center.z()) ? (point_in_grid.z() - 1) : point_in_grid.z();
+
+    return point_in_grid;
 }
+
+double Raycast::getTSDFInterpolation(const Eigen::Vector3d& point,
+        const std::shared_ptr<Volume>& volume){
+    auto voxelScale = volume->getVoxelScale();
+    Eigen::Vector3i origin = getOriginForInterpolation(point);
+    Eigen::Vector3d center = origin.cast<double>() + Eigen::Vector3d(0.5f,0.5f,0.5f);
+
+    const double a = (point.x() - center.x());
+    const double b = (point.y() - center.y());
+    const double c = (point.z() - center.z());
+
+    double tsdf = 0.0f;
+    tsdf += volume->getTSDF(Eigen::Vector3d(origin.x()*voxelScale,origin.y()*voxelScale,origin.z()*voxelScale))*(1-a)*(1-b)*(1-c);
+    tsdf += volume->getTSDF(Eigen::Vector3d(origin.x()*voxelScale,origin.y()*voxelScale,(origin.z()+1.0f)*voxelScale))*(1-a)*(1-b)*(c);
+    tsdf += volume->getTSDF(Eigen::Vector3d(origin.x()*voxelScale,(origin.y()+1.0f)*voxelScale,origin.z()*voxelScale))*(1-a)*(b)*(1-c);
+    tsdf += volume->getTSDF(Eigen::Vector3d(origin.x()*voxelScale,(origin.y()+1.0f)*voxelScale,(origin.z()+1.0f)*voxelScale))*(1-a)*(b)*(c);
+    tsdf += volume->getTSDF(Eigen::Vector3d((origin.x()+1.0f)*voxelScale,origin.y()*voxelScale,origin.z()*voxelScale))*(a)*(1-b)*(1-c);
+    tsdf += volume->getTSDF(Eigen::Vector3d((origin.x()+1.0f)*voxelScale,origin.y()*voxelScale,(origin.z()+1.0f)*voxelScale))*(a)*(1-b)*(c);
+    tsdf += volume->getTSDF(Eigen::Vector3d((origin.x()+1.0f)*voxelScale,(origin.y()+1.0f)*voxelScale,origin.z()*voxelScale))*(a)*(b)*(1-c);
+    tsdf += volume->getTSDF(Eigen::Vector3d((origin.x()+1.0f)*voxelScale,(origin.y()+1.0f)*voxelScale,(origin.z()+1.0f)*voxelScale))*(a)*(b)*(c);
+
+    return tsdf;
+}
+
+Eigen::Vector3d Raycast::calculateNormal(const Eigen::Vector3d& gridVertex,
+                                  const std::shared_ptr<Volume>& volume){
+    Eigen::Vector3d normal(0.0f,0.0f,0.0f);
+    Eigen::Vector3d shiftedVertex;
+
+    shiftedVertex = gridVertex;
+    shiftedVertex.x() += 1;
+    float tsdf_x1 = getTSDFInterpolation(shiftedVertex,volume);
+    shiftedVertex = gridVertex;
+    shiftedVertex.x() -= 1;
+    float tsdf_x2 = getTSDFInterpolation(shiftedVertex,volume);
+    normal.x() = tsdf_x1-tsdf_x2;
+
+
+    shiftedVertex = gridVertex;
+    shiftedVertex.y() += 1;
+    float tsdf_y1 = getTSDFInterpolation(shiftedVertex,volume);
+    shiftedVertex = gridVertex;
+    shiftedVertex.y() -= 1;
+    float tsdf_y2 = getTSDFInterpolation(shiftedVertex,volume);
+    normal.y() = tsdf_y1-tsdf_y2;
+
+
+    shiftedVertex = gridVertex;
+    shiftedVertex.z() += 1;
+    float tsdf_z1 = getTSDFInterpolation(shiftedVertex,volume);
+    shiftedVertex = gridVertex;
+    shiftedVertex.z() -= 1;
+    float tsdf_z2 = getTSDFInterpolation(shiftedVertex,volume);
+    normal.z() = tsdf_z1-tsdf_z2;
+
+    return normal;
+}
+
