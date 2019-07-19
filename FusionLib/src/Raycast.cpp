@@ -1,5 +1,23 @@
-#include <MeshWriter.h>
+#include "MeshWriter.h"
 #include "Raycast.hpp"
+
+float get_min_time(const Eigen::Vector3d& volume_max, const Vector3d& origin, const Vector3d& direction)
+{
+    double txmin = ((direction.x() > 0 ? 0.f : volume_max.x()) - origin.x()) / direction.x();
+    double tymin = ((direction.y() > 0 ? 0.f : volume_max.y()) - origin.y()) / direction.y();
+    double tzmin = ((direction.z() > 0 ? 0.f : volume_max.z()) - origin.z()) / direction.z();
+
+    return fmax(fmax(txmin, tymin), tzmin);
+}
+
+float get_max_time(const Vector3d& volume_max, const Vector3d& origin, const Vector3d& direction)
+{
+    double txmax = ((direction.x() > 0 ? volume_max.x() : 0.f) - origin.x()) / direction.x();
+    double tymax = ((direction.y() > 0 ? volume_max.y() : 0.f) - origin.y()) / direction.y();
+    double tzmax = ((direction.z() > 0 ? volume_max.z() : 0.f) - origin.z()) / direction.z();
+
+    return fmin(fmin(txmax, tymax), tzmax);
+}
 
 bool Raycast::surfacePrediction(std::shared_ptr<Frame>& currentFrame,std::shared_ptr<Volume>& volume,float truncationDistance){
 
@@ -11,10 +29,12 @@ bool Raycast::surfacePrediction(std::shared_ptr<Frame>& currentFrame,std::shared
     auto width = currentFrame->getWidth();
     auto height = currentFrame->getHeight();
 
-    std::vector<Eigen::Vector3d> vertices (width*height);
     std::vector<double> depthMap (width*height);
 
     const Eigen::Vector3d volumeRange(volumeSize.x()*voxelScale,volumeSize.y()*voxelScale,volumeSize.z()*voxelScale);
+
+    std::vector<Eigen::Vector3d> vertices;
+    std::vector<Vector4uc> colors;
 
     for( size_t v =0;v<height;v++){
         for(size_t u=0;u< width;u++) {
@@ -23,10 +43,18 @@ bool Raycast::surfacePrediction(std::shared_ptr<Frame>& currentFrame,std::shared
             auto direction = calculateRayDirection(u, v, rotationMatrix, currentFrame->getIntrinsics());
 
             //calculate rayLength
-            float rayLength(0.0f);
+            //Parika: test ray length
+            float min = get_min_time(volumeRange, translation, direction);
+            float max = get_max_time(volumeRange, translation, direction);
+            float rayLength = fmax(min, 0.f);
 
-            Ray ray (translation, direction);
-            if ( ! (volume->intersects( ray, rayLength))) continue;
+            if (rayLength >= max)
+                continue;
+
+            /*Ray ray (translation, direction);
+            if ( ! (volume->intersects( ray, rayLength))) continue;*/
+
+            rayLength += voxelScale;
 
             Eigen::Vector3d currentPoint;
             if(! calculatePointOnRay(currentPoint, volume, translation,
@@ -75,16 +103,20 @@ bool Raycast::surfacePrediction(std::shared_ptr<Frame>& currentFrame,std::shared
                         color = volume->getColor(currentPoint);
                     }
 
+                    std::cout<<"Raycasting calculated something .....\n";
+
                     currentFrame->setGlobalPoint(globalVertex,u,v);
                     currentFrame->setGlobalNormal(normal,u,v);
                     currentFrame->setColor(color,u,v);
+
+                    vertices.emplace_back(globalVertex);
+                    colors.emplace_back(color);
 
                 }
             }
         }
     }
 
-    MeshWriter::toFile("vertices_surface", "255 0 0 255", vertices);
     return true;
 }
 

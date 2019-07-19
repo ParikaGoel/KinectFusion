@@ -1,10 +1,11 @@
 #include <string>
 #include <fstream>
-#include <Eigen/Core>
+#include <memory>
 #include <iostream>
-#include "Frame.h"
+#include <Eigen/Core>
 
-typedef unsigned char BYTE;
+#include "Frame.h"
+#include "data_types.h"
 
 
 class MeshWriter{
@@ -106,8 +107,37 @@ public:
         return true;
     }
 
-    static bool toFile(std::string filename,std::string color, Frame& frame ) {
-        return toFile(filename, color, frame.getGlobalPoints());
+    static bool toFile(std::string filename , const std::shared_ptr<Frame>& frame)
+    {
+
+        auto global_points = frame->getGlobalPoints();
+        auto color_map = frame->getColorMap();
+
+        std::string filenameBaseOut = PROJECT_DIR + std::string("/results/");
+
+        // Write off file.
+        std::cout << filename << std::endl;
+        std::ofstream outFile(filenameBaseOut + filename + ".off");
+        if (!outFile.is_open()) return false;
+
+        // Write header.
+        outFile << "COFF" << std::endl;
+        outFile << global_points.size() << " " << "0" << " 0" << std::endl;
+
+        // Save vertices.
+        for (size_t i = 0; i < global_points.size(); i++) {
+            const auto& vertex = global_points[i];
+            if (vertex.allFinite())
+                outFile << vertex.x() << " " << vertex.y() << " " << vertex.z() << " "
+                        << int(color_map[i][0]) << " " << int(color_map[i][1]) << " "
+                        << int(color_map[i][2]) << " " << int(color_map[i][3]) << std::endl;
+            else
+                outFile << "0.0 0.0 0.0 0 0 0 0" << std::endl;
+        }
+        // Close file.
+        outFile.close();
+
+        return true;
     }
 
 };

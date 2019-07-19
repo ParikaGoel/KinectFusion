@@ -20,9 +20,7 @@ public:
     Frame(const double* depthMap, const BYTE* colorMap, const Eigen::Matrix3d& depthIntrinsics,
             const unsigned int width, const unsigned int height, double maxDistance = 2);
 
-	bool WriteMesh(const std::string& filename);
-
-    void applyGlobalPose(Eigen::Matrix4d& estimated_pose);
+	void applyGlobalPose(Eigen::Matrix4d& estimated_pose);
 
 	const std::vector<Eigen::Vector3d>& getPoints() const;
 
