@@ -61,22 +61,7 @@ bool VirtualSensor::processNextFrame() {
             m_depthFrame[i] = MINF;
         else
             m_depthFrame[i] = dImage.data[i] * 1.0f / 5000.0f;
-            //m_depthFrame[i] = dImage.data[i] * 0.000125f;
-            // m_depthFrame[i] = dImage.data[i];
     }
-
-    // find transformation (simple nearest neighbor, linear search)
-    // double timestamp = m_depthImagesTimeStamps[m_currentIdx];
-    // double min = std::numeric_limits<double>::max();
-    // int idx = 0;
-    // for (unsigned int i = 0; i < m_trajectory.size(); ++i) {
-    // 	double d = abs(m_trajectoryTimeStamps[i] - timestamp);
-    // 	if (min > d) {
-    // 		min = d;
-    // 		idx = i;
-    // 	}
-    // }
-    // m_currentTrajectory = m_trajectory[idx];
 
     return true;
 }

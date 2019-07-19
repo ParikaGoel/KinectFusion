@@ -4,13 +4,17 @@
 #include <iostream>
 
 
-Frame::Frame(const double * depthMap, const Eigen::Matrix3d &depthIntrinsics,
+Frame::Frame(const double * depthMap, const BYTE* colorMap, const Eigen::Matrix3d &depthIntrinsics,
         const unsigned int width, const unsigned int height, double maxDistance)
         : m_width(width),m_height(height),m_intrinsic_matrix(depthIntrinsics){
 
     m_depth_map = std::vector<double>(width*height);
     for (size_t i = 0; i < width*height; ++i)
         m_depth_map[i] = depthMap[i];
+
+    m_color_map = std::vector<Vector4uc>(width*height);
+    for (size_t i = 0; i < width*height; i++)
+        m_color_map[i] = Vector4uc(colorMap[i*4],colorMap[i*4+1],colorMap[i*4+2],colorMap[i*4+3]);
 
     auto pointsTmp = computeCameraCoordinates(width, height);
     auto normalsTmp = computeNormals(pointsTmp, width, height, maxDistance);
@@ -79,7 +83,8 @@ bool Frame::WriteMesh(const std::string& filename, std::string color) {
         const auto& vertex = m_points_global[i];
         if (vertex.allFinite())
             outFile << vertex.x() << " " << vertex.y() << " " << vertex.z() << " "
-                    << color << std::endl;
+                    << m_color_map[i][0] << " " << m_color_map[i][1] << " "
+                    << m_color_map[i][2] << " " << m_color_map[i][3] << std::endl;
         else
             outFile << "0.0 0.0 0.0 0 0 0 0" << std::endl;
     }
@@ -215,6 +220,10 @@ void Frame::setGlobalPose(const Eigen::Matrix4d& pose) {
 
 const std::vector<double>& Frame::getDepthMap() const{
     return m_depth_map;
+}
+
+const std::vector<Vector4uc>& Frame::getColorMap() const{
+    return m_color_map;
 }
 
 const Eigen::Matrix3d& Frame::getIntrinsics() const{

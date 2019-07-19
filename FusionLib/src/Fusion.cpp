@@ -8,7 +8,7 @@ bool Fusion::reconstructSurface(const std::shared_ptr<Frame>& currentFrame,const
     auto pose = currentFrame->getGlobalPose().inverse();
     auto width = currentFrame->getWidth();
     auto height = currentFrame->getHeight();
-    auto tsdfVolumeData = volume->getTSDFData();
+    auto tsdfVolumeData = volume->getVoxelData();
 
      for (int z = 0;z<volumeSize.z();z++) {
 		 for( int y =0;y<volumeSize.y();y++){
@@ -41,15 +41,15 @@ bool Fusion::reconstructSurface(const std::shared_ptr<Frame>& currentFrame,const
 				    const double current_tsdf = std::min(1., sdf / truncationDistance); // *sgn(sdf)
 					const double current_weight = 1.0;
 					size_t tsdf_index = x+(y*volumeSize.x())+(z*volumeSize.x()*volumeSize.y());
-					const double old_tsdf=tsdfVolumeData[tsdf_index].first;
-					const double old_weight = tsdfVolumeData[tsdf_index].second;
+					const double old_tsdf=tsdfVolumeData[tsdf_index].tsdf;
+					const double old_weight = tsdfVolumeData[tsdf_index].weight;
 
 					const double updated_tsdf = (old_weight*old_tsdf + current_weight*current_tsdf)/
 							(old_weight+current_weight);
 					const double updated_weight = old_weight+current_weight;
 
-                    tsdfVolumeData[tsdf_index].first = updated_tsdf;
-                    tsdfVolumeData[tsdf_index].second = updated_weight;
+                    tsdfVolumeData[tsdf_index].tsdf = updated_tsdf;
+                    tsdfVolumeData[tsdf_index].weight = updated_weight;
 
 				}
 			}

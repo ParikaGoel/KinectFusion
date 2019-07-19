@@ -6,6 +6,7 @@
 #include <cmath>
 
 #include <vector>
+#include "data_types.h"
 #include <Eigen.h>
 
 #ifndef MINF
@@ -16,7 +17,7 @@ class Frame {
 public:
     EIGEN_MAKE_ALIGNED_OPERATOR_NEW
     
-    Frame(const double* depthMap, const Eigen::Matrix3d& depthIntrinsics,
+    Frame(const double* depthMap, const BYTE* colorMap, const Eigen::Matrix3d& depthIntrinsics,
             const unsigned int width, const unsigned int height, double maxDistance = 2);
 
 	bool WriteMesh(const std::string& filename, std::string color);
@@ -36,6 +37,8 @@ public:
     void setGlobalPose(const Eigen::Matrix4d& pose);
 
     const std::vector<double>& getDepthMap() const;
+
+    const std::vector<Vector4uc>& getColorMap() const;
 
     const Eigen::Matrix3d& getIntrinsics() const;
 
@@ -71,4 +74,5 @@ private:
     Eigen::Matrix4d m_global_pose;
     Eigen::Matrix3d m_intrinsic_matrix;
     std::vector<double> m_depth_map;
+    std::vector<Vector4uc> m_color_map;
 };
