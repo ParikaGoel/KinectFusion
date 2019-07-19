@@ -88,10 +88,17 @@ float Volume::getVoxelScale() const {
 bool Volume::contains(const Eigen::Vector3d global_point){
     Eigen::Vector3d volumeCoord = (global_point - _origin);
 
-    return (volumeCoord.x() < 1 || volumeCoord.x() >= _volumeRange.x() - 1 || volumeCoord.y() < 1 ||
-            volumeCoord.y() >= _volumeRange.y() - 1 ||
-            volumeCoord.z() < 1 || volumeCoord.z() >= _volumeRange.z() - 1);
+    return ! (volumeCoord.x() < 0 || volumeCoord.x() >= _volumeRange.x() || volumeCoord.y() < 0 ||
+            volumeCoord.y() >= _volumeRange.y() ||
+            volumeCoord.z() < 0 || volumeCoord.z() >= _volumeRange.z());
 
+}
+
+Eigen::Vector3d Volume::getGlobalCoordinate( int voxelIdx_x, int voxelIdx_y, int voxelIdx_z ){
+    const Eigen::Vector3d position((static_cast<double>(voxelIdx_x) + 0.5) * _voxelScale,
+                                   (static_cast<double>(voxelIdx_y) + 0.5) * _voxelScale,
+                                   (static_cast<double>(voxelIdx_z) + 0.5) * _voxelScale);
+    return position + _origin;
 }
 
 double Volume::getTSDF(Eigen::Vector3d global){
@@ -114,7 +121,7 @@ Eigen::Vector3d Volume::getTSDFGrad(Eigen::Vector3d global){
     currentPosition.z() = int(shifted.z());
 
     // TODO: double check
-
+    
     double tsdf_x0 = getVoxelData()[(currentPosition.x()-1) + currentPosition.y()*_volumeSize.x()
                                                                + currentPosition.z()*_volumeSize.x()*_volumeSize.y()].tsdf;
     double tsdf_x1 = getVoxelData()[(currentPosition.x()+1) + currentPosition.y()*_volumeSize.x()
