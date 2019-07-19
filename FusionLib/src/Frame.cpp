@@ -69,7 +69,7 @@ void Frame::addValidPoints(std::vector<Eigen::Vector3d> points, std::vector<Eige
     }
 }
 
-bool Frame::WriteMesh(const std::string& filename, std::string color) {
+bool Frame::WriteMesh(const std::string& filename) {
     // Write off file.
     std::ofstream outFile(filename);
     if (!outFile.is_open()) return false;
@@ -83,8 +83,8 @@ bool Frame::WriteMesh(const std::string& filename, std::string color) {
         const auto& vertex = m_points_global[i];
         if (vertex.allFinite())
             outFile << vertex.x() << " " << vertex.y() << " " << vertex.z() << " "
-                    << m_color_map[i][0] << " " << m_color_map[i][1] << " "
-                    << m_color_map[i][2] << " " << m_color_map[i][3] << std::endl;
+                    << int(m_color_map[i][0]) << " " << int(m_color_map[i][1]) << " "
+                    << int(m_color_map[i][2]) << " " << int(m_color_map[i][3]) << std::endl;
         else
             outFile << "0.0 0.0 0.0 0 0 0 0" << std::endl;
     }

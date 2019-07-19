@@ -55,7 +55,7 @@ bool process_frame( size_t frame_cnt, std::shared_ptr<Frame> prevFrame,std::shar
         throw "ICP Pose Estimation failed";
     };
 
-    /*// STEP 2: Surface reconstruction
+    // STEP 2: Surface reconstruction
     //TODO does icp.estimate set the new Pose to currentFrame? Otherwise it needs to be added as function parameter
     Fusion fusion;
     if(!fusion.reconstructSurface(currentFrame,volume, config.m_truncationDistance)){
@@ -63,7 +63,7 @@ bool process_frame( size_t frame_cnt, std::shared_ptr<Frame> prevFrame,std::shar
     };
 
     // Step 4: Surface prediction
-    Raycast raycast;
+    /*Raycast raycast;
     if(!raycast.surfacePrediction(currentFrame,volume, config.m_truncationDistance)){
         throw "Raycasting failed";
     };*/
@@ -113,17 +113,12 @@ int main(){
     BYTE* colors = &sensor.getColorRGBX()[0];
 
     std::shared_ptr<Frame> prevFrame = std::make_shared<Frame>(Frame(depthMap, colors, depthIntrinsics, depthWidth, depthHeight));
-    prevFrame->WriteMesh(filenameBaseOut+"0.off", "0 0 255 100");
+    prevFrame->WriteMesh(filenameBaseOut+"0.off");
 
-    std::cout << std::endl;
-    /*auto map = prevFrame->getDepthMap();
-
-    MeshWriter::toFile( "my_mesh", colors, prevFrame->getPoints());*/
+    //MeshWriter::toFile( "my_mesh", colors, prevFrame->getPoints());
 
     int i = 1;
     const int iMax = 45;
-
-    std::stringstream ss;
 
     while(sensor.processNextFrame() && i <= iMax){
 
@@ -132,11 +127,12 @@ int main(){
         std::shared_ptr<Frame> currentFrame = std::make_shared<Frame>(Frame(depthMap, colors, depthIntrinsics, depthWidth, depthHeight));
         process_frame(i,prevFrame,currentFrame,volume,config);
 
+        std::stringstream ss;
         ss << filenameBaseOut << i << ".off";
 
         std::cout << "Writing Mesh " << i << std::endl;
 
-        currentFrame->WriteMesh(ss.str(), "255 0 0 255");
+        currentFrame->WriteMesh(ss.str());
 
         prevFrame = std::move(currentFrame);
         i++;
