@@ -18,6 +18,8 @@ bool Raycast::surfacePrediction(std::shared_ptr<Frame>& currentFrame,std::shared
 
     for( size_t v =0;v<height;v++){
         for(size_t u=0;u< width;u++) {
+            vertices[u+ v*width] = Eigen::Vector3d(MINF, MINF, MINF);
+
             //calculate Normalized Direction
             auto direction = calculateRayDirection(u, v, rotationMatrix, currentFrame->getIntrinsics());
 
@@ -56,6 +58,8 @@ bool Raycast::surfacePrediction(std::shared_ptr<Frame>& currentFrame,std::shared
 
                     Eigen::Vector3d globalVertex = getVertexAtZeroCrossing(previousPoint, currentPoint, previousTSDF, currentTSDF);
 
+                    vertices[u+ v*width] = globalVertex;
+
                     Eigen::Vector3d gridVertex = globalVertex / voxelScale;
 
                     if (gridVertex.x()-1 < 1 || gridVertex.x()+1 >= volumeSize.x() - 1 ||
@@ -82,7 +86,7 @@ bool Raycast::surfacePrediction(std::shared_ptr<Frame>& currentFrame,std::shared
             }
         }
     }
-
+    MeshWriter::toFile("v_tex", "255 0 0 255", vertices);
     return true;
 }
 

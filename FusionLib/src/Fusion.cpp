@@ -72,7 +72,7 @@ bool Fusion::reconstructSurface(const std::shared_ptr<Frame>& currentFrame,const
 			}
         }
     }
-     MeshWriter::toFile(std::string("tsdf"), *volume);
+     MeshWriter::toFile(std::string("tsdf"), *volume, 2);
     return true;
 }
 
