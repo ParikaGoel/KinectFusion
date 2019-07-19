@@ -112,31 +112,27 @@ int main(){
     const double* depthMap = &sensor.getDepth()[0];
     BYTE* colors = &sensor.getColorRGBX()[0];
 
-    std::shared_ptr<Frame> prevFrame = std::make_shared<Frame>(Frame(depthMap, depthIntrinsics, depthWidth, depthHeight));
+    std::shared_ptr<Frame> prevFrame = std::make_shared<Frame>(Frame(depthMap, colors, depthIntrinsics, depthWidth, depthHeight));
+    prevFrame->WriteMesh(filenameBaseOut+"0.off");
 
-    std::cout << std::endl;
-    auto map = prevFrame->getDepthMap();
+    //MeshWriter::toFile( "my_mesh", colors, prevFrame->getPoints());
 
-    MeshWriter::toFile( "my_mesh", colors, prevFrame->getPoints());
-
-    int i = 0;
+    int i = 1;
     const int iMax = 45;
-
-    std::stringstream ss;
-    ss << filenameBaseOut << i << ".off";
-    prevFrame->WriteMesh(ss.str(), "0 0 255 100");
 
     while(sensor.processNextFrame() && i <= iMax){
 
         const double* depthMap = &sensor.getDepth()[0];
-        std::shared_ptr<Frame> currentFrame = std::make_shared<Frame>(Frame(depthMap,depthIntrinsics, depthWidth, depthHeight));
+        BYTE* colors = &sensor.getColorRGBX()[0];
+        std::shared_ptr<Frame> currentFrame = std::make_shared<Frame>(Frame(depthMap, colors, depthIntrinsics, depthWidth, depthHeight));
         process_frame(i,prevFrame,currentFrame,volume,config);
 
+        std::stringstream ss;
         ss << filenameBaseOut << i << ".off";
 
         std::cout << "Writing Mesh " << i << std::endl;
 
-        currentFrame->WriteMesh(ss.str(), "255 0 0 255");
+        currentFrame->WriteMesh(ss.str());
 
         prevFrame = std::move(currentFrame);
         i++;

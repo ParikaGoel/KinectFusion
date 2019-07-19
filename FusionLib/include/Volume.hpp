@@ -3,6 +3,7 @@
 #include <Eigen/Dense>
 #include <vector>
 #include <utility>
+#include "data_types.h"
 
 class Ray
 {
@@ -19,9 +20,10 @@ public:
 
     bool intersects(const Ray &r, double& entry_distance) const;
 
-    std::vector<std::pair<double,double>> &getTSDFData() ;
+    std::vector<Voxel>& getVoxelData();
 
     const Eigen::Vector3d &getOrigin() const;
+
 	const Eigen::Vector3i &getVolumeSize() const;
     float getVoxelScale() const;
 
@@ -32,8 +34,8 @@ public:
     Eigen::Vector3d getTSDFGrad(Eigen::Vector3d global);
 
 private:
-    //_tsdfData contains tuples of tsdf & Weight
-    std::vector<std::pair<double,double>> _tsdfData;
+    //_voxelData contains color, tsdf & Weight
+    std::vector<Voxel> _voxelData;
     const Eigen::Vector3i _volumeSize;
     const double _voxelScale;
     const Eigen::Vector3d _volumeRange;
