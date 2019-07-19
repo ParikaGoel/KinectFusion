@@ -103,8 +103,13 @@ int main(){
     sensor.processNextFrame();
 
     //TODO truncationDistance is completly random Value right now
-    const auto volumeOrigin = Eigen::Vector3d (-5,0,1);
-    Config config (0.1,0.5,0.5, volumeOrigin, 100,100,100,0.1);
+    Eigen::Vector3d volumeRange(5.0, 5.0, 5.0);
+    Eigen::Vector3i volumeSize (256,256,256);
+    double voxelSize = volumeRange.x()/volumeSize.x();
+
+    const auto volumeOrigin = Eigen::Vector3d (-volumeRange.x()/2,-volumeRange.y()/2,0.5);
+
+    Config config (0.1,0.5,0.5, volumeOrigin, volumeSize.x(),volumeSize.y(),volumeSize.z(), voxelSize);
 
     //Setup Volume
     auto volume = std::make_shared<Volume>(config.m_volumeOrigin, config.m_volumeSize,config.m_voxelScale) ;

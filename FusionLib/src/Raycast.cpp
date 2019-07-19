@@ -12,14 +12,12 @@ bool Raycast::surfacePrediction(std::shared_ptr<Frame>& currentFrame,std::shared
     auto height = currentFrame->getHeight();
 
     std::vector<Eigen::Vector3d> vertices (width*height);
-    MeshWriter::toFile("wtf", "255 0 0 255", vertices);
     std::vector<double> depthMap (width*height);
 
     const Eigen::Vector3d volumeRange(volumeSize.x()*voxelScale,volumeSize.y()*voxelScale,volumeSize.z()*voxelScale);
 
     for( size_t v =0;v<height;v++){
         for(size_t u=0;u< width;u++) {
-
             //calculate Normalized Direction
             auto direction = calculateRayDirection(u, v, rotationMatrix, currentFrame->getIntrinsics());
 
@@ -61,8 +59,8 @@ bool Raycast::surfacePrediction(std::shared_ptr<Frame>& currentFrame,std::shared
                     Eigen::Vector3d gridVertex = globalVertex / voxelScale;
 
                     if (gridVertex.x()-1 < 1 || gridVertex.x()+1 >= volumeSize.x() - 1 ||
-                            gridVertex.y()-1 < 1 || gridVertex.y()+1 >= volumeSize.y() - 1 ||
-                            gridVertex.z()-1 < 1 || gridVertex.z()+1 >= volumeSize.z() - 1)
+                        gridVertex.y()-1 < 1 || gridVertex.y()+1 >= volumeSize.y() - 1 ||
+                        gridVertex.z()-1 < 1 || gridVertex.z()+1 >= volumeSize.z() - 1)
                         break;
 
                     Eigen::Vector3d normal = calculateNormal(gridVertex, volume);
@@ -85,7 +83,6 @@ bool Raycast::surfacePrediction(std::shared_ptr<Frame>& currentFrame,std::shared
         }
     }
 
-    MeshWriter::toFile("vertices_surface", "255 0 0 255", vertices);
     return true;
 }
 
@@ -97,7 +94,7 @@ Eigen::Vector3d Raycast::getVertexAtZeroCrossing(
 }
 
 Eigen::Vector3d Raycast::calculateRayDirection(size_t x, size_t y, const Eigen::Matrix3d& rotation,
-                               const Eigen::Matrix3d& intrinsics) {
+                                               const Eigen::Matrix3d& intrinsics) {
     double fovX = intrinsics(0, 0);
     double fovY = intrinsics(1, 1);
     double cX = intrinsics(0, 2);
@@ -132,7 +129,7 @@ Eigen::Vector3i Raycast::getOriginForInterpolation(const Eigen::Vector3d& point)
 }
 
 double Raycast::getTSDFInterpolation(const Eigen::Vector3d& point,
-        const std::shared_ptr<Volume>& volume){
+                                     const std::shared_ptr<Volume>& volume){
     auto voxelScale = volume->getVoxelScale();
     Eigen::Vector3i origin = getOriginForInterpolation(point);
     Eigen::Vector3d center = origin.cast<double>() + Eigen::Vector3d(0.5f,0.5f,0.5f);
@@ -155,7 +152,7 @@ double Raycast::getTSDFInterpolation(const Eigen::Vector3d& point,
 }
 
 Eigen::Vector3d Raycast::calculateNormal(const Eigen::Vector3d& gridVertex,
-                                  const std::shared_ptr<Volume>& volume){
+                                         const std::shared_ptr<Volume>& volume){
     Eigen::Vector3d normal(0.0f,0.0f,0.0f);
     Eigen::Vector3d shiftedVertex;
 
