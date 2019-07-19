@@ -19,6 +19,8 @@
 #include "icp.h"
 #include "Frame.h"
 
+Fusion fusion;
+Raycast raycast;
 
 //TODO this should be moved to one File containing all data_declarations class
 struct Config{
@@ -57,16 +59,12 @@ bool process_frame( size_t frame_cnt, std::shared_ptr<Frame> prevFrame,std::shar
     };
 
     // STEP 2: Surface reconstruction
-    //TODO does icp.estimate set the new Pose to currentFrame? Otherwise it needs to be added as function parameter
-    Fusion fusion;
-    std::cout << "Init: Fusion..." << std::endl;
+   std::cout << "Init: Fusion..." << std::endl;
     if(!fusion.reconstructSurface(currentFrame,volume, config.m_truncationDistance)){
         throw "Surface reconstruction failed";
     };
 
-    // Step 4: Surface prediction
-    Raycast raycast;
-    std::cout << "Init: Raycast..." << std::endl;
+   std::cout << "Init: Raycast..." << std::endl;
     if(!raycast.surfacePrediction(currentFrame,volume, config.m_truncationDistance)){
         throw "Raycasting failed";
     };
@@ -89,10 +87,6 @@ int main(){
     //Recorder rec;
     // rec.record(20);
 
-    // 5. visual in a mesh.off
-    //std::string filenameIn = PROJECT_DATA_DIR + std::string("/rgbd_dataset_freiburg1_xyz/");
-    std::string filenameBaseOut = PROJECT_DATA_DIR + std::string("/results/mesh_");
-
     // Load video
     std::cout << "Initialize virtual sensor..." << std::endl;
     // VirtualSensor sensor;
@@ -104,7 +98,7 @@ int main(){
 
     //TODO truncationDistance is completly random Value right now
     Eigen::Vector3d volumeRange(5.0, 5.0, 5.0);
-    Eigen::Vector3i volumeSize (256,256,256);
+    Eigen::Vector3i volumeSize (50,50,50);
     double voxelSize = volumeRange.x()/volumeSize.x();
 
     const auto volumeOrigin = Eigen::Vector3d (-volumeRange.x()/2,-volumeRange.y()/2,0.5);
@@ -122,9 +116,7 @@ int main(){
     BYTE* colors = &sensor.getColorRGBX()[0];
 
     std::shared_ptr<Frame> prevFrame = std::make_shared<Frame>(Frame(depthMap, colors, depthIntrinsics, depthWidth, depthHeight));
-    prevFrame->WriteMesh(filenameBaseOut+"0.off");
-
-    //MeshWriter::toFile( "my_mesh", colors, prevFrame->getPoints());
+    MeshWriter::toFile("mesh0",prevFrame);
 
     int i = 1;
     const int iMax = 45;
@@ -136,12 +128,9 @@ int main(){
         std::shared_ptr<Frame> currentFrame = std::make_shared<Frame>(Frame(depthMap, colors, depthIntrinsics, depthWidth, depthHeight));
         process_frame(i,prevFrame,currentFrame,volume,config);
 
-        std::stringstream ss;
-        ss << filenameBaseOut << i << ".off";
-
-        std::cout << "Writing Mesh " << i << std::endl;
-
-        currentFrame->WriteMesh(ss.str());
+        std::stringstream filename;
+        filename << "mesh" << i;
+        MeshWriter::toFile(filename.str(),currentFrame);
 
         prevFrame = std::move(currentFrame);
         i++;

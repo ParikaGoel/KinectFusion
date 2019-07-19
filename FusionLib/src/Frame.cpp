@@ -69,31 +69,6 @@ void Frame::addValidPoints(std::vector<Eigen::Vector3d> points, std::vector<Eige
     }
 }
 
-bool Frame::WriteMesh(const std::string& filename) {
-    // Write off file.
-    std::ofstream outFile(filename);
-    if (!outFile.is_open()) return false;
-
-    // Write header.
-    outFile << "COFF" << std::endl;
-    outFile << m_points_global.size() << " " << "0" << " 0" << std::endl;
-
-    // Save vertices.
-    for (unsigned int i = 0; i < m_points_global.size(); i++) {
-        const auto& vertex = m_points_global[i];
-        if (vertex.allFinite())
-            outFile << vertex.x() << " " << vertex.y() << " " << vertex.z() << " "
-                    << int(m_color_map[i][0]) << " " << int(m_color_map[i][1]) << " "
-                    << int(m_color_map[i][2]) << " " << int(m_color_map[i][3]) << std::endl;
-        else
-            outFile << "0.0 0.0 0.0 0 0 0 0" << std::endl;
-    }
-    // Close file.
-    outFile.close();
-
-    return true;
-}
-
 std::vector<Eigen::Vector3d> Frame::computeCameraCoordinates(unsigned int width, unsigned int height){
     double fovX = m_intrinsic_matrix(0, 0);
     double fovY = m_intrinsic_matrix(1, 1);
