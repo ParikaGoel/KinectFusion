@@ -22,13 +22,11 @@ public:
     std::vector<std::pair<double,double>> &getTSDFData() ;
 
     const Eigen::Vector3d &getOrigin() const;
-
-
 	const Eigen::Vector3i &getVolumeSize() const;
-
     float getVoxelScale() const;
 
     bool contains(const Eigen::Vector3d point);
+    Eigen::Vector3d getGlobalCoordinate( int voxelIdx_x, int voxelIdx_y, int voxelIdx_z );
 
     double getTSDF(Eigen::Vector3d global);
     Eigen::Vector3d getTSDFGrad(Eigen::Vector3d global);

@@ -88,10 +88,17 @@ float Volume::getVoxelScale() const {
 bool Volume::contains(const Eigen::Vector3d global_point){
     Eigen::Vector3d volumeCoord = (global_point - _origin);
 
-    return (volumeCoord.x() < 1 || volumeCoord.x() >= _volumeRange.x() - 1 || volumeCoord.y() < 1 ||
-            volumeCoord.y() >= _volumeRange.y() - 1 ||
-            volumeCoord.z() < 1 || volumeCoord.z() >= _volumeRange.z() - 1);
+    return ! (volumeCoord.x() < 0 || volumeCoord.x() >= _volumeRange.x() || volumeCoord.y() < 0 ||
+            volumeCoord.y() >= _volumeRange.y() ||
+            volumeCoord.z() < 0 || volumeCoord.z() >= _volumeRange.z());
 
+}
+
+Eigen::Vector3d Volume::getGlobalCoordinate( int voxelIdx_x, int voxelIdx_y, int voxelIdx_z ){
+    const Eigen::Vector3d position((static_cast<double>(voxelIdx_x) + 0.5) * _voxelScale,
+                                   (static_cast<double>(voxelIdx_y) + 0.5) * _voxelScale,
+                                   (static_cast<double>(voxelIdx_z) + 0.5) * _voxelScale);
+    return position + _origin;
 }
 
 double Volume::getTSDF(Eigen::Vector3d global){
@@ -102,7 +109,7 @@ double Volume::getTSDF(Eigen::Vector3d global){
     currentPosition.z() = int(shifted.z());
 
     std::pair<double,double> fusionPoints= getTSDFData()[currentPosition.x() + currentPosition.y()*_volumeSize.x()
-                                                               + currentPosition.z()*_volumeSize.x()*_volumeSize.y()];
+                                                         + currentPosition.z()*_volumeSize.x()*_volumeSize.y()];
     return fusionPoints.first;
 }
 
@@ -116,17 +123,17 @@ Eigen::Vector3d Volume::getTSDFGrad(Eigen::Vector3d global){
     // TODO: double check
 
     double tsdf_x0 = getTSDFData()[(currentPosition.x()-1) + currentPosition.y()*_volumeSize.x()
-                                                               + currentPosition.z()*_volumeSize.x()*_volumeSize.y()].first;
+                                   + currentPosition.z()*_volumeSize.x()*_volumeSize.y()].first;
     double tsdf_x1 = getTSDFData()[(currentPosition.x()+1) + currentPosition.y()*_volumeSize.x()
-                                                               + currentPosition.z()*_volumeSize.x()*_volumeSize.y()].first;
+                                   + currentPosition.z()*_volumeSize.x()*_volumeSize.y()].first;
     double tsdf_y0 = getTSDFData()[currentPosition.x() + (currentPosition.y()-1)*_volumeSize.x()
-                                                               + currentPosition.z()*_volumeSize.x()*_volumeSize.y()].first;
+                                   + currentPosition.z()*_volumeSize.x()*_volumeSize.y()].first;
     double tsdf_y1 = getTSDFData()[currentPosition.x() + (currentPosition.y()+1)*_volumeSize.x()
-                                                               + currentPosition.z()*_volumeSize.x()*_volumeSize.y()].first;
+                                   + currentPosition.z()*_volumeSize.x()*_volumeSize.y()].first;
     double tsdf_z0 = getTSDFData()[currentPosition.x() + currentPosition.y()*_volumeSize.x()
-                                                               + (currentPosition.z()-1)*_volumeSize.x()*_volumeSize.y()].first;
+                                   + (currentPosition.z()-1)*_volumeSize.x()*_volumeSize.y()].first;
     double tsdf_z1 = getTSDFData()[currentPosition.x() + currentPosition.y()*_volumeSize.x()
-                                                               + (currentPosition.z()+1)*_volumeSize.x()*_volumeSize.y()].first;
+                                   + (currentPosition.z()+1)*_volumeSize.x()*_volumeSize.y()].first;
 
     return Eigen::Vector3d(tsdf_x1 - tsdf_x0, tsdf_y1 - tsdf_y0, tsdf_z1 - tsdf_z0) / (_voxelScale*2);
 }
