@@ -12,6 +12,7 @@ bool Raycast::surfacePrediction(std::shared_ptr<Frame>& currentFrame,std::shared
     auto height = currentFrame->getHeight();
 
     std::vector<Eigen::Vector3d> vertices (width*height);
+    MeshWriter::toFile("wtf", "255 0 0 255", vertices);
     std::vector<double> depthMap (width*height);
 
     const Eigen::Vector3d volumeRange(volumeSize.x()*voxelScale,volumeSize.y()*voxelScale,volumeSize.z()*voxelScale);

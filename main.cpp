@@ -51,6 +51,7 @@ bool process_frame( size_t frame_cnt, std::shared_ptr<Frame> prevFrame,std::shar
     Eigen::Matrix4d estimated_pose = prevFrame->getGlobalPose();
     currentFrame->setGlobalPose(estimated_pose);
 
+    std::cout << "Init: ICP..." << std::endl;
     if(!icp.estimatePose(frame_cnt, prevFrame,currentFrame, 3, estimated_pose)){
         throw "ICP Pose Estimation failed";
     };
@@ -58,15 +59,18 @@ bool process_frame( size_t frame_cnt, std::shared_ptr<Frame> prevFrame,std::shar
     // STEP 2: Surface reconstruction
     //TODO does icp.estimate set the new Pose to currentFrame? Otherwise it needs to be added as function parameter
     Fusion fusion;
+    std::cout << "Init: Fusion..." << std::endl;
     if(!fusion.reconstructSurface(currentFrame,volume, config.m_truncationDistance)){
         throw "Surface reconstruction failed";
     };
 
     // Step 4: Surface prediction
     Raycast raycast;
+    std::cout << "Init: Raycast..." << std::endl;
     if(!raycast.surfacePrediction(currentFrame,volume, config.m_truncationDistance)){
         throw "Raycasting failed";
     };
+    std::cout << "Done!" << std::endl;
     return true;
 }
 
@@ -99,8 +103,8 @@ int main(){
     sensor.processNextFrame();
 
     //TODO truncationDistance is completly random Value right now
-    const auto volumeOrigin = Eigen::Vector3d (0,0,0);
-    Config config (0.1,0.5,0.5, volumeOrigin, 512,512,512,1.0);
+    const auto volumeOrigin = Eigen::Vector3d (-5,0,1);
+    Config config (0.1,0.5,0.5, volumeOrigin, 100,100,100,0.1);
 
     //Setup Volume
     auto volume = std::make_shared<Volume>(config.m_volumeOrigin, config.m_volumeSize,config.m_voxelScale) ;
