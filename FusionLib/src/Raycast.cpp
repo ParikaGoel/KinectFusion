@@ -67,7 +67,9 @@ bool Raycast::surfacePrediction(std::shared_ptr<Frame>& currentFrame,std::shared
 
                 //TODO: Calculated normal using interpolation method
 
-                //TODO: set global vertex & normal into currentFrame
+                //TODO: Calculate color using interpolation method
+
+                //TODO: set global vertex, normal and color into currentFrame
             }
         }
     }

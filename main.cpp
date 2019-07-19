@@ -63,10 +63,10 @@ bool process_frame( size_t frame_cnt, std::shared_ptr<Frame> prevFrame,std::shar
     };
 
     // Step 4: Surface prediction
-    /*Raycast raycast;
+    Raycast raycast;
     if(!raycast.surfacePrediction(currentFrame,volume, config.m_truncationDistance)){
         throw "Raycasting failed";
-    };*/
+    };
     return true;
 }
 
