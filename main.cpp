@@ -53,19 +53,23 @@ bool process_frame( size_t frame_cnt, std::shared_ptr<Frame> prevFrame,std::shar
     Eigen::Matrix4d estimated_pose = prevFrame->getGlobalPose();
     currentFrame->setGlobalPose(estimated_pose);
 
+    std::cout << "Init: ICP..." << std::endl;
     if(!icp.estimatePose(frame_cnt, prevFrame,currentFrame, 3, estimated_pose)){
         throw "ICP Pose Estimation failed";
     };
 
     // STEP 2: Surface reconstruction
+    std::cout << "Init: Fusion..." << std::endl;
     if(!fusion.reconstructSurface(currentFrame,volume, config.m_truncationDistance)){
         throw "Surface reconstruction failed";
     };
 
     // Step 4: Surface prediction
+    std::cout << "Init: Raycast..." << std::endl;
     if(!raycast.surfacePrediction(currentFrame,volume, config.m_truncationDistance)){
         throw "Raycasting failed";
     };
+    std::cout << "Done!" << std::endl;
     return true;
 }
 
@@ -93,8 +97,8 @@ int main(){
     // We store a first frame as a reference frame. All next frames are tracked relatively to the first frame.
     sensor.processNextFrame();
 
-    const auto volumeOrigin = Eigen::Vector3d (0,0,0);
-    Config config (0.1,0.5,0.5, volumeOrigin, 512,512,512,1.0);
+    const auto volumeOrigin = Eigen::Vector3d (-5,0,1);
+    Config config (0.1,0.5,0.5, volumeOrigin, 100,100,100,0.1);
 
     //Setup Volume
     auto volume = std::make_shared<Volume>(config.m_volumeOrigin, config.m_volumeSize,config.m_voxelScale) ;

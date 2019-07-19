@@ -1,3 +1,5 @@
+#include <iostream>
+#include <MeshWriter.h>
 #include "Fusion.hpp"
 
 
@@ -8,6 +10,10 @@ bool Fusion::reconstructSurface(const std::shared_ptr<Frame>& currentFrame,const
     auto pose = currentFrame->getGlobalPose().inverse();
     auto width = currentFrame->getWidth();
     auto voxelData = volume->getVoxelData();
+    auto height = currentFrame->getHeight();
+
+    Eigen::Matrix3d rotation    = pose.block(0,0,3,3);
+    Eigen::Vector3d translation = pose.block(0,3,3,1);
 
      for (int z = 0;z<volumeSize.z();z++) {
 		 for( int y =0;y<volumeSize.y();y++){
@@ -16,12 +22,9 @@ bool Fusion::reconstructSurface(const std::shared_ptr<Frame>& currentFrame,const
 				 * Volumetric Reconstruction
 				 */
 				//calculate Camera Position
-
-                Eigen::Vector3d currentCameraPosition;
-
-                if (!calculateGlobal2CameraPoint(currentCameraPosition, x, y, z, pose.block(0,0,3,3), pose.block(0,3,3,1), voxelScale))continue;
-
-                currentCameraPosition += volume->getOrigin();
+				Eigen::Vector3d globalCoord_voxel = volume->getGlobalCoordinate(x, y, z);
+                Eigen::Vector3d currentCameraPosition = rotation * globalCoord_voxel + translation;
+                if (currentCameraPosition.z() <= 0) continue;
 
                 Eigen::Vector2i img_coord = currentFrame -> projectOntoPlane(currentCameraPosition);
 
@@ -31,7 +34,6 @@ bool Fusion::reconstructSurface(const std::shared_ptr<Frame>& currentFrame,const
 				if (depth <= 0) continue;
 
 				auto lambda = calculateLamdas(img_coord, currentFrame->getIntrinsics());
-
 				auto sdf = calculateSDF(lambda, currentCameraPosition, depth);
 
 				/*
@@ -40,17 +42,17 @@ bool Fusion::reconstructSurface(const std::shared_ptr<Frame>& currentFrame,const
 				if (sdf >= -truncationDistance) {
 
 				    const double current_tsdf = std::min(1., sdf / truncationDistance); // *sgn(sdf)
-					const double current_weight = 1.0;
+				    const double current_weight = 1.0;
 					size_t voxel_index = x+(y*volumeSize.x())+(z*volumeSize.x()*volumeSize.y());
-					const double old_tsdf=voxelData[voxel_index].tsdf;
-					const double old_weight = voxelData[voxel_index].weight;
+					const double old_tsdf=volume->getVoxelData()[voxel_index].tsdf;
+					const double old_weight = volume->getVoxelData()[voxel_index].weight;
 
 					const double updated_tsdf = (old_weight*old_tsdf + current_weight*current_tsdf)/
 							(old_weight+current_weight);
 					const double updated_weight = old_weight+current_weight;
 
-                    voxelData[voxel_index].tsdf = updated_tsdf;
-                    voxelData[voxel_index].weight = updated_weight;
+                    volume->getVoxelData()[voxel_index].tsdf = updated_tsdf;
+                    volume->getVoxelData()[voxel_index].weight = updated_weight;
 
                     if (sdf <= truncationDistance / 2 && sdf >= -truncationDistance / 2) {
                         Vector4uc& voxel_color = voxelData[voxel_index].color;
@@ -70,6 +72,7 @@ bool Fusion::reconstructSurface(const std::shared_ptr<Frame>& currentFrame,const
 			}
         }
     }
+     MeshWriter::toFile(std::string("tsdf"), *volume);
     return true;
 }
 

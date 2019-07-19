@@ -1,15 +1,58 @@
+#pragma once
+
 #include <string>
 #include <fstream>
 #include <memory>
 #include <iostream>
 #include <Eigen/Core>
 
+#include "Volume.hpp"
 #include "Frame.h"
 #include "data_types.h"
 
 
 class MeshWriter{
 public:
+
+    static bool toFile(std::string filename,    Volume& v){
+
+        std::string filenameBaseOut = PROJECT_DIR + std::string("/results/");
+
+        // Write off file.
+        std::ofstream outFile(filenameBaseOut + filename + ".off");
+        if (!outFile.is_open()){
+            return false;
+        }
+        auto volumeSize = v.getVolumeSize();
+        // Write header.
+        outFile << "COFF" << std::endl;
+        outFile << volumeSize.x()*volumeSize.z()*volumeSize.y() << " " << "0" << " 0" <<
+                std::endl;
+        // Save vertices.
+        auto origin = v.getOrigin();
+        for (int z = 0;z<volumeSize.z();z++) {
+
+            for (int y = 0; y < volumeSize.y(); y++) {
+                for (int x = 0; x < volumeSize.x(); x++) {
+                    auto voxel = v.getVoxelData()[x+y*volumeSize.x()+z*volumeSize.x()*volumeSize.y()];
+                    if(voxel.weight == 0. || std::abs(voxel.tsdf) >= 0.999){
+                        continue;
+                    }
+                    // if(v.getVoxelData()[x+y*volumeSize.x()+z*volumeSize.x()*volumeSize.y()].tsdf ==0){
+                    //     outFile<<x<<" "<<y<<" "<<z<<" "<<"255 255 0 0.5"<<std::endl;
+                    // }else{
+                    //     outFile<<x<<" "<<y<<" "<<z<<" "<<"0 0 255 0.5"<<std::endl;
+                    // }
+                    outFile<<x*v.getVoxelScale() + origin.x()<<" "<<y*v.getVoxelScale() + origin.y()<<" "<<z*v.getVoxelScale() + origin.z()<<" "<<"0 0 255 255"<<std::endl;
+                }
+            }
+        }
+
+        // Close file.
+        outFile.close();
+        return true;
+    }
+
     static bool toFile(std::string filename, BYTE* color,
                        const std::vector<Eigen::Vector3d>& points){
 
