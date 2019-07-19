@@ -16,9 +16,7 @@ private:
 									 const Eigen::Matrix3d& rotation,
 									 const Eigen::Vector3d& translation, double voxelScale);
 
-    bool pi(Eigen::Vector2i& unhomogenized,Eigen::Vector3d homogenized, Eigen::Matrix3d intrinsics,int width, int height);
-
-        /*!
+    /*!
          * The original implementation actually takes a raw depth Value, as we already calculated the camereSpacePoints
          * only the normalization has to be done.
          * TODO: move normalization to frame.cpp ; check if the cameraSpaceTransformation in frame.cpp equals the one used in Paper

@@ -54,9 +54,6 @@ bool Raycast::surfacePrediction(std::shared_ptr<Frame>& currentFrame,std::shared
                 if (previousTSDF < 0. && currentTSDF > 0.)break;
                 //this equals +ve to -ve in the paper / this means we just crossed a zero value
                 if (previousTSDF > 0. && currentTSDF < 0.) {
-                    /*vertices[u+ v*width] = getVertexAtZeroCrossing(previousPoint, currentPoint, previousTSDF, currentTSDF);
-                    // Eigen::Vector3d normal_point  = volume->getTSDFGrad(surface_point);
-                    depthMap[u + v*width] = vertices[u+ v*width].z();*/
 
                     Eigen::Vector3d globalVertex = getVertexAtZeroCrossing(previousPoint, currentPoint, previousTSDF, currentTSDF);
 

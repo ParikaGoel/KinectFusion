@@ -7,7 +7,6 @@ bool Fusion::reconstructSurface(const std::shared_ptr<Frame>& currentFrame,const
     auto voxelScale = volume->getVoxelScale();
     auto pose = currentFrame->getGlobalPose().inverse();
     auto width = currentFrame->getWidth();
-    auto height = currentFrame->getHeight();
     auto voxelData = volume->getVoxelData();
 
      for (int z = 0;z<volumeSize.z();z++) {
@@ -19,17 +18,19 @@ bool Fusion::reconstructSurface(const std::shared_ptr<Frame>& currentFrame,const
 				//calculate Camera Position
 
                 Eigen::Vector3d currentCameraPosition;
-                Eigen::Vector2i X;
+
                 if (!calculateGlobal2CameraPoint(currentCameraPosition, x, y, z, pose.block(0,0,3,3), pose.block(0,3,3,1), voxelScale))continue;
 
                 currentCameraPosition += volume->getOrigin();
 
-				if (!pi(X, currentCameraPosition, currentFrame->getIntrinsics(), width, height))continue;
+                Eigen::Vector2i img_coord = currentFrame -> projectOntoPlane(currentCameraPosition);
 
-				const double depth = currentFrame->getDepthMap()[X.x() + (X.y() * width)];
+				if (!currentFrame->contains(img_coord))continue;
+
+				const double depth = currentFrame->getDepthMap()[img_coord.x() + (img_coord.y() * width)];
 				if (depth <= 0) continue;
 
-				auto lambda = calculateLamdas(X, currentFrame->getIntrinsics());
+				auto lambda = calculateLamdas(img_coord, currentFrame->getIntrinsics());
 
 				auto sdf = calculateSDF(lambda, currentCameraPosition, depth);
 
@@ -53,7 +54,7 @@ bool Fusion::reconstructSurface(const std::shared_ptr<Frame>& currentFrame,const
 
                     if (sdf <= truncationDistance / 2 && sdf >= -truncationDistance / 2) {
                         Vector4uc& voxel_color = voxelData[voxel_index].color;
-                        const Vector4uc image_color = currentFrame->getColorMap()[X.x() + (X.y() * width)];
+                        const Vector4uc image_color = currentFrame->getColorMap()[img_coord.x() + (img_coord.y() * width)];
 
                         voxel_color[0] = (old_weight * voxel_color[0] + current_weight * image_color[0]) /
                                 (old_weight + current_weight);
@@ -84,23 +85,6 @@ bool Fusion::calculateGlobal2CameraPoint(Eigen::Vector3d &currentCameraPosition,
     currentCameraPosition = rotation * position + translation;
 
     if (currentCameraPosition.z() <= 0) return false;
-
-    return true;
-}
-bool Fusion::pi(Eigen::Vector2i& pi,Eigen::Vector3d currentPos, Eigen::Matrix3d intrinsics,int width, int height){
-    double fovX = intrinsics(0, 0);
-    double fovY = intrinsics(1, 1);
-    double cX = intrinsics(0, 2);
-    double cY = intrinsics(1, 2);
-    //X=pi(x)
-
-    pi = Eigen::Vector2i(
-            (int)(currentPos.x() / currentPos.z() * fovX + cX),
-            (int)(currentPos.y() / currentPos.z() * fovY + cY)
-    );
-
-    if (pi.x() < 0 || pi.x() >= width || pi.y() < 0 || pi.y() >= height)
-        return false;
 
     return true;
 }

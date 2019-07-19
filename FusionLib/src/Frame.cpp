@@ -100,8 +100,6 @@ std::vector<Eigen::Vector3d> Frame::computeCameraCoordinates(unsigned int width,
     double cX = m_intrinsic_matrix(0, 2);
     double cY = m_intrinsic_matrix(1, 2);
 
-    // auto intrinsicInverse = m_intrinsic_matrix.inverse();
-
     // Back-project the pixel depths into the camera space.
     std::vector<Eigen::Vector3d> pointsTmp(width * height);
 
