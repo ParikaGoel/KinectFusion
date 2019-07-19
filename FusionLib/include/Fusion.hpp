@@ -1,3 +1,7 @@
+//
+// Created by pbo on 08.07.19.
+//
+
 #pragma once
 
 #include "Volume.hpp"
@@ -7,14 +11,15 @@ class Fusion {
 public:
 //THIS method expects frame to hold all camera paramerters as well as the estimated pose --> TODO: check if those values are set or redefine method parameters
 
-    bool reconstructSurface(const std::shared_ptr<Frame>& currentFrame,const std::shared_ptr<Volume>& volume,double truncationDistance);
+    bool reconstructSurface(std::shared_ptr<Frame> currentFrame,std::shared_ptr<Volume> volume,double truncationDistance);
 
 private:
 
+    void reconstruct(std::shared_ptr<Frame> currentFrame,std::shared_ptr<Volume> volume,float truncationDistance);
     //Reconstruction
     bool calculateGlobal2CameraPoint(Eigen::Vector3d &currentCameraPosition, int x, int y, int z,
-									 const Eigen::Matrix3d& rotation,
-									 const Eigen::Vector3d& translation, double voxelScale);
+									 Eigen::Matrix<double, 3, 3, Eigen::DontAlign> rotation,
+									 Eigen::Vector3d translation, double voxelScale);
 
     bool pi(Eigen::Vector2i& unhomogenized,Eigen::Vector3d homogenized, Eigen::Matrix3d intrinsics,int width, int height);
 

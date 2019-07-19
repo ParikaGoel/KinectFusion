@@ -1,3 +1,7 @@
+//
+// Created by pbo on 08.07.19.
+//
+
 #pragma once
 #include "Volume.hpp"
 #include <Frame.h>
@@ -7,12 +11,11 @@ class Raycast {
 public:
 
     //THIS method expects frame to hold all camera paramerters as well as the estimated pose --> TODO: check if those values are set or redefine method parameters
-    bool surfacePrediction(std::shared_ptr<Frame>& currentFrame,std::shared_ptr<Volume>& volume,float truncationDistance);
+    bool surfacePrediction(std::shared_ptr<Frame> currentFrame,std::shared_ptr<Volume> volume,float truncationDistance);
 
 private:
 
-    double interpolateNormals(const Eigen::Vector3d& normal, const std::shared_ptr<Volume>& volume);
-
+    double interpolateNormals(const Eigen::Vector3d ,std::shared_ptr<Volume> volume );
 
     /*!
      *
@@ -22,8 +25,8 @@ private:
      * @param direction  the direction equals the rotation * pixel position
      * @return
      */
-    bool calculateRayLength(double &rayLength, const Eigen::Vector3d& volumeRange, const Eigen::Vector3d &origin,
-                            const Eigen::Vector3d &direction);
+    bool calcuateEntryParameter(double &rayLength, const Eigen::Vector3d volumeRange, const Eigen::Vector3d &origin,
+                                const Eigen::Vector3d &direction);
     /*!
      *
      * @param x
@@ -32,8 +35,7 @@ private:
      * @param intrinsics
      * @return the normalized direction of the ray which equals the rotation*cameraSpaceCoordinates
      */
-    const Eigen::Vector3d calculateRayDirection(int x, int y, const Eigen::Matrix<double, 3, 3, Eigen::DontAlign>& rotation,
-                                                const Eigen::Matrix3d& intrinsics);
+    const Eigen::Vector3d calculateRayDirection(int x,int y,Eigen::Matrix<double, 3, 3, Eigen::DontAlign> rotation, Eigen::Matrix3d intrinsics);
 
     /*!
      * This method should not only calculate the currentPoint on the ray but also check wether it is inside the volume 1<=x<=volume.Size.x()-1,...
@@ -47,27 +49,16 @@ private:
      * @return is point in Volume
      */
 
-    bool calculatePointOnRay(Eigen::Vector3d& currentPoint,
-                             std::shared_ptr<Volume>& volume,
-                             const Eigen::Vector3d& origin,
-                             const Eigen::Vector3d& direction,
-                             double raylength
-    );
+    bool calculateCurrentPointOnRay(Eigen::Vector3d& currentPoint, double& rayParameter, const Eigen::Vector3d volumeSize,const Eigen::Vector3d& origin, const Eigen::Vector3d& direction);
 
     /*!
-     * @param ray_origin : originating position of vector to the vertex point at zero crossing
-     * @param ray_direction : direction of the vector
-     * @param ray_length: length of the vector specifying how far the point is from origin
-     * @return 3d point of the vertex at zero crossing
+     * Attention/TODO: make sure the correct tsdf is retrieved as the mapping is dependant on the for loops in fusion
+     *
+     * @param volume
+     * @param position
+     * @return the tsdf from the map in Volume at position, check the way it is done in Fusion
      */
-    Eigen::Vector3d getVertexatZeroCrossing(Eigen::Vector3d& ray_origin,
-                                            Eigen::Vector3d& ray_direction,
-                                            double ray_length);
-
-    Eigen::Vector3d getZeroCrossing(
-            Eigen::Vector3d& prevPoint, Eigen::Vector3d& currPoint,
-            double prevTSDF, double currTSDF
-            );
+    double getTSDF(std::shared_ptr<Volume> volume, Eigen::Vector3d position);
 };
 
 
