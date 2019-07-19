@@ -36,7 +36,7 @@ public:
     };
     struct Voxel{
         Voxel(double x, double y, double z, double voxelScale,int startIdx){
-            voxelScale /= 2.;
+            voxelScale *= 0.75;
             vertices.push_back({x,y,z});
             vertices.push_back({x+voxelScale,y,z});
             vertices.push_back({x,y,z+voxelScale});
@@ -70,7 +70,7 @@ public:
 
 
     };
-    static bool toFile(std::string filename,    Volume& v, int step_size = 1, std::string borderColor = "0 255 0"){
+    static bool toFile(std::string filename,    Volume& v, int step_size = 1, double threshold=1, std::string borderColor = "0 255 0"){
 
         std::string filenameBaseOut = PROJECT_DIR + std::string("/results/");
 
@@ -93,7 +93,7 @@ public:
             for (int y = 0; y < volumeSize.y(); y+=step_size) {
                 for (int x = 0; x < volumeSize.x(); x+=step_size) {
                     auto voxel = v.getVoxelData()[x+y*volumeSize.x()+z*volumeSize.x()*volumeSize.y()];
-                    if(voxel.weight == 0. || std::abs(voxel.tsdf) >= 0.9999){
+                    if(voxel.weight == 0. || std::abs(voxel.tsdf) >= threshold){
                         continue;
                     }
                     voxels.push_back(Voxel(v.getOrigin().x()+x*v.getVoxelScale(),v.getOrigin().y()+y*v.getVoxelScale
@@ -110,50 +110,56 @@ public:
             }
         }
 
-        std::vector<Eigen::Vector3d> borders;
+        std::vector<Voxel> borders;
         for (size_t x = 0; x < volumeSize.x(); ++x){
-        borders.push_back(v.getOrigin() + Eigen::Vector3d(x, volumeSize.y(), 0)*v.getVoxelScale());
-            borders.push_back(v.getOrigin() + Eigen::Vector3d(x, volumeSize.y(), volumeSize.z())*v.getVoxelScale());
-            borders.push_back(v.getOrigin() + Eigen::Vector3d(x, 0, volumeSize.z())*v.getVoxelScale());
+            Eigen::Vector3d p1 = (v.getOrigin() + Eigen::Vector3d(x, 0, 0)*v.getVoxelScale());
+            Eigen::Vector3d p2 = (v.getOrigin() + Eigen::Vector3d(x, volumeSize.y(), 0)*v.getVoxelScale());
+            Eigen::Vector3d p3 = (v.getOrigin() + Eigen::Vector3d(x, volumeSize.y(), volumeSize.z())*v.getVoxelScale());
+            Eigen::Vector3d p4 = (v.getOrigin() + Eigen::Vector3d(x, 0, volumeSize.z())*v.getVoxelScale());
+            borders.push_back(Voxel(p1.x(), p1.y(), p1.z(), v.getVoxelScale(), voxels.size()*8 + borders.size()*8));
+            borders.push_back(Voxel(p2.x(), p2.y(), p2.z(), v.getVoxelScale(), voxels.size()*8 + borders.size()*8));
+            borders.push_back(Voxel(p3.x(), p3.y(), p3.z(), v.getVoxelScale(), voxels.size()*8 + borders.size()*8));
+            borders.push_back(Voxel(p4.x(), p4.y(), p4.z(), v.getVoxelScale(), voxels.size()*8 + borders.size()*8));
         }
         for (size_t y = 0; y < volumeSize.x(); ++y){
-            borders.push_back(v.getOrigin() + Eigen::Vector3d(0, y, 0)*v.getVoxelScale());
-            borders.push_back(v.getOrigin() + Eigen::Vector3d(0, y, volumeSize.z())*v.getVoxelScale());
-            borders.push_back(v.getOrigin() + Eigen::Vector3d(volumeSize.x(), y, volumeSize.z())*v.getVoxelScale());
-            borders.push_back(v.getOrigin() + Eigen::Vector3d(volumeSize.x(), y, 0)*v.getVoxelScale());
+            Eigen::Vector3d p1 = (v.getOrigin() + Eigen::Vector3d(0, y, 0)*v.getVoxelScale());
+            Eigen::Vector3d p2 = (v.getOrigin() + Eigen::Vector3d(0, y, volumeSize.z())*v.getVoxelScale());
+            Eigen::Vector3d p3 = (v.getOrigin() + Eigen::Vector3d(volumeSize.x(), y, volumeSize.z())*v.getVoxelScale());
+            Eigen::Vector3d p4 = (v.getOrigin() + Eigen::Vector3d(volumeSize.x(), y, 0)*v.getVoxelScale());
+            borders.push_back(Voxel(p1.x(), p1.y(), p1.z(), v.getVoxelScale(), voxels.size()*8 + borders.size()*8));
+            borders.push_back(Voxel(p2.x(), p2.y(), p2.z(), v.getVoxelScale(), voxels.size()*8 + borders.size()*8));
+            borders.push_back(Voxel(p3.x(), p3.y(), p3.z(), v.getVoxelScale(), voxels.size()*8 + borders.size()*8));
+            borders.push_back(Voxel(p4.x(), p4.y(), p4.z(), v.getVoxelScale(), voxels.size()*8 + borders.size()*8));
         }
         for (size_t z = 0; z < volumeSize.x(); ++z){
-            borders.push_back(v.getOrigin() + Eigen::Vector3d(0, 0, z)*v.getVoxelScale());
-            borders.push_back(v.getOrigin() + Eigen::Vector3d(0, volumeSize.y(), z)*v.getVoxelScale());
-            borders.push_back(v.getOrigin() + Eigen::Vector3d(volumeSize.x(), volumeSize.y(), z)*v.getVoxelScale());
-            borders.push_back(v.getOrigin() + Eigen::Vector3d(volumeSize.x(), 0, z)*v.getVoxelScale());
+            Eigen::Vector3d p1 = (v.getOrigin() + Eigen::Vector3d(0, 0, z)*v.getVoxelScale());
+            Eigen::Vector3d p2 = (v.getOrigin() + Eigen::Vector3d(0, volumeSize.y(), z)*v.getVoxelScale());
+            Eigen::Vector3d p3 = (v.getOrigin() + Eigen::Vector3d(volumeSize.x(), volumeSize.y(), z)*v.getVoxelScale());
+            Eigen::Vector3d p4 = (v.getOrigin() + Eigen::Vector3d(volumeSize.x(), 0, z)*v.getVoxelScale());
+            borders.push_back(Voxel(p1.x(), p1.y(), p1.z(), v.getVoxelScale(), voxels.size()*8  + borders.size()*8 ));
+            borders.push_back(Voxel(p2.x(), p2.y(), p2.z(), v.getVoxelScale(), voxels.size()*8  + borders.size()*8 ));
+            borders.push_back(Voxel(p3.x(), p3.y(), p3.z(), v.getVoxelScale(), voxels.size()*8  + borders.size()*8 ));
+            borders.push_back(Voxel(p4.x(), p4.y(), p4.z(), v.getVoxelScale(), voxels.size()*8  + borders.size()*8 ));
         }
 
         // Write header.
         outFile << "COFF" << std::endl;
-        outFile << voxels.size() *8<< " " << voxels.size()*6 << " 0" <<std::endl;
+        outFile << voxels.size() *8 + borders.size()*8<< " " << voxels.size()*6 + borders.size()*6 << " 0" <<std::endl;
 
         for(size_t i = 0; i < voxels.size(); i++){ //Voxel vo:voxels){
             outFile << voxels[i].printVertices(colors[i]);
         }
-
+        for(size_t i = 0; i < borders.size(); i++){ //Voxel vo:voxels){
+            outFile << borders[i].printVertices(borderColor);
+        }
         for(Voxel vo:voxels) {
             outFile << vo.printPlanes("255 0 0");
         }
+        for(Voxel vo:borders) {
+            outFile << vo.printPlanes("255 0 0");
+        }
 
-        // Close file.
         outFile.close();
-        // Write off file.
-        std::ofstream outFile2(filenameBaseOut + filename + "_borders.off");
-        // Write header.
-        outFile2 << "COFF" << std::endl;
-        outFile2 << borders.size() << " 0 0" <<std::endl;
-
-        for(Eigen::Vector3d vec: borders)
-            outFile2 << vec.x() << " " << vec.y() << " " << vec.z() << " " << borderColor << std::endl;
-
-        outFile2.close();
-
         return true;
     }
 
