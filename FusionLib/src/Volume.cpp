@@ -11,11 +11,13 @@ Ray::Ray(const Eigen::Vector3d &origin, const Eigen::Vector3d &dir) : orig(origi
 
 
 Volume::Volume(const Eigen::Vector3d origin, const Eigen::Vector3i volumeSize, const double voxelScale)
-        : _voxelData(), _volumeSize(volumeSize),
-          _voxelScale(voxelScale), _origin(origin),
-          _maxPoint(voxelScale * volumeSize.cast<double>()),
-          _volumeRange(volumeSize.cast<double>()*voxelScale)
-                  {
+        : _voxelData(),
+          _volumeSize(volumeSize),
+          _voxelScale(voxelScale),
+          _volumeRange(volumeSize.cast<double>()*voxelScale),
+          _origin(origin),
+          _maxPoint(voxelScale * volumeSize.cast<double>())
+          {
     _voxelData.reserve(volumeSize.x() * volumeSize.y() * volumeSize.z());
     for (int z = 0;z<volumeSize.z();z++)
         for( int y =0;y<volumeSize.y();y++)
@@ -121,7 +123,7 @@ Eigen::Vector3d Volume::getTSDFGrad(Eigen::Vector3d global){
     currentPosition.z() = int(shifted.z());
 
     // TODO: double check
-    
+
     double tsdf_x0 = getVoxelData()[(currentPosition.x()-1) + currentPosition.y()*_volumeSize.x()
                                                                + currentPosition.z()*_volumeSize.x()*_volumeSize.y()].tsdf;
     double tsdf_x1 = getVoxelData()[(currentPosition.x()+1) + currentPosition.y()*_volumeSize.x()
