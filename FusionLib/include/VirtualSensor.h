@@ -8,8 +8,7 @@
 #include "Eigen.h"
 #include "FreeImageHelper.hpp"
 #include "Sensor.h"
-
-typedef unsigned char BYTE;
+#include "data_types.h"
 
 // reads sensor files according to https://vision.in.tum.de/data/datasets/rgbd-dataset/file_formats
 class VirtualSensor : public Sensor {
@@ -51,16 +50,8 @@ public:
 
 	unsigned int getDepthImageHeight();
 
-	// get current trajectory transformation
-	Eigen::Matrix4d getTrajectory();
-
-
-
 protected:
 	bool readFileList(const std::string& filename, std::vector<std::string>& result, std::vector<double>& timestamps);
-
-	bool readTrajectoryFile(const std::string& filename, std::vector<Eigen::Matrix4d>& result,
-							std::vector<double>& timestamps);
 
 	EIGEN_MAKE_ALIGNED_OPERATOR_NEW
 
@@ -72,8 +63,6 @@ protected:
 	// frame data
 	double* m_depthFrame;
 	BYTE* m_colorFrame;
-	Eigen::Matrix4d m_currentTrajectory;
-
 	// color camera info
 	Eigen::Matrix4d m_colorExtrinsics;
 
@@ -88,10 +77,4 @@ protected:
 	// filenamelist color
 	std::vector<std::string> m_filenameColorImages;
 	std::vector<double> m_colorImagesTimeStamps;
-
-	// trajectory
-	std::vector<Eigen::Matrix4d> m_trajectory;
-	std::vector<double> m_trajectoryTimeStamps;
-
-
 };

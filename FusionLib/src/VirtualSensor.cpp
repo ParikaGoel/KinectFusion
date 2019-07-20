@@ -8,10 +8,7 @@ bool VirtualSensor::init(const std::string &datasetDir, bool intrinsics){
 	if (!readFileList(datasetDir + "depth.txt", m_filenameDepthImages, m_depthImagesTimeStamps)) return false;
 	if (!readFileList(datasetDir + "rgb.txt", m_filenameColorImages, m_colorImagesTimeStamps)) return false;
 
-	// Read tracking
-	// if (!readTrajectoryFile(datasetDir + "groundtruth.txt", m_trajectory, m_trajectoryTimeStamps)) return false;
-
-    if (m_filenameDepthImages.size() != m_filenameColorImages.size()) return false;
+	if (m_filenameDepthImages.size() != m_filenameColorImages.size()) return false;
 
     if( intrinsics){
         // Image resolutions
@@ -111,11 +108,6 @@ unsigned int VirtualSensor::getDepthImageHeight() {
     return m_depthImageHeight;
 }
 
-// get current trajectory transformation
-Eigen::Matrix4d VirtualSensor::getTrajectory() {
-    return m_currentTrajectory;
-}
-
 bool VirtualSensor::readFileList(const std::string &filename, std::vector<std::string> &result,
                                  std::vector<double> &timestamps) {
 
@@ -139,40 +131,3 @@ bool VirtualSensor::readFileList(const std::string &filename, std::vector<std::s
     fileDepthList.close();
     return true;
 }
-
-bool VirtualSensor::readTrajectoryFile(const std::string &filename, std::vector<Eigen::Matrix4d> &result,
-                                       std::vector<double> &timestamps) {
-
-    std::ifstream file(filename, std::ios::in);
-    if (!file.is_open()) return false;
-    result.clear();
-    std::string dump;
-    std::getline(file, dump);
-    std::getline(file, dump);
-
-    std::getline(file, dump);
-
-    while (file.good()) {
-        double timestamp;
-        file >> timestamp;
-        Eigen::Vector3d translation;
-        file >> translation.x() >> translation.y() >> translation.z();
-        Eigen::Quaterniond rot;
-        file >> rot;
-
-        Eigen::Matrix4d transf;
-        transf.setIdentity();
-        transf.block<3, 3>(0, 0) = rot.toRotationMatrix();
-        transf.block<3, 1>(0, 3) = translation;
-
-        if (rot.norm() == 0) break;
-
-        transf = transf.inverse().eval();
-
-        timestamps.push_back(timestamp);
-        result.push_back(transf);
-    }
-    file.close();
-    return true;
-}
-

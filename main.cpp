@@ -21,6 +21,9 @@
 
 Fusion fusion;
 Raycast raycast;
+VirtualSensor sensor;
+// KinectVirtualSensor sensor(PROJECT_DATA_DIR + std::string("/sample0"), 5 );
+//Recorder rec;
 
 //TODO this should be moved to one File containing all data_declarations class
 struct Config{
@@ -74,24 +77,15 @@ bool process_frame( size_t frame_cnt, std::shared_ptr<Frame> prevFrame,std::shar
 
 int main(){
 
-    VirtualSensor sensor;
     std::string filenameIn = PROJECT_DATA_DIR + std::string("/rgbd_dataset_freiburg1_xyz/");
 
-    //std::string filenameIn = PROJECT_DATA_DIR + std::string("/rs9/");
-
+    std::cout << "Initialize virtual sensor..." << std::endl;
     if (!sensor.init(filenameIn)) {
         std::cout << "Failed to initialize the sensor!\nCheck file path!" << std::endl;
         return -1;
     }
 
-    //Recorder rec;
     // rec.record(20);
-
-    // Load video
-    std::cout << "Initialize virtual sensor..." << std::endl;
-    // VirtualSensor sensor;
-    // KinectVirtualSensor sensor(PROJECT_DATA_DIR + std::string("/sample0"), 5 );
-
 
     // We store a first frame as a reference frame. All next frames are tracked relatively to the first frame.
     sensor.processNextFrame();
@@ -119,7 +113,7 @@ int main(){
     MeshWriter::toFile("mesh0",prevFrame);
 
     int i = 1;
-    const int iMax = 45;
+    const int iMax = 60;
 
     while(sensor.processNextFrame() && i <= iMax){
 
@@ -135,4 +129,6 @@ int main(){
         prevFrame = std::move(currentFrame);
         i++;
     }
+
+    MeshWriter::toFile("volume_mesh",*volume);
 }
