@@ -23,6 +23,7 @@
 Fusion fusion;
 Raycast raycast;
 VirtualSensor sensor;
+double total_time = 0.0f;
 // KinectVirtualSensor sensor(PROJECT_DATA_DIR + std::string("/sample0"), 5 );
 //Recorder rec;
 
@@ -37,9 +38,15 @@ bool process_frame( size_t frame_cnt, std::shared_ptr<Frame> prevFrame,std::shar
     currentFrame->setGlobalPose(estimated_pose);
 
     std::cout << "Init: ICP..." << std::endl;
-    if(!icp.estimatePose(frame_cnt, prevFrame,currentFrame, 3, estimated_pose)){
+    clock_t begin = clock();
+    if(!icp.estimatePose(frame_cnt, prevFrame,currentFrame, 10, estimated_pose)){
         throw "ICP Pose Estimation failed";
     };
+
+    clock_t end = clock();
+    double elapsedSecs = double(end - begin) / CLOCKS_PER_SEC;
+    total_time += elapsedSecs;
+    std::cout << "Completed in " << elapsedSecs << " seconds." << std::endl;
 
     // STEP 2: Surface reconstruction
    std::cout << "Init: Fusion..." << std::endl;
@@ -99,11 +106,13 @@ int main(){
     BYTE* colors = &sensor.getColorRGBX()[0];
 
     std::shared_ptr<Frame> prevFrame = std::make_shared<Frame>(Frame(depthMap, colors, depthIntrinsics, colIntrinsics, d2cExtrinsics, depthWidth, depthHeight));
+    MeshWriter::toFile("mesh0", prevFrame);
 
     int i = 1;
 //    const int iMax = 60;
     const int iMax = 20;
 	config.printToFile("config");
+
     while( i <= iMax && sensor.processNextFrame() ){
 
         const double* depthMap = &sensor.getDepth()[0];
@@ -111,13 +120,17 @@ int main(){
         std::shared_ptr<Frame> currentFrame = std::make_shared<Frame>(Frame(depthMap, colors, depthIntrinsics,colIntrinsics, d2cExtrinsics, depthWidth, depthHeight));
         process_frame(i,prevFrame,currentFrame,volume,config);
 
-        std::stringstream filename;
-        filename << "mesh" << i;
-        MeshWriter::toFile(filename.str(),currentFrame);
+        if (i % 5 == 0) {
+            std::stringstream filename;
+            filename << "mesh" << i;
+            MeshWriter::toFile(filename.str(), currentFrame);
+        }
 
         prevFrame = std::move(currentFrame);
         i++;
     }
+
+    std::cout<<"Average time taken by icp: " << total_time / 50.0f << std::endl;
 
 //    MeshWriter::toFile("volume_mesh",*volume);
 
