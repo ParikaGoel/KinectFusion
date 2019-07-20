@@ -99,13 +99,13 @@ int main(){
 
     //TODO truncationDistance is completly random Value right now
     Eigen::Vector3d volumeRange(5.0, 5.0, 5.0);
-	Eigen::Vector3i volumeSize (128,128,128);
-//	Eigen::Vector3i volumeSize (512,512,512);
+//	Eigen::Vector3i volumeSize (256,256,256);
+	Eigen::Vector3i volumeSize (512,512,512);
     double voxelSize = volumeRange.x()/volumeSize.x();
 
     const auto volumeOrigin = Eigen::Vector3d (-volumeRange.x()/2,-volumeRange.y()/2,0.5);
 
-    Config config (0.1,0.5,0.5, volumeOrigin, volumeSize.x(),volumeSize.y(),volumeSize.z(), voxelSize);
+    Config config (0.1,0.5,0.06, volumeOrigin, volumeSize.x(),volumeSize.y(),volumeSize.z(), voxelSize);
 
     //Setup Volume
     auto volume = std::make_shared<Volume>(config.m_volumeOrigin, config.m_volumeSize,config.m_voxelScale) ;
@@ -123,7 +123,7 @@ int main(){
 
     int i = 1;
 //    const int iMax = 60;
-    const int iMax = 1;
+    const int iMax = 20;
 
     while( i <= iMax && sensor.processNextFrame() ){
 
