@@ -1,7 +1,7 @@
 #include <iostream>
 #include <MeshWriter.h>
 #include "Fusion.hpp"
-
+#include <Marching_cubes.hpp>
 
 bool Fusion::reconstructSurface(const std::shared_ptr<Frame>& currentFrame,const std::shared_ptr<Volume>& volume,double truncationDistance){
 
@@ -9,6 +9,7 @@ bool Fusion::reconstructSurface(const std::shared_ptr<Frame>& currentFrame,const
     auto pose = currentFrame->getGlobalPose().inverse();
     auto width = currentFrame->getWidth();
     auto voxelData = volume->getVoxelData();
+int idx =0;
 
     Eigen::Matrix3d rotation    = pose.block(0,0,3,3);
     Eigen::Vector3d translation = pose.block(0,3,3,1);
@@ -38,6 +39,7 @@ bool Fusion::reconstructSurface(const std::shared_ptr<Frame>& currentFrame,const
 				 * Volumetric Integration
 				 */
 				if (sdf >= -truncationDistance) {
+					idx++;
 
 				    const double current_tsdf = std::min(1., sdf / truncationDistance); // *sgn(sdf)
 				    const double current_weight = 1.0;
@@ -54,6 +56,7 @@ bool Fusion::reconstructSurface(const std::shared_ptr<Frame>& currentFrame,const
 
                     if (sdf <= truncationDistance / 2 && sdf >= -truncationDistance / 2) {
                         Vector4uc& voxel_color = voxelData[voxel_index].color;
+
                         const Vector4uc image_color = currentFrame->getColorMap()[img_coord.x() + (img_coord.y() * width)];
 
                         voxel_color[0] = (old_weight * voxel_color[0] + current_weight * image_color[0]) /
@@ -64,12 +67,23 @@ bool Fusion::reconstructSurface(const std::shared_ptr<Frame>& currentFrame,const
                                 (old_weight + current_weight);
                         voxel_color[3] =(old_weight * voxel_color[3] + current_weight * image_color[3]) /
                                         (old_weight + current_weight);
+                        volume->getVoxelData()[voxel_index].color = voxel_color;
                     }
+//					std::cout << static_cast<unsigned>(volume->getVoxelData()[voxel_index].color.x()) << " "
+//							  << static_cast<unsigned>(volume->getVoxelData()[voxel_index].color.y()) << " "
+//																		   ""
+//							  << static_cast<unsigned>(volume->getVoxelData()[voxel_index].color.z()) << " "
+//																		   "" << std::endl;
+
+
+
 
 				}
 			}
         }
     }
+//     std::cout<<"§idx:"<<idx<<std::endl;
+     MarchingCubes::extractMesh(*volume,"fusionMCout");
      MeshWriter::toFile(std::string("tsdf"), *volume, 1, 0.7);
     return true;
 }

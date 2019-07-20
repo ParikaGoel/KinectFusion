@@ -18,6 +18,7 @@
 #include "VirtualSensor.h"
 #include "icp.h"
 #include "Frame.h"
+#include "Marching_cubes.hpp"
 
 Fusion fusion;
 Raycast raycast;
@@ -98,7 +99,8 @@ int main(){
 
     //TODO truncationDistance is completly random Value right now
     Eigen::Vector3d volumeRange(5.0, 5.0, 5.0);
-    Eigen::Vector3i volumeSize (50,50,50);
+	Eigen::Vector3i volumeSize (128,128,128);
+//	Eigen::Vector3i volumeSize (512,512,512);
     double voxelSize = volumeRange.x()/volumeSize.x();
 
     const auto volumeOrigin = Eigen::Vector3d (-volumeRange.x()/2,-volumeRange.y()/2,0.5);
@@ -120,9 +122,10 @@ int main(){
     std::shared_ptr<Frame> prevFrame = std::make_shared<Frame>(Frame(depthMap, colors, depthIntrinsics, colIntrinsics, d2cExtrinsics, depthWidth, depthHeight));
 
     int i = 1;
-    const int iMax = 60;
+//    const int iMax = 60;
+    const int iMax = 1;
 
-    while(sensor.processNextFrame() && i <= iMax){
+    while( i <= iMax && sensor.processNextFrame() ){
 
         const double* depthMap = &sensor.getDepth()[0];
         BYTE* colors = &sensor.getColorRGBX()[0];
@@ -137,5 +140,7 @@ int main(){
         i++;
     }
 
-    MeshWriter::toFile("volume_mesh",*volume);
+//    MeshWriter::toFile("volume_mesh",*volume);
+
+//    MarchingCubes::extractMesh(*volume, "mcOutput");
 }

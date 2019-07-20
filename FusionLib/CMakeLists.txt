@@ -9,7 +9,8 @@ set(FUSION_SOURCES
         src/Volume.cpp
         src/Raycast.cpp
         src/Fusion.cpp
-        src/FreeImageHelper.cpp)
+        src/FreeImageHelper.cpp
+        src/Marching_cubes.cpp)
 
 add_library(${FUSION_Name}  ${FUSION_SOURCES})
 target_include_directories(${FUSION_Name} PUBLIC ${CMAKE_CURRENT_LIST_DIR}/include)
