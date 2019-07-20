@@ -88,7 +88,6 @@ public:
         Eigen::Vector3d blue(0, 0, 255);
 
         int idx=0;
-        auto origin = v.getOrigin();
         for (int z = 0;z<volumeSize.z();z+=step_size) {
             for (int y = 0; y < volumeSize.y(); y+=step_size) {
                 for (int x = 0; x < volumeSize.x(); x+=step_size) {
@@ -111,7 +110,7 @@ public:
         }
 
         std::vector<Voxel> borders;
-        for (size_t x = 0; x < volumeSize.x(); ++x){
+        for (int x = 0; x < volumeSize.x(); ++x){
             Eigen::Vector3d p1 = (v.getOrigin() + Eigen::Vector3d(x, 0, 0)*v.getVoxelScale());
             Eigen::Vector3d p2 = (v.getOrigin() + Eigen::Vector3d(x, volumeSize.y(), 0)*v.getVoxelScale());
             Eigen::Vector3d p3 = (v.getOrigin() + Eigen::Vector3d(x, volumeSize.y(), volumeSize.z())*v.getVoxelScale());
@@ -121,7 +120,7 @@ public:
             borders.push_back(Voxel(p3.x(), p3.y(), p3.z(), v.getVoxelScale(), voxels.size()*8 + borders.size()*8));
             borders.push_back(Voxel(p4.x(), p4.y(), p4.z(), v.getVoxelScale(), voxels.size()*8 + borders.size()*8));
         }
-        for (size_t y = 0; y < volumeSize.x(); ++y){
+        for (int y = 0; y < volumeSize.x(); ++y){
             Eigen::Vector3d p1 = (v.getOrigin() + Eigen::Vector3d(0, y, 0)*v.getVoxelScale());
             Eigen::Vector3d p2 = (v.getOrigin() + Eigen::Vector3d(0, y, volumeSize.z())*v.getVoxelScale());
             Eigen::Vector3d p3 = (v.getOrigin() + Eigen::Vector3d(volumeSize.x(), y, volumeSize.z())*v.getVoxelScale());
@@ -131,7 +130,7 @@ public:
             borders.push_back(Voxel(p3.x(), p3.y(), p3.z(), v.getVoxelScale(), voxels.size()*8 + borders.size()*8));
             borders.push_back(Voxel(p4.x(), p4.y(), p4.z(), v.getVoxelScale(), voxels.size()*8 + borders.size()*8));
         }
-        for (size_t z = 0; z < volumeSize.x(); ++z){
+        for (int z = 0; z < volumeSize.x(); ++z){
             Eigen::Vector3d p1 = (v.getOrigin() + Eigen::Vector3d(0, 0, z)*v.getVoxelScale());
             Eigen::Vector3d p2 = (v.getOrigin() + Eigen::Vector3d(0, volumeSize.y(), z)*v.getVoxelScale());
             Eigen::Vector3d p3 = (v.getOrigin() + Eigen::Vector3d(volumeSize.x(), volumeSize.y(), z)*v.getVoxelScale());
@@ -146,10 +145,11 @@ public:
         outFile << "COFF" << std::endl;
         outFile << voxels.size() *8 + borders.size()*8<< " " << voxels.size()*6 + borders.size()*6 << " 0" <<std::endl;
 
-        for(size_t i = 0; i < voxels.size(); i++){ //Voxel vo:voxels){
+        for(size_t i = 0; i < voxels.size(); i++){
             outFile << voxels[i].printVertices(colors[i]);
         }
-        for(size_t i = 0; i < borders.size(); i++){ //Voxel vo:voxels){
+
+        for(size_t i = 0; i < borders.size(); i++){
             outFile << borders[i].printVertices(borderColor);
         }
         for(Voxel vo:voxels) {

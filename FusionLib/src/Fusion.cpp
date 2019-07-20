@@ -6,11 +6,9 @@
 bool Fusion::reconstructSurface(const std::shared_ptr<Frame>& currentFrame,const std::shared_ptr<Volume>& volume,double truncationDistance){
 
     auto volumeSize =volume->getVolumeSize();
-    auto voxelScale = volume->getVoxelScale();
     auto pose = currentFrame->getGlobalPose().inverse();
     auto width = currentFrame->getWidth();
     auto voxelData = volume->getVoxelData();
-    auto height = currentFrame->getHeight();
 
     Eigen::Matrix3d rotation    = pose.block(0,0,3,3);
     Eigen::Vector3d translation = pose.block(0,3,3,1);
