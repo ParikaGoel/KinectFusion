@@ -17,7 +17,8 @@ class Frame {
 public:
     EIGEN_MAKE_ALIGNED_OPERATOR_NEW
     
-    Frame(const double* depthMap, const BYTE* colorMap, const Eigen::Matrix3d& depthIntrinsics,
+    Frame(const double* depthMap, const BYTE* colorMap, const Eigen::Matrix3d& depthIntrinsics, const Eigen::Matrix3d& colorIntrinsics,
+            const Eigen::Matrix4d& d2cExtrinsics,
             const unsigned int width, const unsigned int height, double maxDistance = 2);
 
 	void applyGlobalPose(Eigen::Matrix4d& estimated_pose);
@@ -53,9 +54,14 @@ public:
     bool contains(const Eigen::Vector2i& point);
 
     Eigen::Vector3d projectIntoCamera(const Eigen::Vector3d& globalCoord);
-    Eigen::Vector2i projectOntoPlane(const Eigen::Vector3d& cameraCoord);
+
+    Eigen::Vector2i projectOntoDepthPlane(const Eigen::Vector3d &cameraCoord);
+    Eigen::Vector2i projectOntoColorPlane(const Eigen::Vector3d& cameraCoord);
 
 private:
+    Eigen::Vector2i projectOntoPlane(const Eigen::Vector3d &cameraCoord, Eigen::Matrix3d& intrinsics);
+
+    void alignColorsToDepth(std::vector<Vector4uc> colors);
 
     std::vector<Eigen::Vector3d> computeCameraCoordinates(unsigned int width, unsigned int height);
 
@@ -77,6 +83,9 @@ private:
     std::vector<Eigen::Vector3d> m_normals_global;
     Eigen::Matrix4d m_global_pose;
     Eigen::Matrix3d m_intrinsic_matrix;
+    Eigen::Matrix3d m_color_intrinsic_matrix;
+    Eigen::Matrix4d m_d2cExtrinsics;
+
     std::vector<double> m_depth_map;
     std::vector<Vector4uc> m_color_map;
 };

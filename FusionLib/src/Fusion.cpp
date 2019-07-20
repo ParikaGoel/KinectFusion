@@ -23,7 +23,7 @@ bool Fusion::reconstructSurface(const std::shared_ptr<Frame>& currentFrame,const
 
                 currentCameraPosition += volume->getOrigin();
 
-                Eigen::Vector2i img_coord = currentFrame -> projectOntoPlane(currentCameraPosition);
+                Eigen::Vector2i img_coord = currentFrame->projectOntoDepthPlane(currentCameraPosition);
 
 				if (!currentFrame->contains(img_coord))continue;
 

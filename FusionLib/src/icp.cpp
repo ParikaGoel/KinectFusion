@@ -108,7 +108,7 @@ void icp::findCorrespondence(std::shared_ptr<Frame> prev_frame, std::shared_ptr<
             const Eigen::Vector3d curr_global_normal = rotation * curr_normal;
 
             const Eigen::Vector3d curr_point_prev_frame = prev_frame->projectIntoCamera(curr_global_point);
-            const Eigen::Vector2i curr_point_img_coord = prev_frame->projectOntoPlane(curr_point_prev_frame);
+            const Eigen::Vector2i curr_point_img_coord = prev_frame->projectOntoDepthPlane(curr_point_prev_frame);
 
             if (prev_frame->contains(curr_point_img_coord)) {
 

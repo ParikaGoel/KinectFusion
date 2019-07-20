@@ -71,10 +71,10 @@ bool process_frame( size_t frame_cnt, std::shared_ptr<Frame> prevFrame,std::shar
 
 int main(){
 
-    VirtualSensor sensor;
-    std::string filenameIn = PROJECT_DATA_DIR + std::string("/rgbd_dataset_freiburg1_xyz/");
+    KinectVirtualSensor sensor;
+    // std::string filenameIn = PROJECT_DATA_DIR + std::string("/rgbd_dataset_freiburg1_xyz/");
 
-    //std::string filenameIn = PROJECT_DATA_DIR + std::string("/rs9/");
+    std::string filenameIn = PROJECT_DATA_DIR + std::string("/rs10/");
 
     if (!sensor.init(filenameIn)) {
         std::cout << "Failed to initialize the sensor!\nCheck file path!" << std::endl;
@@ -100,14 +100,15 @@ int main(){
     auto volume = std::make_shared<Volume>(config.m_volumeOrigin, config.m_volumeSize,config.m_voxelScale) ;
 
     Eigen::Matrix3d depthIntrinsics = sensor.getDepthIntrinsics();
+    Eigen::Matrix3d colIntrinsics   = sensor.getColorIntrinsics();
+    Eigen::Matrix4d d2cExtrinsics   = sensor.getD2CExtrinsics();
     const unsigned int depthWidth         = sensor.getDepthImageWidth();
     const unsigned int depthHeight        = sensor.getDepthImageHeight();
 
     const double* depthMap = &sensor.getDepth()[0];
     BYTE* colors = &sensor.getColorRGBX()[0];
 
-    std::shared_ptr<Frame> prevFrame = std::make_shared<Frame>(Frame(depthMap, colors, depthIntrinsics, depthWidth, depthHeight));
-    MeshWriter::toFile("mesh0",prevFrame);
+    std::shared_ptr<Frame> prevFrame = std::make_shared<Frame>(Frame(depthMap, colors, depthIntrinsics, colIntrinsics, d2cExtrinsics, depthWidth, depthHeight));
 
     int i = 1;
     const int iMax = 45;
@@ -116,7 +117,7 @@ int main(){
 
         const double* depthMap = &sensor.getDepth()[0];
         BYTE* colors = &sensor.getColorRGBX()[0];
-        std::shared_ptr<Frame> currentFrame = std::make_shared<Frame>(Frame(depthMap, colors, depthIntrinsics, depthWidth, depthHeight));
+        std::shared_ptr<Frame> currentFrame = std::make_shared<Frame>(Frame(depthMap, colors, depthIntrinsics,colIntrinsics, d2cExtrinsics, depthWidth, depthHeight));
         process_frame(i,prevFrame,currentFrame,volume,config);
 
         std::stringstream filename;

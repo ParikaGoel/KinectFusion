@@ -4,24 +4,44 @@
 #include <iostream>
 
 
-Frame::Frame(const double * depthMap, const BYTE* colorMap, const Eigen::Matrix3d &depthIntrinsics,
+Frame::Frame(const double * depthMap, const BYTE* colorMap,
+        const Eigen::Matrix3d &depthIntrinsics, const Eigen::Matrix3d &colorIntrinsics,
+        const Eigen::Matrix4d &d2cExtrinsics,
         const unsigned int width, const unsigned int height, double maxDistance)
-        : m_width(width),m_height(height),m_intrinsic_matrix(depthIntrinsics){
+        : m_width(width),m_height(height),m_intrinsic_matrix(depthIntrinsics), m_color_intrinsic_matrix(colorIntrinsics),
+        m_d2cExtrinsics(d2cExtrinsics)
+        {
 
     m_depth_map = std::vector<double>(width*height);
     for (size_t i = 0; i < width*height; ++i)
         m_depth_map[i] = depthMap[i];
 
-    m_color_map = std::vector<Vector4uc>(width*height);
-    for (size_t i = 0; i < width*height; i++)
-        m_color_map[i] = Vector4uc(colorMap[i*4],colorMap[i*4+1],colorMap[i*4+2],colorMap[i*4+3]);
-
     auto pointsTmp = computeCameraCoordinates(width, height);
+
+    std::vector<Vector4uc> cols (width*height);
+    for (size_t i = 0; i < width*height; i++)
+        cols[i] = Vector4uc(colorMap[i*4],colorMap[i*4+1],colorMap[i*4+2],colorMap[i*4+3]);
+
     auto normalsTmp = computeNormals(pointsTmp, width, height, maxDistance);
-
     addValidPoints(pointsTmp, normalsTmp);
-
     setGlobalPose(Eigen::Matrix4d::Identity());
+
+    alignColorsToDepth(cols);
+
+}
+
+void Frame::alignColorsToDepth(std::vector<Vector4uc> colors) {
+    const auto rotation = m_d2cExtrinsics.block(0,0,3,3);
+    const auto translation = m_d2cExtrinsics.block(0,3,3,1);
+
+    m_color_map.reserve(m_points.size());
+    for( size_t i = 0; i < m_points.size(); ++i){
+        Eigen::Vector2i coord = projectOntoColorPlane( rotation* m_points[i] + translation);
+        if(contains(coord))
+            m_color_map.push_back(colors[coord.x() + coord.y()*m_width]);
+        else
+            m_color_map.push_back(Vector4uc('\000', '\000', '\000', '\000'));
+    }
 }
 
 
@@ -36,13 +56,21 @@ bool Frame::contains(const Eigen::Vector2i& img_coord){
     return img_coord[0] < m_width && img_coord[1] < m_height && img_coord[0] >= 0 && img_coord[1] >= 0;
 }
 
-Eigen::Vector2i Frame::projectOntoPlane(const Eigen::Vector3d& cameraCoord){
-    Eigen::Vector3d projected = (m_intrinsic_matrix*cameraCoord);
+
+Eigen::Vector2i Frame::projectOntoPlane(const Eigen::Vector3d &cameraCoord, Eigen::Matrix3d& intrinsics){
+    Eigen::Vector3d projected = (intrinsics*cameraCoord);
     if(projected[2] == 0){
         return Eigen::Vector2i(MINF, MINF);
     }
     projected /= projected[2];
     return (Eigen::Vector2i ((int) round(projected.x()), (int)round(projected.y())));
+}
+Eigen::Vector2i Frame::projectOntoDepthPlane(const Eigen::Vector3d &cameraCoord){
+    return projectOntoPlane(cameraCoord, m_intrinsic_matrix);
+}
+
+Eigen::Vector2i Frame::projectOntoColorPlane(const Eigen::Vector3d& cameraCoord){
+    return projectOntoPlane(cameraCoord, m_color_intrinsic_matrix);
 }
 
 void Frame::addValidPoints(std::vector<Eigen::Vector3d> points, std::vector<Eigen::Vector3d> normals)
