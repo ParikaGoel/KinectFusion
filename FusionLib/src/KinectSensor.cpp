@@ -28,6 +28,8 @@ void KinectSensor::start() {
 
     InitDepthIntrinsics(intrinsics.fx, intrinsics.fy, intrinsics.width, intrinsics.height);
     InitColorIntrinsics(colIntrinsics.fx, colIntrinsics.fy, colIntrinsics.width, colIntrinsics.height);
+    // TODO
+    // InitDepth2ColorExtrinsics(extrinsics.rotation, extrinsics.translation);
 
     for (auto i = 0; i < 30; ++i) m_pipe.wait_for_frames();
 }

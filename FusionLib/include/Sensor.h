@@ -65,6 +65,8 @@ public:
 
     int GetCurrentFrameCnt(){return m_currentIdx;}
 
+    Eigen::Matrix4d getD2CExtrinsics(){return m_d2cExtrinsics;}
+
 private:
     void InitIntrinsics(double fx, double fy, double ppx, double ppy, Eigen::Matrix3d& intrinsics){
         intrinsics.setZero();
@@ -77,16 +79,14 @@ private:
 
 protected:
 
+    Eigen::Matrix4d m_d2cExtrinsics;
+
     void InitDepthIntrinsics(double fx, double fy, double ppx, double ppy){
         InitIntrinsics(fx, fy, ppx, ppy, m_depthIntrinsics);
-        //m_depthImageWidth  = width;
-        //m_depthImageHeight = height;
     }
 
-    void InitColorIntrinsics(double fx, double fy, double width, double height){
-        InitIntrinsics(fx, fy, width, height, m_colorIntrinsics);
-        m_colorImageWidth = width;
-        m_colorImageHeight = height;
+    void InitColorIntrinsics(double fx, double fy, double ppx, double ppy){
+        InitIntrinsics(fx, fy, ppx, ppy, m_colorIntrinsics);
     }
 
     Eigen::Matrix3d m_depthIntrinsics;

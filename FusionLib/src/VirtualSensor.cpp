@@ -23,6 +23,8 @@ bool VirtualSensor::init(const std::string &datasetDir, bool intrinsics){
                 0.0f, 0.0f, 1.0f;
 
         m_depthIntrinsics = m_colorIntrinsics;
+
+        m_d2cExtrinsics = Eigen::Matrix4d::Identity();
     }
     m_colorExtrinsics.setIdentity();
     m_depthExtrinsics.setIdentity();

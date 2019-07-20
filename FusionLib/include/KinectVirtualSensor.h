@@ -15,6 +15,7 @@ public:
     bool init(const std::string& datasetDir){
         LoadDepthIntrinsics(datasetDir);
         LoadColorIntrinsics(datasetDir);
+        LoadExtrinsics(datasetDir);
         bool success = VirtualSensor::init(datasetDir, false);
         return success;
     }
@@ -104,6 +105,24 @@ public:
            //cast_points[i] = num;
        }
 
+       return true;
+   }
+
+   bool LoadExtrinsics(const std::string &datasetDir){
+        std::ifstream file(datasetDir + "extrinsics.txt");
+        std::string line;
+        std::getline(file, line);
+
+        std::vector<std::string> extrinsics = SplitOnWhitespace(line);
+
+       for (size_t i = 0; i < 9; ++i){
+           m_d2cExtrinsics(int(i/3), i%3) = atof(extrinsics.at(i).c_str());
+       }
+       for (size_t i = 0; i < 3; ++i){
+           m_d2cExtrinsics(i, 3) = atof(extrinsics.at(i+9).c_str());
+           m_d2cExtrinsics(3, i) = 0;
+       }
+       m_d2cExtrinsics(3,3) = 1;
        return true;
    }
 

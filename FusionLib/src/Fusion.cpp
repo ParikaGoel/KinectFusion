@@ -24,7 +24,7 @@ bool Fusion::reconstructSurface(const std::shared_ptr<Frame>& currentFrame,const
                 Eigen::Vector3d currentCameraPosition = rotation * globalCoord_voxel + translation;
                 if (currentCameraPosition.z() <= 0) continue;
 
-                Eigen::Vector2i img_coord = currentFrame -> projectOntoPlane(currentCameraPosition);
+                Eigen::Vector2i img_coord = currentFrame->projectOntoDepthPlane(currentCameraPosition);
 
 				if (!currentFrame->contains(img_coord))continue;
 
