@@ -15,7 +15,8 @@ bool Raycast::surfacePrediction(std::shared_ptr<Frame>& currentFrame,std::shared
 
     const Eigen::Vector3d volumeRange(volumeSize.x()*voxelScale,volumeSize.y()*voxelScale,volumeSize.z()*voxelScale);
 
-    std::vector<Eigen::Vector3d> vertices;
+    // TODO
+    std::vector<Eigen::Vector3d> vertices(height*width);
     std::vector<Vector4uc> colors;
 
     for( size_t v =0;v<height;v++){
@@ -92,7 +93,6 @@ bool Raycast::surfacePrediction(std::shared_ptr<Frame>& currentFrame,std::shared
             }
         }
     }
-    MeshWriter::toFile("v_tex", "255 0 0 255", vertices);
     return true;
 }
 

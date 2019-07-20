@@ -12,9 +12,13 @@ Frame::Frame(const double * depthMap, const BYTE* colorMap,
         m_d2cExtrinsics(d2cExtrinsics)
         {
 
+    double depth_threshold = 6.;
     m_depth_map = std::vector<double>(width*height);
-    for (size_t i = 0; i < width*height; ++i)
-        m_depth_map[i] = depthMap[i];
+    for (size_t i = 0; i < width*height; ++i) {
+        if(depthMap[i] < depth_threshold) {
+            m_depth_map[i] = depthMap[i];
+        }
+    }
 
     auto pointsTmp = computeCameraCoordinates(width, height);
 
@@ -34,13 +38,15 @@ void Frame::alignColorsToDepth(std::vector<Vector4uc> colors) {
     const auto rotation = m_d2cExtrinsics.block(0,0,3,3);
     const auto translation = m_d2cExtrinsics.block(0,3,3,1);
 
+    BYTE zero = (BYTE) 255;
+
     m_color_map.reserve(m_points.size());
     for( size_t i = 0; i < m_points.size(); ++i){
         Eigen::Vector2i coord = projectOntoColorPlane( rotation* m_points[i] + translation);
         if(contains(coord))
             m_color_map.push_back(colors[coord.x() + coord.y()*m_width]);
         else
-            m_color_map.push_back(Vector4uc('\000', '\000', '\000', '\000'));
+            m_color_map.push_back(Vector4uc(zero, zero, zero, zero));
     }
 }
 

@@ -116,7 +116,7 @@ public:
         std::vector<std::string> extrinsics = SplitOnWhitespace(line);
 
        for (size_t i = 0; i < 9; ++i){
-           m_d2cExtrinsics(int(i/3), i%3) = atof(extrinsics.at(i).c_str());
+           m_d2cExtrinsics(i%3, int(i/3)) = atof(extrinsics.at(i).c_str());
        }
        for (size_t i = 0; i < 3; ++i){
            m_d2cExtrinsics(i, 3) = atof(extrinsics.at(i+9).c_str());
