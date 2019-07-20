@@ -163,6 +163,60 @@ public:
         return true;
     }
 
+    static bool toFileColors(std::string filename,    Volume& v, int step_size = 1, double threshold=1, std::string borderColor = "0 255 0"){
+
+        std::string filenameBaseOut = PROJECT_DIR + std::string("/results/");
+
+        // Write off file.
+        std::ofstream outFile(filenameBaseOut + filename + ".off");
+        if (!outFile.is_open()){
+            return false;
+        }
+        auto volumeSize = v.getVolumeSize();
+        // Save vertices.
+        std::vector<Voxel> voxels;
+        std::vector<std::string> colors;
+
+        Eigen::Vector3d red(255, 0, 0);
+        Eigen::Vector3d blue(0, 0, 255);
+
+        int idx=0;
+        for (int z = 0;z<volumeSize.z();z+=step_size) {
+            for (int y = 0; y < volumeSize.y(); y+=step_size) {
+                for (int x = 0; x < volumeSize.x(); x+=step_size) {
+                    auto voxel = v.getVoxelData()[x+y*volumeSize.x()+z*volumeSize.x()*volumeSize.y()];
+                    if(voxel.weight == 0. || std::abs(voxel.tsdf) >= threshold){
+                        continue;
+                    }
+                    voxels.push_back(Voxel(v.getOrigin().x()+x*v.getVoxelScale(),v.getOrigin().y()+y*v.getVoxelScale
+                            (),v.getOrigin().z()+z*v.getVoxelScale(),v.getVoxelScale()*step_size,idx));
+
+                    // max value for TSDF 1, min value -1
+                    Vector4uc col = voxel.color;
+                    std::stringstream s;
+                    s << (int) col[0] << " "<< (int)col[1] << " "<< (int)col[2] << " " << (int)col[3];
+                    colors.push_back(s.str());
+                    idx+=8;
+                }
+            }
+        }
+
+        // Write header.
+        outFile << "COFF" << std::endl;
+        outFile << voxels.size() *8<< " " << voxels.size()*6<< " 0" <<std::endl;
+
+        for(size_t i = 0; i < voxels.size(); i++){
+            outFile << voxels[i].printVertices(colors[i]);
+        }
+
+        for(Voxel vo:voxels) {
+            outFile << vo.printPlanes("255 0 0");
+        }
+
+        outFile.close();
+        return true;
+    }
+
     static bool toFile(std::string filename, BYTE* color,
                        const std::vector<Eigen::Vector3d>& points){
 
