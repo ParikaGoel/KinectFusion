@@ -18,6 +18,9 @@ SET(CMAKE_CXX_FLAGS " -ftemplate-backtrace-limit=0 -Wall ${EXTRA_WARNING_FLAGS} 
 
 find_package(FreeImage REQUIRED)
 
+find_package(realsense2 REQUIRED)
+include_directories(${realsense2_INCLUDE_DIRS})
+
 #adds gitsubmodules
 add_subdirectory(extern)
 ### if CMAKE Build Time
@@ -28,7 +31,7 @@ add_subdirectory(FusionLib)
 set(APP_ONE ${PROJECT_NAME} )
 add_executable(${APP_ONE} main.cpp)
 #target_link_libraries
-target_link_libraries (${APP_ONE} kfusion eigen ${FREEIMAGE_LIBRARIES})
+target_link_libraries (${APP_ONE} kfusion eigen ${FREEIMAGE_LIBRARIES} realsense2)
 target_compile_features(${APP_ONE} PUBLIC cxx_std_17 )
 target_compile_definitions(${APP_ONE} PRIVATE PROJECT_DATA_DIR="${CMAKE_SOURCE_DIR}/data")
 
