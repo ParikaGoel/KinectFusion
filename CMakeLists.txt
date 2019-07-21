@@ -12,7 +12,8 @@ set(LIBRARY_OUTPUT_PATH lib)
 # for some reason clang doesn't include them in Wall whereas gcc does, so include them explicitly.
 SET(EXTRA_WARNING_FLAGS "-Wsign-compare")
 SET(CMAKE_CXX_FLAGS_DEBUG "-O0 -g")
-SET(CMAKE_CXX_FLAGS_RELEASE "-O3 -DNDEBUG -march=native")
+SET(CMAKE_CXX_FLAGS_RELEASE "-O3 -DNDEBUG") # -march=native")
+
 SET(CMAKE_CXX_FLAGS_RELWITHDEBINFO "-O3 -g -DNDEBUG -ftree-vectorize")
 SET(CMAKE_CXX_FLAGS " -ftemplate-backtrace-limit=0 -Wall ${EXTRA_WARNING_FLAGS} ${CMAKE_CXX_FLAGS}")
 
