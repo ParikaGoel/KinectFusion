@@ -55,7 +55,7 @@ public:
         double ppx  = atof(intrinsics.at(4).c_str());
         double ppy  = atof(intrinsics.at(5).c_str());
 
-        InitDepthIntrinsics(fx, fy, ppx, ppy);
+        InitDepthIntrinsics(fx, fy, ppx, ppy, width, height);
 
         m_depthImageWidth  = width;
         m_depthImageHeight = height;
@@ -77,7 +77,7 @@ public:
         double ppx  = atof(intrinsics.at(4).c_str());
         double ppy  = atof(intrinsics.at(5).c_str());
 
-        InitColorIntrinsics(fx, fy, ppx, ppy);
+        InitColorIntrinsics(fx, fy, ppx, ppy, width, height);
 
         m_colorImageWidth  = width;
         m_colorImageHeight = height;

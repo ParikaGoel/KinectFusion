@@ -32,8 +32,8 @@ public:
         return depth;
     }
 
-    bool writeDepthToFile(std::string directory){
-        std::ofstream outFile(directory + "/depth" + std::to_string( m_currentIdx )+ ".txt");
+    bool writeDepthToFile(std::string directory, int idx){
+        std::ofstream outFile(directory + "/" + std::to_string( idx )+ ".txt");
         if (!outFile.is_open()) return false;
 
         outFile << m_depthImageWidth << " " << m_depthImageHeight << std::endl;
@@ -50,18 +50,38 @@ public:
         if (!outFile.is_open()) return false;
         outFile << m_depthIntrinsics(0,0) << " "
                 << m_depthIntrinsics(1,1) << " "
+                << m_depthImageWidth << " "
+                << m_depthImageHeight << " "
                 << m_depthIntrinsics(0,2) << " "
                 << m_depthIntrinsics(1,2)
                 ;
 
+        outFile.close();
+
         std::ofstream outFile2(directory + "/color_intrinsics.txt");
         if (!outFile2.is_open()) return false;
-        outFile2 << m_depthIntrinsics(0,0) << " "
-                 << m_depthIntrinsics(1,1) << " "
-                 << m_depthIntrinsics(0,2) << " "
-                 << m_depthIntrinsics(1,2)
+        outFile2 << m_colorIntrinsics(0,0) << " "
+                 << m_colorIntrinsics(1,1) << " "
+                 << m_colorImageWidth << " "
+                 << m_colorImageHeight << " "
+                 << m_colorIntrinsics(0,2) << " "
+                 << m_colorIntrinsics(1,2)
                 ;
+        outFile2.close();
     }
+
+    bool writeExtrinsicsToFile(std::string directory){
+        std::ofstream outFile(directory + "/extrinsics.txt");
+        if (!outFile.is_open()) return false;
+        for (size_t i = 0; i < 9; ++i)
+            outFile << m_rotation[i] << " ";
+        for (size_t i = 0; i < 2; ++i)
+            outFile << m_translation[i] << " ";
+        outFile << m_translation[2];
+        outFile.close();
+    }
+
+
 
     int GetCurrentFrameCnt(){return m_currentIdx;}
 
@@ -79,14 +99,39 @@ private:
 
 protected:
 
-    Eigen::Matrix4d m_d2cExtrinsics;
+    void InitDepth2ColorExtrinsics(float *rotation, float *translation){
+        for (size_t i = 0; i < 9; ++i){
+            m_d2cExtrinsics(int(i/3), i%3) = rotation[i];
+        }
+        for (size_t i = 0; i < 3; ++i){
+            m_d2cExtrinsics(i, 3) = translation[i];
+        }
+        m_d2cExtrinsics(3,3) = 1;
 
-    void InitDepthIntrinsics(double fx, double fy, double ppx, double ppy){
-        InitIntrinsics(fx, fy, ppx, ppy, m_depthIntrinsics);
+        m_rotation.reserve(9);
+        m_translation.reserve(3);
+
+        for (size_t i = 0; i < 9; ++i)
+            m_rotation.push_back(rotation[i]);
+        for (size_t i = 0; i < 3; ++i)
+            m_translation.push_back(translation[i]);
     }
 
-    void InitColorIntrinsics(double fx, double fy, double ppx, double ppy){
+    std::vector<double> m_rotation;
+    std::vector<double> m_translation;
+
+    Eigen::Matrix4d m_d2cExtrinsics;
+
+    void InitDepthIntrinsics(double fx, double fy, double ppx, double ppy, int width, int height){
+        InitIntrinsics(fx, fy, ppx, ppy, m_depthIntrinsics);
+        m_depthImageWidth  = width;
+        m_depthImageHeight = height;
+    }
+
+    void InitColorIntrinsics(double fx, double fy, double ppx, double ppy, int width, int height){
         InitIntrinsics(fx, fy, ppx, ppy, m_colorIntrinsics);
+        m_colorImageWidth = width;
+        m_colorImageHeight = height;
     }
 
     Eigen::Matrix3d m_depthIntrinsics;

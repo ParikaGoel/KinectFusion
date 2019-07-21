@@ -27,14 +27,16 @@ public:
             stbi_write_png(png_file.str().c_str(), frame.get_width(), frame.get_height(),
                            frame.get_bytes_per_pixel(), frame.get_data(), frame.get_stride_in_bytes());
 
-            depth_info << i << " " << "rs-depth/" << i << ".png" << std::endl;
+            depth_info << i << " " << "rs-depth/" << i << ".txt" << std::endl;
+
+            sensor.writeDepthToFile(PROJECT_DATA_DIR + std::string("/recording/rs-depth/"), i);
 
             std::stringstream png_file2;
             png_file2 << PROJECT_DATA_DIR << "/recording/rs-rgb/" << i << ".png";
             stbi_write_png(png_file2.str().c_str(), color_frame.get_width(), color_frame.get_height(),
                            color_frame.get_bytes_per_pixel(), color_frame.get_data(), color_frame.get_stride_in_bytes());
 
-            color_info << i << " " << "rs-color/" << i << ".png" << std::endl;
+            color_info << i << " " << "rs-rgb/" << i << ".png" << std::endl;
 
             std::cout << "Saved " << i << std::endl;
         }
@@ -49,6 +51,7 @@ public:
         out2 << intro << color_info.str();
 
         sensor.writeIntrinsicsToFile(dir.str());
+        sensor.writeExtrinsicsToFile(dir.str());
         sensor.stop();
     }
 

@@ -12,8 +12,8 @@ KinectSensor::KinectSensor() {
 
 void KinectSensor::start() {
      rs2::config cfg;
-    cfg.enable_stream(RS2_STREAM_COLOR, 1280, 720, RS2_FORMAT_RGB8, 30);
-    cfg.enable_stream(RS2_STREAM_DEPTH, 1280, 720, RS2_FORMAT_Z16, 30);
+    cfg.enable_stream(RS2_STREAM_COLOR, 640, 480, RS2_FORMAT_RGB8, 30);
+    cfg.enable_stream(RS2_STREAM_DEPTH, 640, 480, RS2_FORMAT_Z16, 30);
 
     m_profile = m_pipe.start(cfg);
 
@@ -26,10 +26,11 @@ void KinectSensor::start() {
     auto intrinsics    = stream.get_intrinsics(); // Calibration data
     auto colIntrinsics = stream2.get_intrinsics();
 
-    InitDepthIntrinsics(intrinsics.fx, intrinsics.fy, intrinsics.width, intrinsics.height);
-    InitColorIntrinsics(colIntrinsics.fx, colIntrinsics.fy, colIntrinsics.width, colIntrinsics.height);
-    // TODO
-    // InitDepth2ColorExtrinsics(extrinsics.rotation, extrinsics.translation);
+    InitDepthIntrinsics(intrinsics.fx, intrinsics.fy, intrinsics.ppx, intrinsics.ppy, intrinsics.width, intrinsics.height);
+    InitColorIntrinsics(colIntrinsics.fx, colIntrinsics.fy, intrinsics.ppx, intrinsics.ppy, colIntrinsics.width, colIntrinsics.height);
+
+    auto extrinsics = stream.get_extrinsics_to(stream2);
+    InitDepth2ColorExtrinsics(extrinsics.rotation, extrinsics.translation);
 
     for (auto i = 0; i < 30; ++i) m_pipe.wait_for_frames();
 }
