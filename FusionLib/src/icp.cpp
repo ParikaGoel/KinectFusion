@@ -2,7 +2,12 @@
 #include "icp.h"
 #include "iterator"
 
+// Linear Solver : linear least-squares optimization of ICP
+// This class serves the purpose of solving for the pose of a camera given the point correspondences
+// Reference Paper : Linear least-squares optimization for point-to-plane icp surface registration by Kok-Lim Low
 
+// Creates a linear system of equations fulfilling the constraints of point-to-plane error metric
+// Solves the created linear system for the camera pose
 void LinearSolver::solvePoint2Plane(const std::vector<Eigen::Vector3d>& sourcePoints,
             const std::vector<Eigen::Vector3d>& destPoints,
             const std::vector<Eigen::Vector3d> destNormals,
@@ -29,6 +34,8 @@ void LinearSolver::solvePoint2Plane(const std::vector<Eigen::Vector3d>& sourcePo
     solution = x;
 }
 
+// Creates a linear system of equations fulfilling the constraints of point-to-point error metric
+// Solves the created linear system for the camera pose
 void LinearSolver::solvePoint2Point(const std::vector<Eigen::Vector3d>& sourcePoints,
             const std::vector<Eigen::Vector3d>& destPoints,
             const std::vector<std::pair<size_t, size_t>>& correspondence){
@@ -59,6 +66,8 @@ void LinearSolver::solvePoint2Point(const std::vector<Eigen::Vector3d>& sourcePo
     solution = x;
 }
 
+// Creates the pose from the rotation angles and translation vector obtained after solving the linear system
+// Rotation matrix Approximation as mentioned in the reference paper has been used
 const Eigen::Matrix4d LinearSolver::getApproximatePose(){
     Eigen::Matrix4d transformation;
     double alpha = solution[0];
@@ -72,6 +81,8 @@ const Eigen::Matrix4d LinearSolver::getApproximatePose(){
     return transformation;
 }
 
+// Creates the pose from the rotation angles and translation vector obtained after solving the linear system
+// Unit Rotation matrices created from the angles is used
 const Eigen::Matrix4d LinearSolver::getPose(){
     double alpha = solution[0];
     double beta  = solution[1];
@@ -94,10 +105,12 @@ icp::icp(double dist_thresh, double normal_thresh)
     :dist_threshold(dist_thresh), normal_threshold(normal_thresh)
 {}
 
+// Checks whether the Euclidean distance between two points is within a certain threshold or not
 bool icp::hasValidDistance(const Eigen::Vector3d& point1, const Eigen::Vector3d& point2) {
     return (point1- point2).norm() < dist_threshold;
 }
 
+// Checks whether the angle between the two normals is within a certain threshold or not
 bool icp::hasValidAngle(const Eigen::Vector3d& normal1, const Eigen::Vector3d& normal2) {
     return std::abs(normal1.dot(normal2)) > normal_threshold;
 }
@@ -105,6 +118,7 @@ bool icp::hasValidAngle(const Eigen::Vector3d& normal1, const Eigen::Vector3d& n
 // Find corresponding points between current frame and previous frame
 // Method Used : Projective Point-Plane data association
 // Return : vector of pairs of source and target vertex indices
+// Reference Paper : Efficient variants of the ICP algorithm by Rusinkiewicz, Szymon and Levoy, Marc
 void icp::findCorrespondence(std::shared_ptr<Frame> prev_frame, std::shared_ptr<Frame> curr_frame, std::vector<std::pair<size_t,size_t>>& corresponding_points,Eigen::Matrix4d& estimated_pose){
 
     std::vector<Eigen::Vector3d> prev_frame_global_points = prev_frame->getGlobalPoints();
@@ -148,11 +162,11 @@ void icp::findCorrespondence(std::shared_ptr<Frame> prev_frame, std::shared_ptr<
     }
 }
 
+// API to be called from outside the class
+// Input : Two frames to be aligned
+// Result : estimated pose
 bool icp::estimatePose(int frame_cnt, std::shared_ptr<Frame> prev_frame, std::shared_ptr<Frame> curr_frame, size_t m_nIterations,Eigen::Matrix4d& estimated_pose)
 {
-//    MeshWriter::toFile("meshA" + std::to_string(frame_cnt), "0 255 0 255", prev_frame->getGlobalPoints());
-//    MeshWriter::toFile("meshB" + std::to_string(frame_cnt), "255 0 0 255", curr_frame->getGlobalPoints());
-
     for (size_t i = 0; i < m_nIterations; ++i) {
 
         std::vector<std::pair<size_t, size_t>> corresponding_points;
@@ -163,12 +177,9 @@ bool icp::estimatePose(int frame_cnt, std::shared_ptr<Frame> prev_frame, std::sh
                                 prev_frame->getGlobalNormals(),
                                 corresponding_points);
 
-        estimated_pose = solver.getPose() * estimated_pose;
+        estimated_pose = solver.getApproximatePose() * estimated_pose;
 
         curr_frame->setGlobalPose(estimated_pose);
     }
-//    MeshWriter::toFile(
-//                "corrBT" + std::to_string(frame_cnt), "0 0 255 255", curr_frame->getGlobalPoints());
-
     return true;
 }
