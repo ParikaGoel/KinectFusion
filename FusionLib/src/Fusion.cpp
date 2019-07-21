@@ -55,9 +55,13 @@ int idx =0;
                     volume->getVoxelData()[voxel_index].weight = updated_weight;
 
                     if (sdf <= truncationDistance / 2 && sdf >= -truncationDistance / 2) {
-                        Vector4uc& voxel_color = voxelData[voxel_index].color;
 
+                        Vector4uc& voxel_color = voxelData[voxel_index].color;
                         const Vector4uc image_color = currentFrame->getColorMap()[img_coord.x() + (img_coord.y() * width)];
+                        // voxel is invisible
+                        if(image_color[3] == 0)
+                            continue;
+
 
                         voxel_color[0] = (old_weight * voxel_color[0] + current_weight * image_color[0]) /
                                 (old_weight + current_weight);
@@ -82,9 +86,6 @@ int idx =0;
 			}
         }
     }
-//     std::cout<<"§idx:"<<idx<<std::endl;
-     MarchingCubes::extractMesh(*volume,"fusionMCout");
-     MeshWriter::toFile(std::string("tsdf"), *volume, 1, 0.7);
     return true;
 }
 

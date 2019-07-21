@@ -8,6 +8,7 @@
 #include "Volume.hpp"
 #include <Eigen/Core>
 #include "data_types.h"
+#include "Marching_cubes.hpp"
 
 
 class MeshWriter{
@@ -70,7 +71,16 @@ public:
 
 
     };
-    static bool toFile(std::string filename,    Volume& v, int step_size = 1, double threshold=1, std::string borderColor = "0 255 0"){
+
+    static bool toFileMarchingCubes(std::string filename, Volume& v){
+        std::cout << "Writing "<< filename << std::endl;
+        MarchingCubes::extractMesh(v,filename);
+        return true;
+    }
+
+    static bool toFileTSDF(std::string filename,    Volume& v, int step_size = 1, double threshold=1, std::string borderColor = "0 255 0"){
+
+        std::cout << "Writing "<< filename << std::endl;
 
         std::string filenameBaseOut = PROJECT_DIR + std::string("/results/");
 
@@ -164,6 +174,8 @@ public:
     }
 
     static bool toFileColors(std::string filename,    Volume& v, int step_size = 1, double threshold=1, std::string borderColor = "0 255 0"){
+
+        std::cout << "Writing "<< filename << std::endl;
 
         std::string filenameBaseOut = PROJECT_DIR + std::string("/results/");
 
@@ -314,7 +326,7 @@ public:
         return true;
     }
 
-    static bool toFile(std::string filename , const std::shared_ptr<Frame>& frame)
+    static bool toFile(std::string filename , const std::shared_ptr<Frame>& frame, float scale=0.001f)
     {
 
         auto global_points = frame->getGlobalPoints();
@@ -327,9 +339,17 @@ public:
         std::ofstream outFile(filenameBaseOut + filename + ".off");
         if (!outFile.is_open()) return false;
 
+        Eigen::Matrix4f cameraToWorld = frame->getGlobalPose().inverse().cast<float>();
+        // These are precomputed values for sphere aproximation.
+        std::vector<double> vertexComponents = { 25, 25, 0, -50, 50, 100, 49.99986, 49.9922, 99.99993, -24.99998, 25.00426, 0.005185,
+                                                 25.00261, -25.00023, 0.004757, 49.99226, -49.99986, 99.99997, -50, -50, 100, -25.00449, -25.00492, 0.019877 };
+        const std::vector<unsigned> faceIndices = { 1, 2, 3, 2, 0, 3, 2, 5, 4, 4, 0, 2, 5, 6, 7, 7, 4, 5, 6, 1, 7, 1, 3, 7, 3, 0, 4, 7, 3, 4, 5, 2, 1, 5, 1, 6 };
+
+
         // Write header.
         outFile << "COFF" << std::endl;
         outFile << global_points.size() << " " << "0" << " 0" << std::endl;
+
 
         // Save vertices.
         for (size_t i = 0; i < global_points.size(); i++) {
@@ -343,6 +363,24 @@ public:
         }
         // Close file.
         outFile.close();
+
+        std::ofstream outFile_cam(filenameBaseOut + filename + "_cam.off");
+        outFile_cam << "COFF" << std::endl;
+        outFile_cam << "8 12 0" << std::endl;
+        Vector4uc color (255, 0, 0, 255);
+        for (int i = 0; i < 8; ++i) {
+            Eigen::Vector4f c_pos =Eigen::Vector4f( scale * float(vertexComponents[3 * i + 0]), scale * float(vertexComponents[3 * i + 1]), scale * float(vertexComponents[3 * i + 2]), 1.f );
+            Eigen::Vector4f position = cameraToWorld * c_pos;
+            outFile_cam << position.x() << " " << position.y() << " " << position.z() << " " <<
+                (int)color[0] << " " << (int) color[1] << " " << (int) color[2] << " " << (int) color[3] << std::endl;
+        }
+
+        std::vector<std::string> faces(12);
+        for (int i = 0; i < 12; ++i) {
+            outFile_cam << "3 " << (faceIndices[3 * i + 0]) << " " << faceIndices[3 * i + 1] << " " << faceIndices[3 * i + 2] << std::endl;
+        }
+
+        outFile_cam.close();
 
         return true;
     }

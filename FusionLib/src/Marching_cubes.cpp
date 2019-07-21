@@ -62,7 +62,6 @@ void MarchingCubes::extractMesh(Volume &volume, std::string fileName) {
 	auto volumeSize = volume.getVolumeSize();
 	auto voxelScale = volume.getVoxelScale();
 	//iterate over all cubes in the volume
-	int idx = 1;
 	for (int z = 0; z < volumeSize.z() - 1; z++) {
 		for (int y = 0; y < volumeSize.y() - 1; y++) {
 			for (int x = 0; x < volumeSize.x() - 1; x++) {
@@ -91,162 +90,85 @@ void MarchingCubes::extractMesh(Volume &volume, std::string fileName) {
 				Vector4uc averageColor;
 				int contributors = 0;
 				bool valid = true;
+
 				for(int i = 0;i<8;i++){
 					if(points[i]._data.weight  ==0.)valid = false;
 				}
 				if(!valid) continue;
+
 				double tsdf =-10;
-//				double tsdf =-10;
+                for ( size_t voxel_corner = 0; voxel_corner < points.size(); voxel_corner++){
+                    if (points[voxel_corner]._data.tsdf <= isoLevel && points[voxel_corner]._data.weight != 0) {
+                        cubeIndex |= int(std::pow(2,voxel_corner));
+                        if(points[voxel_corner]._data.tsdf>tsdf){
+                            averageColor = points[voxel_corner]._data.color;
+                            contributors++;
+                            tsdf = points[voxel_corner]._data.tsdf;
+                        }
+                    }
+                }
 
-				if (points[0]._data.tsdf <= isoLevel && points[0]._data.weight != 0) {
-					cubeIndex |= 1;
-					if(points[0]._data.color.x()<20 && points[0]._data.color.y()<20 && points[0]._data.color.z()<20 ){
-//						std::cout<<points[0]._data.tsdf<<std::endl;
-					}
-					if(points[0]._data.tsdf>tsdf){
-						averageColor = points[0]._data.color;
-						contributors++;
-						tsdf = points[0]._data.tsdf;
+                // double weight_total =-10;
+                // Vector4d color_sum (0,0,0,0);
 
-					}
+                // for ( size_t voxel_corner = 0; voxel_corner < points.size(); voxel_corner++){
+                //     if (points[voxel_corner]._data.tsdf <= isoLevel && points[voxel_corner]._data.weight != 0) {
+                //         cubeIndex |= int(std::pow(2,voxel_corner));
+                //         double weight = 1./points[voxel_corner]._data.tsdf;
+                //         color_sum += points[voxel_corner]._data.color.cast<double>()*weight;
+                //         weight_total += weight;
+                //     }
+                // }
+                // averageColor = (color_sum / weight_total).cast<BYTE>();
 
 
-				}
-				if (points[1]._data.tsdf <= isoLevel && points[1]._data.weight != 0) {
-					if(points[1]._data.color.x()<20 && points[1]._data.color.y()<20 && points[1]._data.color.z()<20 ){
-//						std::cout<<points[1]._data.tsdf<<std::endl;
-					}
-					cubeIndex |= 2;
-					if(points[1]._data.tsdf>tsdf){
-						averageColor = points[1]._data.color;
-						contributors++;
-						tsdf = points[1]._data.tsdf;
+                //create triangles for printing out
+                // Create triangles for current cube configuration
+                for (int i = 0; triangulation[cubeIndex][i] != -1; i += 3) {
+                    // Get indices of corner points A and B for each of the three edges
+                    // of the cube that need to be joined to form the triangle.
+                    int a0 = cornerIndexAFromEdge[triangulation[cubeIndex][i]];
+                    int b0 = cornerIndexBFromEdge[triangulation[cubeIndex][i]];
 
-					}
-				}
-				if (points[2]._data.tsdf <= isoLevel && points[2]._data.weight != 0) {
-					if(points[2]._data.color.x()<20 && points[2]._data.color.y()<20 && points[2]._data.color.z()<20 ){
-//						std::cout<<points[2]._data.tsdf<<std::endl;
-					}
-					cubeIndex |= 4;
-					if(points[2]._data.tsdf>tsdf){
-						averageColor = points[2]._data.color;
-						contributors++;
-						tsdf = points[2]._data.tsdf;
+                    int a1 = cornerIndexAFromEdge[triangulation[cubeIndex][i + 1]];
+                    int b1 = cornerIndexBFromEdge[triangulation[cubeIndex][i + 1]];
 
-					}
-				}
-				if (points[3]._data.tsdf <= isoLevel && points[3]._data.weight != 0) {
-					if(points[3]._data.color.x()<20 && points[3]._data.color.y()<20 && points[3]._data.color.z()<20 ){
-//						std::cout<<points[3]._data.tsdf<<std::endl;
-					}
-					cubeIndex |= 8;
-					if(points[3]._data.tsdf>tsdf){
-						averageColor = points[3]._data.color;
-						contributors++;
-						tsdf = points[3]._data.tsdf;
+                    int a2 = cornerIndexAFromEdge[triangulation[cubeIndex][i + 2]];
+                    int b2 = cornerIndexBFromEdge[triangulation[cubeIndex][i + 2]];
 
-					}
-				}
-				if (points[4]._data.tsdf <= isoLevel && points[4]._data.weight != 0) {
-					if(points[4]._data.color.x()<20 && points[4]._data.color.y()<20 && points[4]._data.color.z()<20 ){
-//						std::cout<<points[4]._data.tsdf<<std::endl;
-					}
-					cubeIndex |= 16;
-					if(points[4]._data.tsdf>tsdf){
-						averageColor = points[4]._data.color;
-						contributors++;
-						tsdf = points[4]._data.tsdf;
-
-					}
-				}
-				if (points[5]._data.tsdf <= isoLevel && points[5]._data.weight != 0) {
-					if(points[5]._data.color.x()<20 && points[5]._data.color.y()<20 && points[5]._data.color.z()<20 ){
-//						std::cout<<points[5]._data.tsdf<<std::endl;
-					}
-					cubeIndex |= 32;
-					if(points[5]._data.tsdf>tsdf){
-						averageColor = points[5]._data.color;
-						contributors++;
-						tsdf = points[5]._data.tsdf;
-
-					}
-				}
-				if (points[6]._data.tsdf <= isoLevel && points[6]._data.weight != 0) {
-					if(points[6]._data.color.x()<20 && points[6]._data.color.y()<20 && points[6]._data.color.z()<20 ){
-//						std::cout<<points[6]._data.tsdf<<std::endl;
-					}
-					cubeIndex |= 64;
-					if(points[6]._data.tsdf>tsdf){
-						averageColor = points[6]._data.color;
-						contributors++;
-						tsdf = points[6]._data.tsdf;
-
-					}
-				}
-				if (points[7]._data.tsdf <= isoLevel && points[7]._data.weight != 0) {
-					if(points[7]._data.color.x()<20 && points[7]._data.color.y()<20 && points[7]._data.color.z()<20 ){
-//						std::cout<<points[7]._data.tsdf<<std::endl;
-					}
-					cubeIndex |= 128;
-					if(points[7]._data.tsdf>tsdf){
-						averageColor = points[7]._data.color;
-						contributors++;
-						tsdf = points[7]._data.tsdf;
-					}
-				}
-				/*if (contributors != 0) {
-					averageColor /= contributors;
-				}*/
-
-				//create triangles for printing out
-				// Create triangles for current cube configuration
-				for (int i = 0; triangulation[cubeIndex][i] != -1; i += 3) {
-					// Get indices of corner points A and B for each of the three edges
-					// of the cube that need to be joined to form the triangle.
-					int a0 = cornerIndexAFromEdge[triangulation[cubeIndex][i]];
-					int b0 = cornerIndexBFromEdge[triangulation[cubeIndex][i]];
-
-					int a1 = cornerIndexAFromEdge[triangulation[cubeIndex][i + 1]];
-					int b1 = cornerIndexBFromEdge[triangulation[cubeIndex][i + 1]];
-
-					int a2 = cornerIndexAFromEdge[triangulation[cubeIndex][i + 2]];
-					int b2 = cornerIndexBFromEdge[triangulation[cubeIndex][i + 2]];
-
-					triangleShape tri;
+                    triangleShape tri;
 //					tri._idx1 = interpolate(points[a0], points[b0]) + volume.getOrigin();
 //					tri._idx2 = interpolate(points[a1], points[b1]) + volume.getOrigin();
 //					tri._idx3 = interpolate(points[a2], points[b2]) + volume.getOrigin();
-					tri.color = averageColor;
-					tri._idx1 = interpolate(points[a0], points[b0])*voxelScale+volume.getOrigin();
-					tri._idx2 = interpolate(points[a1], points[b1])*voxelScale+volume.getOrigin();
-					tri._idx3 = interpolate(points[a2], points[b2])*voxelScale+volume.getOrigin();
-					faces.push_back(tri);
-				}
+                    tri.color = averageColor;
+                    tri._idx1 = interpolate(points[a0], points[b0])*voxelScale+volume.getOrigin();
+                    tri._idx2 = interpolate(points[a1], points[b1])*voxelScale+volume.getOrigin();
+                    tri._idx3 = interpolate(points[a2], points[b2])*voxelScale+volume.getOrigin();
+                    faces.push_back(tri);
+                }
 
 
-			}
-		}
-	}
-	std::cout << "idx:" << idx << std::endl;
-	std::string filenameBaseOut = PROJECT_DIR + std::string("/results/");
+            }
+        }
+    }
+    std::string filenameBaseOut = PROJECT_DIR + std::string("/results/");
 
-	// Write off file.
+    // Write off file.
 
-	std::ofstream outFile(filenameBaseOut + fileName + ".off");
-	if (!outFile.is_open()) { std::cout << "Could open File:" << filenameBaseOut << fileName << ".off" << std::endl; };
+    std::ofstream outFile(filenameBaseOut + fileName + ".off");
+    if (!outFile.is_open()) { std::cout << "Could open File:" << filenameBaseOut << fileName << ".off" << std::endl; };
 
-	// Write header.
-	outFile << "COFF" << std::endl;
-	outFile << faces.size() * 3 << " " << faces.size() << " 0" << std::endl;
-	for (int i = 0; i < faces.size(); i++) {
-		outFile << printTriangleVertices(faces[i], volume.getVoxelScale());
-	}
-	for (int i = 0; i < faces.size(); i++) {
-		outFile << printTriangleFaces(faces[i], i);
-	}
+    // Write header.
+    outFile << "COFF" << std::endl;
+    outFile << faces.size() * 3 << " " << faces.size() << " 0" << std::endl;
+    for (int i = 0; i < faces.size(); i++) {
+        outFile << printTriangleVertices(faces[i], volume.getVoxelScale());
+    }
+    for (int i = 0; i < faces.size(); i++) {
+        outFile << printTriangleFaces(faces[i], i);
+    }
 
 
-	outFile.close();
+    outFile.close();
 
 }
