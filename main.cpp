@@ -39,13 +39,19 @@ bool process_frame( size_t frame_cnt, std::shared_ptr<Frame> prevFrame,std::shar
         throw "ICP Pose Estimation failed";
     };
 
+    if ((frame_cnt-1) % 5 == 0) {
+        std::stringstream filename;
+        filename << "frame" << frame_cnt << "pre";
+        MeshWriter::toFile(filename.str(), currentFrame);
+    }
+
     // STEP 2: Surface reconstruction
-   std::cout << "Init: Fusion..." << std::endl;
+    std::cout << "Init: Fusion..." << std::endl;
     if(!fusion.reconstructSurface(currentFrame,volume, config.m_truncationDistance)){
         throw "Surface reconstruction failed";
     };
 
-   std::cout << "Init: Raycast..." << std::endl;
+    std::cout << "Init: Raycast..." << std::endl;
     if(!raycast.surfacePrediction(currentFrame,volume, config.m_truncationDistance)){
         throw "Raycasting failed";
     };
@@ -55,7 +61,12 @@ bool process_frame( size_t frame_cnt, std::shared_ptr<Frame> prevFrame,std::shar
 
 int main(){
 
-    std::string filenameIn = PROJECT_DATA_DIR + std::string("/rgbd_dataset_freiburg1_xyz/");
+    // Recorder rec;
+    // rec.record(10);
+
+
+    // std::string filenameIn = PROJECT_DATA_DIR + std::string("/rgbd_dataset_freiburg1_xyz/");
+    std::string filenameIn = PROJECT_DATA_DIR + std::string("/recording/");
 
     std::cout << "Initialize virtual sensor..." << std::endl;
 
@@ -72,7 +83,7 @@ int main(){
      * Configuration Stuff
      */
     Eigen::Vector3d volumeRange(5.0, 5.0, 5.0);
-	Eigen::Vector3i volumeSize (512,512,512);
+    Eigen::Vector3i volumeSize (512,512,512);
     double voxelSize = volumeRange.x()/volumeSize.x();
 
     const auto volumeOrigin = Eigen::Vector3d (-volumeRange.x()/2,-volumeRange.y()/2,0.5);
@@ -80,7 +91,7 @@ int main(){
     Config config (0.1,0.5,0.06, volumeOrigin, volumeSize.x(),volumeSize.y(),volumeSize.z(), voxelSize);
 
     //print Configuration to File
-	config.printToFile("config");
+    config.printToFile("config");
 
     /*
      * Setting up the Volume from Configuration
@@ -91,7 +102,7 @@ int main(){
      * Process a first frame as a reference frame.
      * --> All next frames are tracked relatively to the first frame.
      */
-	sensor.processNextFrame();
+    sensor.processNextFrame();
     Eigen::Matrix3d depthIntrinsics = sensor.getDepthIntrinsics();
     Eigen::Matrix3d colIntrinsics   = sensor.getColorIntrinsics();
     Eigen::Matrix4d d2cExtrinsics   = sensor.getD2CExtrinsics();
@@ -112,20 +123,21 @@ int main(){
         const double* depthMap = &sensor.getDepth()[0];
         BYTE* colors = &sensor.getColorRGBX()[0];
         std::shared_ptr<Frame> currentFrame = std::make_shared<Frame>(Frame(depthMap, colors, depthIntrinsics,colIntrinsics, d2cExtrinsics, depthWidth, depthHeight));
+
         process_frame(i,prevFrame,currentFrame,volume,config);
 
-        if (i % 5 == 0) {
+        if ((i-1) % 5 == 0) {
             std::stringstream filename;
-            filename << "mesh" << i;
+            filename << "frame" << i;
             MeshWriter::toFile(filename.str(), currentFrame);
-			//Write Fused Volume to File with Marching Cubes Algorithm
-			MeshWriter::toFileMarchingCubes( "fusedVolume_MarchingCubes",*volume);
-			//Write Fused Volume to File with Blocks indicating the Distance of each Voxel
-			MeshWriter::toFileTSDF("fusedVolume_TSDF",*volume);
+            //Write Fused Volume to File with Marching Cubes Algorithm
+            MeshWriter::toFileMarchingCubes( std::string("marchingCubes_") + std::to_string(i),*volume);
+            //Write Fused Volume to File with Blocks indicating the Distance of each Voxel
+            MeshWriter::toFileTSDF(std::string("tsdf_") + std::to_string(i),*volume);
         }
 
         prevFrame = std::move(currentFrame);
         i++;
 
-	}
+    }
 }
