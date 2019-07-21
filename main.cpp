@@ -19,7 +19,7 @@
 #include "icp.h"
 #include "Frame.h"
 #include "Marching_cubes.hpp"
-
+#include <data_types.h>
 Fusion fusion;
 Raycast raycast;
 VirtualSensor sensor;
@@ -27,27 +27,6 @@ VirtualSensor sensor;
 //Recorder rec;
 
 //TODO this should be moved to one File containing all data_declarations class
-struct Config{
-
-public:
-    Config(const double dist_threshold, const double normal_threshold, const double truncationDistance,
-            const Eigen::Vector3d volumeOrigin,const int x,const int y, const int z, const double voxelScale):
-    m_dist_threshold(dist_threshold),
-    m_normal_threshold(normal_threshold),
-    m_truncationDistance(truncationDistance),
-    m_voxelScale(voxelScale),
-    m_volumeSize(x,y,z),
-    m_volumeOrigin(volumeOrigin)
-    {};
-
-    const double m_dist_threshold;
-    const double m_normal_threshold;
-    const double m_truncationDistance;
-    const double m_voxelScale;
-    Eigen::Vector3i m_volumeSize;
-    const Eigen::Vector3d m_volumeOrigin;
-
-};
 
 bool process_frame( size_t frame_cnt, std::shared_ptr<Frame> prevFrame,std::shared_ptr<Frame> currentFrame, std::shared_ptr<Volume> volume,const Config& config)
 {
@@ -124,7 +103,7 @@ int main(){
     int i = 1;
 //    const int iMax = 60;
     const int iMax = 20;
-
+	config.printToFile("config");
     while( i <= iMax && sensor.processNextFrame() ){
 
         const double* depthMap = &sensor.getDepth()[0];
