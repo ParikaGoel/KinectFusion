@@ -70,22 +70,17 @@ int main(){
 
     //KinectVirtualSensor sensor;
     VirtualSensor sensor;
-
-    //std::string filenameIn = PROJECT_DATA_DIR + std::string("/rs10/");
-
     if (!sensor.init(filenameIn)) {
         std::cout << "Failed to initialize the sensor!\nCheck file path!" << std::endl;
         return -1;
     }
 
-    // rec.record(20);
 
-    // We store a first frame as a reference frame. All next frames are tracked relatively to the first frame.
-    sensor.processNextFrame();
 
-    //TODO truncationDistance is completly random Value right now
+    /*
+     * Configuration Stuff
+     */
     Eigen::Vector3d volumeRange(5.0, 5.0, 5.0);
-//	Eigen::Vector3i volumeSize (256,256,256);
 	Eigen::Vector3i volumeSize (512,512,512);
     double voxelSize = volumeRange.x()/volumeSize.x();
 
@@ -93,9 +88,19 @@ int main(){
 
     Config config (0.1,0.5,0.06, volumeOrigin, volumeSize.x(),volumeSize.y(),volumeSize.z(), voxelSize);
 
-    //Setup Volume
+    //print Configuration to File
+	config.printToFile("config");
+
+    /*
+     * Setting up the Volume from Configuration
+     */
     auto volume = std::make_shared<Volume>(config.m_volumeOrigin, config.m_volumeSize,config.m_voxelScale) ;
 
+    /*
+     * Process a first frame as a reference frame.
+     * --> All next frames are tracked relatively to the first frame.
+     */
+	sensor.processNextFrame();
     Eigen::Matrix3d depthIntrinsics = sensor.getDepthIntrinsics();
     Eigen::Matrix3d colIntrinsics   = sensor.getColorIntrinsics();
     Eigen::Matrix4d d2cExtrinsics   = sensor.getD2CExtrinsics();
@@ -109,9 +114,7 @@ int main(){
     MeshWriter::toFile("mesh0", prevFrame);
 
     int i = 1;
-//    const int iMax = 60;
     const int iMax = 20;
-	config.printToFile("config");
 
     while( i <= iMax && sensor.processNextFrame() ){
 
@@ -124,15 +127,17 @@ int main(){
             std::stringstream filename;
             filename << "mesh" << i;
             MeshWriter::toFile(filename.str(), currentFrame);
+			//Write Fused Volume to File with Marching Cubes Algorithm
+			MeshWriter::toFileMarchingCubes( "fusedVolume_MarchingCubes",*volume);
+			//Write Fused Volume to File with Blocks indicating the Distance of each Voxel
+			MeshWriter::toFileTSDF("fusedVolume_TSDF",*volume);
         }
 
         prevFrame = std::move(currentFrame);
         i++;
-    }
 
+	}
     std::cout<<"Average time taken by icp: " << total_time / 50.0f << std::endl;
 
-//    MeshWriter::toFile("volume_mesh",*volume);
 
-//    MarchingCubes::extractMesh(*volume, "mcOutput");
 }
