@@ -1,7 +1,3 @@
-//
-// Created by phili on 20.07.2019.
-//
-
 #pragma once
 #include <Volume.hpp>
 #include <iostream>

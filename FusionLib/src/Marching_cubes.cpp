@@ -1,11 +1,5 @@
-//
-// Created by phili on 20.07.2019.
-//
-
 #include <iomanip>
 #include "Marching_cubes.hpp"
-//#include <lookup_tables.hpp>
-
 
 struct VoxelWCoords {
 	Voxel _data;
@@ -26,8 +20,7 @@ Eigen::Vector3d interpolate(VoxelWCoords v1, VoxelWCoords v2) {
 	Eigen::Vector3d vec1, vec2;
 	vec1 << v1._x, v1._y, v1._z;
 	vec2 << v2._x, v2._y, v2._z;
-//	if(t!=0.5)std::cout<<"t:"<<t<<"tsdf1: "<<v1._data.tsdf<<"tsdf2: "<<v2._data.tsdf<<std::endl;
-	return vec1 + t * (vec2 - vec1);
+    return vec1 + t * (vec2 - vec1);
 }
 
 const int calculateCoordinateToIndex(int x, int y, int z, Eigen::Vector3i volumeSize) {
@@ -36,11 +29,7 @@ const int calculateCoordinateToIndex(int x, int y, int z, Eigen::Vector3i volume
 
 std::string printTriangleVertices(triangleShape tri, double voxelScale) {
 	std::stringstream color;
-//	std::cout<<static_cast<unsigned>(tri.color.x())<<" "<<static_cast<unsigned>(tri.color.y())<<" "
-//																							 ""<<static_cast<unsigned>(tri.color.z())<<" "
-//																												""<<std::endl;
-
-	color << static_cast<unsigned>(tri.color.x()) << " " << static_cast<unsigned>(tri.color.y()) << " " << static_cast<unsigned>(tri
+    color << static_cast<unsigned>(tri.color.x()) << " " << static_cast<unsigned>(tri.color.y()) << " " << static_cast<unsigned>(tri
 	.color.z());
 	std::stringstream ss;
 
@@ -111,20 +100,6 @@ void MarchingCubes::extractMesh(Volume &volume, std::string fileName) {
                     }
                 }
 
-                // double weight_total =-10;
-                // Vector4d color_sum (0,0,0,0);
-
-                // for ( size_t voxel_corner = 0; voxel_corner < points.size(); voxel_corner++){
-                //     if (points[voxel_corner]._data.tsdf <= isoLevel && points[voxel_corner]._data.weight != 0) {
-                //         cubeIndex |= int(std::pow(2,voxel_corner));
-                //         double weight = 1./points[voxel_corner]._data.tsdf;
-                //         color_sum += points[voxel_corner]._data.color.cast<double>()*weight;
-                //         weight_total += weight;
-                //     }
-                // }
-                // averageColor = (color_sum / weight_total).cast<BYTE>();
-
-
                 //create triangles for printing out
                 // Create triangles for current cube configuration
                 for (int i = 0; triangulation[cubeIndex][i] != -1; i += 3) {
@@ -140,9 +115,6 @@ void MarchingCubes::extractMesh(Volume &volume, std::string fileName) {
                     int b2 = cornerIndexBFromEdge[triangulation[cubeIndex][i + 2]];
 
                     triangleShape tri;
-//					tri._idx1 = interpolate(points[a0], points[b0]) + volume.getOrigin();
-//					tri._idx2 = interpolate(points[a1], points[b1]) + volume.getOrigin();
-//					tri._idx3 = interpolate(points[a2], points[b2]) + volume.getOrigin();
                     tri.color = averageColor;
                     tri._idx1 = interpolate(points[a0], points[b0])*voxelScale+volume.getOrigin();
                     tri._idx2 = interpolate(points[a1], points[b1])*voxelScale+volume.getOrigin();
@@ -164,10 +136,10 @@ void MarchingCubes::extractMesh(Volume &volume, std::string fileName) {
     // Write header.
     outFile << "COFF" << std::endl;
     outFile << faces.size() * 3 << " " << faces.size() << " 0" << std::endl;
-    for (int i = 0; i < faces.size(); i++) {
+    for (size_t i = 0; i < faces.size(); i++) {
         outFile << printTriangleVertices(faces[i], volume.getVoxelScale());
     }
-    for (int i = 0; i < faces.size(); i++) {
+    for (size_t i = 0; i < faces.size(); i++) {
         outFile << printTriangleFaces(faces[i], i);
     }
 

@@ -23,11 +23,8 @@
 Fusion fusion;
 Raycast raycast;
 VirtualSensor sensor;
-double total_time = 0.0f;
 // KinectVirtualSensor sensor(PROJECT_DATA_DIR + std::string("/sample0"), 5 );
 //Recorder rec;
-
-//TODO this should be moved to one File containing all data_declarations class
 
 bool process_frame( size_t frame_cnt, std::shared_ptr<Frame> prevFrame,std::shared_ptr<Frame> currentFrame, std::shared_ptr<Volume> volume,const Config& config)
 {
@@ -38,15 +35,9 @@ bool process_frame( size_t frame_cnt, std::shared_ptr<Frame> prevFrame,std::shar
     currentFrame->setGlobalPose(estimated_pose);
 
     std::cout << "Init: ICP..." << std::endl;
-    clock_t begin = clock();
-    if(!icp.estimatePose(frame_cnt, prevFrame,currentFrame, 10, estimated_pose)){
+    if(!icp.estimatePose(frame_cnt, prevFrame,currentFrame, 3, estimated_pose)){
         throw "ICP Pose Estimation failed";
     };
-
-    clock_t end = clock();
-    double elapsedSecs = double(end - begin) / CLOCKS_PER_SEC;
-    total_time += elapsedSecs;
-    std::cout << "Completed in " << elapsedSecs << " seconds." << std::endl;
 
     // STEP 2: Surface reconstruction
    std::cout << "Init: Fusion..." << std::endl;
@@ -137,7 +128,4 @@ int main(){
         i++;
 
 	}
-    std::cout<<"Average time taken by icp: " << total_time / 50.0f << std::endl;
-
-
 }
