@@ -46,12 +46,12 @@ private:
 
     Eigen::Vector3i getOriginForInterpolation(const Eigen::Vector3d& point);
 
-    double getTSDFInterpolation(const Eigen::Vector3d& point,
+    double getTSDFInterpolation(const Eigen::Vector3d& gridVertex,
             const std::shared_ptr<Volume>& volume);
 
 
     Eigen::Vector3d calculateNormal(const Eigen::Vector3d& gridVertex,
-            const std::shared_ptr<Volume>& volume);
+            const std::shared_ptr<Volume>& volume, float truncationDistance);
 };
 
 

@@ -31,6 +31,7 @@ public:
     Eigen::Vector3d getGlobalCoordinate( int voxelIdx_x, int voxelIdx_y, int voxelIdx_z );
 
     double getTSDF(Eigen::Vector3d global);
+    double getTSDF( int x, int y, int z);
 
     Vector4uc getColor(Eigen::Vector3d global);
 

@@ -9,7 +9,7 @@ Frame::Frame(const double * depthMap, const BYTE* colorMap,
         const Eigen::Matrix4d &d2cExtrinsics,
         const unsigned int width, const unsigned int height, double maxDistance)
         : m_width(width),m_height(height),m_intrinsic_matrix(depthIntrinsics), m_color_intrinsic_matrix(colorIntrinsics),
-        m_d2cExtrinsics(d2cExtrinsics)
+        m_d2cExtrinsics(d2cExtrinsics), m_maxDistance(maxDistance)
         {
 
     double depth_threshold = 6.;
@@ -129,6 +129,13 @@ std::vector<Eigen::Vector3d> Frame::computeCameraCoordinates(unsigned int width,
     return pointsTmp;
 }
 
+void Frame::computeNormalFromGlobals(){
+    std::vector<Eigen::Vector3d> camera_points;
+    for(const auto& global: m_points_global){
+        camera_points.emplace_back(projectIntoCamera(global));
+    }
+    m_normals_global = computeNormals(camera_points, m_width, m_height, m_maxDistance);
+}
 
 std::vector<Eigen::Vector3d> Frame::computeNormals(std::vector<Eigen::Vector3d> camera_points, unsigned int width, unsigned int height,  double maxDistance){
 
@@ -165,7 +172,6 @@ std::vector<Eigen::Vector3d> Frame::computeNormals(std::vector<Eigen::Vector3d> 
     }
     return normalsTmp;
 }
-
 
 void Frame::applyGlobalPose(Eigen::Matrix4d& estimated_pose){
     Eigen::Matrix3d rotation = estimated_pose.block(0,0,3,3);

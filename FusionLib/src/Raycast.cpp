@@ -64,14 +64,16 @@ bool Raycast::surfacePrediction(std::shared_ptr<Frame>& currentFrame,std::shared
 
                     vertices[u+ v*width] = globalVertex;
 
-                    Eigen::Vector3d gridVertex = globalVertex / voxelScale;
+                    Eigen::Vector3d gridVertex = (globalVertex - volume->getOrigin())/ voxelScale;
 
                     if (gridVertex.x()-1 < 1 || gridVertex.x()+1 >= volumeSize.x() - 1 ||
                         gridVertex.y()-1 < 1 || gridVertex.y()+1 >= volumeSize.y() - 1 ||
                         gridVertex.z()-1 < 1 || gridVertex.z()+1 >= volumeSize.z() - 1)
                         break;
 
-                    Eigen::Vector3d normal = calculateNormal(gridVertex, volume);
+                    // Eigen::Vector3d normal = calculateNormal(gridVertex, volume, truncationDistance);
+
+                    // normal.normalize();
 
                     Vector4uc color;
 
@@ -83,16 +85,16 @@ bool Raycast::surfacePrediction(std::shared_ptr<Frame>& currentFrame,std::shared
                     }
 
                     currentFrame->setGlobalPoint(globalVertex,u,v);
-                    currentFrame->setGlobalNormal(normal,u,v);
+                    // currentFrame->setGlobalNormal(normal,u,v);
                     currentFrame->setColor(color,u,v);
 
-                    vertices.emplace_back(globalVertex);
                     colors.emplace_back(color);
 
                 }
             }
         }
     }
+    currentFrame->computeNormalFromGlobals();
     return true;
 }
 
@@ -136,33 +138,50 @@ Eigen::Vector3i Raycast::getOriginForInterpolation(const Eigen::Vector3d& point)
     point_in_grid.z() = (point.z() < center.z()) ? (point_in_grid.z() - 1) : point_in_grid.z();
 
     return point_in_grid;
+
 }
 
-double Raycast::getTSDFInterpolation(const Eigen::Vector3d& point,
+double Raycast::getTSDFInterpolation(const Eigen::Vector3d& gridVertex,
                                      const std::shared_ptr<Volume>& volume){
-    auto voxelScale = volume->getVoxelScale();
-    Eigen::Vector3i origin = getOriginForInterpolation(point);
+    Eigen::Vector3i origin = getOriginForInterpolation(gridVertex);
     Eigen::Vector3d center = origin.cast<double>() + Eigen::Vector3d(0.5f,0.5f,0.5f);
 
-    const double a = (point.x() - center.x());
-    const double b = (point.y() - center.y());
-    const double c = (point.z() - center.z());
+    const double a = (gridVertex.x() - center.x());
+    const double b = (gridVertex.y() - center.y());
+    const double c = (gridVertex.z() - center.z());
 
-    double tsdf = 0.0f;
-    tsdf += volume->getTSDF(Eigen::Vector3d(origin.x()*voxelScale,origin.y()*voxelScale,origin.z()*voxelScale))*(1-a)*(1-b)*(1-c);
-    tsdf += volume->getTSDF(Eigen::Vector3d(origin.x()*voxelScale,origin.y()*voxelScale,(origin.z()+1.0f)*voxelScale))*(1-a)*(1-b)*(c);
-    tsdf += volume->getTSDF(Eigen::Vector3d(origin.x()*voxelScale,(origin.y()+1.0f)*voxelScale,origin.z()*voxelScale))*(1-a)*(b)*(1-c);
-    tsdf += volume->getTSDF(Eigen::Vector3d(origin.x()*voxelScale,(origin.y()+1.0f)*voxelScale,(origin.z()+1.0f)*voxelScale))*(1-a)*(b)*(c);
-    tsdf += volume->getTSDF(Eigen::Vector3d((origin.x()+1.0f)*voxelScale,origin.y()*voxelScale,origin.z()*voxelScale))*(a)*(1-b)*(1-c);
-    tsdf += volume->getTSDF(Eigen::Vector3d((origin.x()+1.0f)*voxelScale,origin.y()*voxelScale,(origin.z()+1.0f)*voxelScale))*(a)*(1-b)*(c);
-    tsdf += volume->getTSDF(Eigen::Vector3d((origin.x()+1.0f)*voxelScale,(origin.y()+1.0f)*voxelScale,origin.z()*voxelScale))*(a)*(b)*(1-c);
-    tsdf += volume->getTSDF(Eigen::Vector3d((origin.x()+1.0f)*voxelScale,(origin.y()+1.0f)*voxelScale,(origin.z()+1.0f)*voxelScale))*(a)*(b)*(c);
+    double tsdf = 0.0;
+    // tsdf += volume->getTSDF(origin.x(),origin.y(),origin.z())                 *(1-a)*(1-b)*(1-c);
+    // tsdf += volume->getTSDF(origin.x(),origin.y(),(origin.z()+1))             *(1-a)*(1-b)*(c);
+    // tsdf += volume->getTSDF(origin.x(),(origin.y()+1),origin.z())             *(1-a)*(b)*(1-c);
+    // tsdf += volume->getTSDF(origin.x(),(origin.y()+1),(origin.z()+1))         *(1-a)*(b)*(c);
+    // tsdf += volume->getTSDF((origin.x()+1),origin.y(),origin.z())             *(a)*(1-b)*(1-c);
+    // tsdf += volume->getTSDF((origin.x()+1),origin.y(),(origin.z()+1))         *(a)*(1-b)*(c);
+    // tsdf += volume->getTSDF((origin.x()+1),(origin.y()+1),origin.z())         *(a)*(b)*(1-c);
+    // tsdf += volume->getTSDF((origin.x()+1),(origin.y()+1),(origin.z()+1))     *(a)*(b)*(c);
+
+    std::vector<double> tsdfs;
+    tsdfs.push_back(volume->getTSDF(origin.x(),origin.y(),origin.z())                 *(1-a)*(1-b)*(1-c));
+    tsdfs.push_back(volume->getTSDF(origin.x(),origin.y(),(origin.z()+1))             *(1-a)*(1-b)*(c));
+    tsdfs.push_back(volume->getTSDF(origin.x(),(origin.y()+1),origin.z())             *(1-a)*(b)*(1-c));
+    tsdfs.push_back(volume->getTSDF(origin.x(),(origin.y()+1),(origin.z()+1))         *(1-a)*(b)*(c));
+    tsdfs.push_back(volume->getTSDF((origin.x()+1),origin.y(),origin.z())             *(a)*(1-b)*(1-c));
+    tsdfs.push_back(volume->getTSDF((origin.x()+1),origin.y(),(origin.z()+1))         *(a)*(1-b)*(c));
+    tsdfs.push_back(volume->getTSDF((origin.x()+1),(origin.y()+1),origin.z())         *(a)*(b)*(1-c));
+    tsdfs.push_back(volume->getTSDF((origin.x()+1),(origin.y()+1),(origin.z()+1))     *(a)*(b)*(c));
+
+    for (double tsdf_val : tsdfs){
+        if(tsdf_val == 0){
+            return MINF;
+        }
+        tsdf += tsdf_val;
+    }
 
     return tsdf;
 }
 
 Eigen::Vector3d Raycast::calculateNormal(const Eigen::Vector3d& gridVertex,
-                                         const std::shared_ptr<Volume>& volume){
+                                         const std::shared_ptr<Volume>& volume, float truncationDistance){
     Eigen::Vector3d normal(0.0f,0.0f,0.0f);
     Eigen::Vector3d shiftedVertex;
 
@@ -172,8 +191,9 @@ Eigen::Vector3d Raycast::calculateNormal(const Eigen::Vector3d& gridVertex,
     shiftedVertex = gridVertex;
     shiftedVertex.x() -= 1;
     float tsdf_x2 = getTSDFInterpolation(shiftedVertex,volume);
-    normal.x() = tsdf_x1-tsdf_x2;
+    normal.x() = (tsdf_x1-tsdf_x2);
 
+    if(tsdf_x1 == MINF || tsdf_x2 == MINF) return Eigen::Vector3d(MINF, MINF, MINF);
 
     shiftedVertex = gridVertex;
     shiftedVertex.y() += 1;
@@ -181,8 +201,9 @@ Eigen::Vector3d Raycast::calculateNormal(const Eigen::Vector3d& gridVertex,
     shiftedVertex = gridVertex;
     shiftedVertex.y() -= 1;
     float tsdf_y2 = getTSDFInterpolation(shiftedVertex,volume);
-    normal.y() = tsdf_y1-tsdf_y2;
+    normal.y() = (tsdf_y1-tsdf_y2);
 
+    if(tsdf_y1 == MINF || tsdf_y2 == MINF) return Eigen::Vector3d(MINF, MINF, MINF);
 
     shiftedVertex = gridVertex;
     shiftedVertex.z() += 1;
@@ -190,7 +211,13 @@ Eigen::Vector3d Raycast::calculateNormal(const Eigen::Vector3d& gridVertex,
     shiftedVertex = gridVertex;
     shiftedVertex.z() -= 1;
     float tsdf_z2 = getTSDFInterpolation(shiftedVertex,volume);
-    normal.z() = tsdf_z1-tsdf_z2;
+    normal.z() = (tsdf_z1-tsdf_z2);
+
+    if(tsdf_z1 == MINF || tsdf_z2 == MINF) return Eigen::Vector3d(MINF, MINF, MINF);
+
+    if(tsdf_x1 != 0 && tsdf_x2 != 0 && tsdf_y1!=0 && tsdf_y2!= 0 && tsdf_z1!=0 && tsdf_z2!=0){
+        std::cout << "halleluja";
+    }
 
     return normal;
 }

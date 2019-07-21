@@ -35,6 +35,8 @@ public:
 
     void setGlobalNormal(const Eigen::Vector3d& normal, size_t u, size_t v);
 
+    void computeNormalFromGlobals();
+
     const Eigen::Matrix4d& getGlobalPose() const;
 
     void setGlobalPose(const Eigen::Matrix4d& pose);
@@ -88,4 +90,6 @@ private:
 
     std::vector<double> m_depth_map;
     std::vector<Vector4uc> m_color_map;
+
+    double m_maxDistance;
 };
