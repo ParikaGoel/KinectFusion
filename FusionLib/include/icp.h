@@ -21,7 +21,7 @@ public:
             const std::vector<std::pair<size_t, size_t>>& correspondence);
 
     const Eigen::Matrix4d getPose();
-
+    const Eigen::Matrix4d getApproximatePose();
 
 private:
     Eigen::Matrix<double, 6, 1> solution;

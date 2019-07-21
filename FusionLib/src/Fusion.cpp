@@ -36,7 +36,7 @@ int idx =0;
 				auto sdf = calculateSDF(lambda, currentCameraPosition, depth);
 
 				/*
-				 * Volumetric Integration
+				 * SDF Conversion to TSDF & Volumetric Integration
 				 */
 				if (sdf >= -truncationDistance) {
 					idx++;
@@ -73,12 +73,6 @@ int idx =0;
                                         (old_weight + current_weight);
                         volume->getVoxelData()[voxel_index].color = voxel_color;
                     }
-//					std::cout << static_cast<unsigned>(volume->getVoxelData()[voxel_index].color.x()) << " "
-//							  << static_cast<unsigned>(volume->getVoxelData()[voxel_index].color.y()) << " "
-//																		   ""
-//							  << static_cast<unsigned>(volume->getVoxelData()[voxel_index].color.z()) << " "
-//																		   "" << std::endl;
-
 
 
 
@@ -89,21 +83,6 @@ int idx =0;
     return true;
 }
 
-bool Fusion::calculateGlobal2CameraPoint(Eigen::Vector3d &currentCameraPosition, int x, int y, int z,
-										 const Eigen::Matrix3d& rotation,
-										 const Eigen::Vector3d& translation,
-										 double voxelScale){
-
-
-    const Eigen::Vector3d position((static_cast<double>(x) + 0.5) * voxelScale,
-                           (static_cast<double>(y) + 0.5) * voxelScale,
-                           (static_cast<double>(z) + 0.5) * voxelScale);
-    currentCameraPosition = rotation * position + translation;
-
-    if (currentCameraPosition.z() <= 0) return false;
-
-    return true;
-}
 
 double Fusion::calculateLamdas(Eigen::Vector2i &cameraSpacePoint,Eigen::Matrix3d intrinsics) {
     double fovX = intrinsics(0, 0);

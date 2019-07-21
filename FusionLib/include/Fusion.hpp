@@ -11,10 +11,7 @@ public:
 
 private:
 
-    //Reconstruction
-    bool calculateGlobal2CameraPoint(Eigen::Vector3d &currentCameraPosition, int x, int y, int z,
-									 const Eigen::Matrix3d& rotation,
-									 const Eigen::Vector3d& translation, double voxelScale);
+
 
     /*!
          * The original implementation actually takes a raw depth Value, as we already calculated the camereSpacePoints

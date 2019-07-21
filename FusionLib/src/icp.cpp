@@ -59,7 +59,7 @@ void LinearSolver::solvePoint2Point(const std::vector<Eigen::Vector3d>& sourcePo
     solution = x;
 }
 
-const Eigen::Matrix4d LinearSolver::getPose(){
+const Eigen::Matrix4d LinearSolver::getApproximatePose(){
     Eigen::Matrix4d transformation;
     double alpha = solution[0];
     double beta  = solution[1];
@@ -70,6 +70,24 @@ const Eigen::Matrix4d LinearSolver::getPose(){
             -beta,    alpha,                  1,                 solution[5],
             0 , 0, 0, 1;
     return transformation;
+}
+
+const Eigen::Matrix4d LinearSolver::getPose(){
+    double alpha = solution[0];
+    double beta  = solution[1];
+    double gamma = solution[2];
+    Vector3d translation = solution.tail(3);
+
+    Matrix3d rotation = AngleAxisd(alpha, Vector3d::UnitX()).toRotationMatrix() *
+                        AngleAxisd(beta, Vector3d::UnitY()).toRotationMatrix() *
+                        AngleAxisd(gamma, Vector3d::UnitZ()).toRotationMatrix();
+
+    Matrix4d pose = Matrix4d::Identity();
+
+    pose.block(0, 0, 3, 3) = rotation;
+    pose.block(0, 3, 3, 1) = translation;
+
+    return pose;
 }
 
 icp::icp(double dist_thresh, double normal_thresh)
