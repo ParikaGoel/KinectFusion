@@ -2,6 +2,7 @@
 // Created by phili on 20.07.2019.
 //
 
+#include <iomanip>
 #include "Marching_cubes.hpp"
 //#include <lookup_tables.hpp>
 
@@ -43,6 +44,7 @@ std::string printTriangleVertices(triangleShape tri, double voxelScale) {
 	.color.z());
 	std::stringstream ss;
 
+	ss << std::setprecision(5)<< std::fixed;
 	ss << tri._idx1.x() << " " << tri._idx1.y() << " " << tri._idx1.z() << " " << color.str() << std::endl;
 	ss << tri._idx2.x() << " " << tri._idx2.y() << " " << tri._idx2.z() << " " << color.str() << std::endl;
 	ss << tri._idx3.x() << " " << tri._idx3.y() << " " << tri._idx3.z() << " " << color.str() << std::endl;
@@ -52,6 +54,7 @@ std::string printTriangleVertices(triangleShape tri, double voxelScale) {
 
 std::string printTriangleFaces(triangleShape tri, double number) {
 	std::stringstream ss;
+    ss << std::noshowpoint << std::fixed;
 	ss << "3 " << number * 3 << " " << number * 3 + 1 << " " << number * 3 + 2 << " " << std::endl;
 
 	return ss.str();
