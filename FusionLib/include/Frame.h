@@ -19,7 +19,7 @@ public:
     
     Frame(const double* depthMap, const BYTE* colorMap, const Eigen::Matrix3d& depthIntrinsics, const Eigen::Matrix3d& colorIntrinsics,
             const Eigen::Matrix4d& d2cExtrinsics,
-            const unsigned int width, const unsigned int height, double maxDistance = 2);
+            const unsigned int width, const unsigned int height, double maxDistance = 0.05);
 
 	void applyGlobalPose(Eigen::Matrix4d& estimated_pose);
 

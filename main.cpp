@@ -62,16 +62,19 @@ bool process_frame( size_t frame_cnt, std::shared_ptr<Frame> prevFrame,std::shar
 int main(){
 
     // Recorder rec;
-    // rec.record(10);
+    // rec.record(50);
+
+    // return 0;
 
 
     // std::string filenameIn = PROJECT_DATA_DIR + std::string("/rgbd_dataset_freiburg1_xyz/");
     std::string filenameIn = PROJECT_DATA_DIR + std::string("/recording/");
+    // std::string filenameIn = PROJECT_DATA_DIR + std::string("/rs12/");
 
     std::cout << "Initialize virtual sensor..." << std::endl;
 
-    //KinectVirtualSensor sensor;
-    VirtualSensor sensor;
+    KinectVirtualSensor sensor;
+    // VirtualSensor sensor;
     if (!sensor.init(filenameIn)) {
         std::cout << "Failed to initialize the sensor!\nCheck file path!" << std::endl;
         return -1;
@@ -82,13 +85,13 @@ int main(){
     /*
      * Configuration Stuff
      */
-    Eigen::Vector3d volumeRange(5.0, 5.0, 5.0);
+    Eigen::Vector3d volumeRange(1.0, 1.0, 1.0);
     Eigen::Vector3i volumeSize (512,512,512);
     double voxelSize = volumeRange.x()/volumeSize.x();
 
-    const auto volumeOrigin = Eigen::Vector3d (-volumeRange.x()/2,-volumeRange.y()/2,0.5);
+    const auto volumeOrigin = Eigen::Vector3d (-volumeRange.x()/2,-volumeRange.y()/2 + 0.3,0.1);
 
-    Config config (0.1,0.5,0.06, volumeOrigin, volumeSize.x(),volumeSize.y(),volumeSize.z(), voxelSize);
+    Config config (0.1,0.5,0.2, volumeOrigin, volumeSize.x(),volumeSize.y(),volumeSize.z(), voxelSize);
 
     //print Configuration to File
     config.printToFile("config");
@@ -112,17 +115,17 @@ int main(){
     const double* depthMap = &sensor.getDepth()[0];
     BYTE* colors = &sensor.getColorRGBX()[0];
 
-    std::shared_ptr<Frame> prevFrame = std::make_shared<Frame>(Frame(depthMap, colors, depthIntrinsics, colIntrinsics, d2cExtrinsics, depthWidth, depthHeight));
+    std::shared_ptr<Frame> prevFrame = std::make_shared<Frame>(depthMap, colors, depthIntrinsics, colIntrinsics, d2cExtrinsics, depthWidth, depthHeight);
     MeshWriter::toFile("mesh0", prevFrame);
 
     int i = 1;
-    const int iMax = 20;
+    const int iMax = 150;
 
     while( i <= iMax && sensor.processNextFrame() ){
 
         const double* depthMap = &sensor.getDepth()[0];
         BYTE* colors = &sensor.getColorRGBX()[0];
-        std::shared_ptr<Frame> currentFrame = std::make_shared<Frame>(Frame(depthMap, colors, depthIntrinsics,colIntrinsics, d2cExtrinsics, depthWidth, depthHeight));
+        std::shared_ptr<Frame> currentFrame = std::make_shared<Frame>(depthMap, colors, depthIntrinsics,colIntrinsics, d2cExtrinsics, depthWidth, depthHeight);
 
         process_frame(i,prevFrame,currentFrame,volume,config);
 
@@ -133,11 +136,13 @@ int main(){
             //Write Fused Volume to File with Marching Cubes Algorithm
             MeshWriter::toFileMarchingCubes( std::string("marchingCubes_") + std::to_string(i),*volume);
             //Write Fused Volume to File with Blocks indicating the Distance of each Voxel
-            MeshWriter::toFileTSDF(std::string("tsdf_") + std::to_string(i),*volume);
+            MeshWriter::toFileTSDF(std::string("tsdf_") + std::to_string(i),*volume, 4);
         }
 
         prevFrame = std::move(currentFrame);
         i++;
 
     }
+
+    MeshWriter::toFileMarchingCubes(std::string("marchingCubes_final"), *volume);
 }

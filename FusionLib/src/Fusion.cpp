@@ -42,10 +42,13 @@ int idx =0;
 					idx++;
 
 				    const double current_tsdf = std::min(1., sdf / truncationDistance); // *sgn(sdf)
-				    const double current_weight = 1.0;
+				    // const double current_weight = 1.0;
 					size_t voxel_index = x+(y*volumeSize.x())+(z*volumeSize.x()*volumeSize.y());
 					const double old_tsdf=volume->getVoxelData()[voxel_index].tsdf;
 					const double old_weight = volume->getVoxelData()[voxel_index].weight;
+                    const double scaled_current_weight = ceil((old_weight+1)/2);
+
+                    const double current_weight = scaled_current_weight;
 
 					const double updated_tsdf = (old_weight*old_tsdf + current_weight*current_tsdf)/
 							(old_weight+current_weight);
@@ -62,15 +65,14 @@ int idx =0;
                         if(image_color[3] == 0)
                             continue;
 
-
-                        voxel_color[0] = (old_weight * voxel_color[0] + current_weight * image_color[0]) /
-                                (old_weight + current_weight);
-                        voxel_color[1] = (old_weight * voxel_color[1] + current_weight * image_color[1]) /
-                                (old_weight + current_weight);
-                        voxel_color[2] =(old_weight * voxel_color[2] + current_weight * image_color[2]) /
-                                (old_weight + current_weight);
-                        voxel_color[3] =(old_weight * voxel_color[3] + current_weight * image_color[3]) /
-                                        (old_weight + current_weight);
+                        voxel_color[0] = (old_weight * voxel_color[0] + scaled_current_weight * image_color[0]) /
+                                (old_weight + scaled_current_weight);
+                        voxel_color[1] = (old_weight * voxel_color[1] + scaled_current_weight * image_color[1]) /
+                                (old_weight + scaled_current_weight);
+                        voxel_color[2] =(old_weight * voxel_color[2]  + scaled_current_weight * image_color[2]) /
+                                (old_weight + scaled_current_weight);
+                        voxel_color[3] =(old_weight * voxel_color[3]  + scaled_current_weight * image_color[3]) /
+                                (old_weight + scaled_current_weight);
                         volume->getVoxelData()[voxel_index].color = voxel_color;
                     }
 

@@ -3,6 +3,8 @@
 #include "Volume.hpp"
 #include <Frame.h>
 #include <memory>
+#include <math.h>
+
 class Fusion {
 public:
 //THIS method expects frame to hold all camera paramerters as well as the estimated pose --> TODO: check if those values are set or redefine method parameters

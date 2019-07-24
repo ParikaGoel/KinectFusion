@@ -46,7 +46,7 @@ void Frame::alignColorsToDepth(std::vector<Vector4uc> colors) {
         if(contains(coord))
             m_color_map.push_back(colors[coord.x() + coord.y()*m_width]);
         else
-            m_color_map.push_back(Vector4uc(zero, zero, zero, zero));
+            m_color_map.push_back(Vector4uc(zero, zero, zero, 0));
     }
 }
 
